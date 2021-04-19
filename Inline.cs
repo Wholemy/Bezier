@@ -1,4 +1,4 @@
-﻿namespace Wholemy {
+namespace Wholemy {
 	#region #class# Inline 
 	public class Inline {
 		#region #class# Quadratic 
@@ -131,15 +131,6 @@
 				var y02 = (y01 - x12) * root + x12;
 				X = x02;
 				Y = y02;
-			}
-			#endregion
-			#region #get# Length 
-			public override double Length => Getlength(x0, y0, x2, y2) + Getlength(x2, y2, x1, y1);
-			#endregion
-			#region #method# ToString 
-			public override string ToString() {
-				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"I= {this.Root.ToString("R", I)}";
 			}
 			#endregion
 			#region #invisible# #get# New 
@@ -782,39 +773,6 @@
 				}
 			}
 			return false;
-		}
-		#endregion
-		#region #get# Length 
-		public virtual double Length => Getlength(x0, y0, x1, y1);
-		#endregion
-		#region #property# Length2 
-		public double Length2 {
-			get {
-				return this.Below.Length + this.Above.Length;
-			}
-		}
-		#endregion
-		#region #property# Length4 
-		public double Length4 {
-			get {
-				var a0 = this.Below;
-				var a1 = this.Above;
-				return a0.Below.Length + a0.Above.Length + a1.Below.Length + a1.Above.Length;
-			}
-		}
-		#endregion
-		#region #property# Length8 
-		public double Length8 {
-			get {
-				var a0 = this.Below;
-				var a1 = this.Above;
-				var a00 = a0.Below;
-				var a01 = a0.Above;
-				var a10 = a1.Below;
-				var a11 = a1.Above;
-				return a00.Below.Length + a00.Above.Length + a01.Below.Length + a01.Above.Length
-				+ a10.Below.Length + a10.Above.Length + a11.Below.Length + a11.Above.Length;
-			}
 		}
 		#endregion
 		#region #method# ToString 
