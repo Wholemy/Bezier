@@ -513,13 +513,6 @@ namespace Wholemy {
 			this.Y = y01;
 		}
 		#endregion
-		#region #method# Getlength(x0, y0, x1, y1) 
-		private static double Getlength(double x0, double y0, double x1, double y1) {
-			x1 = x0 - x1;
-			y1 = y0 - y1;
-			return System.Math.Sqrt(x1 * x1 + y1 * y1);
-		}
-		#endregion
 		#region #method# Divisions 
 		protected virtual void Divisions() {
 			var x00 = x0;
