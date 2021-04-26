@@ -758,8 +758,7 @@ namespace Wholemy {
 						if (bbl > bal) { B = BA; O = true; }
 					}
 				}
-				var Plen = A.Len(B);
-				if (A.X == A.X && B.Y == B.Y || Plen <= Lmin) {
+				if ((A.X == B.X && A.Y == B.Y) || (A.Len(B) <= Lmin)) {
 					Aref = A;
 					Bref = B;
 					return true;
