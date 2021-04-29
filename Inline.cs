@@ -813,6 +813,76 @@ namespace Wholemy {
 			return (a.R >= this.L && this.R >= a.L && a.B >= this.T && this.B >= a.T);
 		}
 		#endregion
+		#region #class# Chance 
+		private class Chance {
+			public readonly Inline Line;
+			public readonly Chance Next;
+			public bool ExistsBelow;
+			public bool ExistsAbove;
+			#region #new# (Next, Line) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			private Chance(Chance Next, Inline Line) {
+				this.Line = Line;
+				this.Next = Next;
+			}
+			#endregion
+			#region #operator# + (Next, Line) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public static Chance operator +(Chance Next, Inline Line) {
+				return new Chance(Next, Line);
+			}
+			#endregion
+			#region #implicit operator# (Line)
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public static implicit operator Chance(Inline Line) {
+				return new Chance(null, Line);
+			}
+			#endregion
+			#region #method# Test(cb) 
+			public void Test(Chance cb) {
+				var A = Line;
+				var B = cb.Line;
+				var AB = A.Below;
+				var AA = A.Above;
+				var BB = B.Below;
+				var BA = B.Above;
+				var ABBB = AB.Intersect(BB);
+				var ABBA = AB.Intersect(BA);
+				var AABB = AA.Intersect(BB);
+				var AABA = AA.Intersect(BA);
+				if (ABBB || ABBA) { this.ExistsBelow = true; }
+				if (AABB || AABA) { this.ExistsAbove = true; }
+				if (AABB || ABBB) { cb.ExistsBelow = true; }
+				if (AABA || ABBA) { cb.ExistsAbove = true; }
+			}
+			#endregion
+			#region #method# Exists 
+			public Chance Exists() {
+				var C = this;
+				Chance R = null;
+				while(C!=null) {
+					var I = C.Line;
+					if (C.ExistsBelow) R += I.Below;
+					if (C.ExistsAbove) R += I.Above;
+					C = C.Next;
+				}
+				return R;
+			}
+			#endregion
+		}
+		#endregion
 		#region #method# Intersect(b, depth) 
 		#region #through# 
 #if TRACE
@@ -820,20 +890,43 @@ namespace Wholemy {
 #endif
 		#endregion
 		private bool Intersect(Inline b, int depth) {
-			if (this.Intersect(b)) {
+			if(this.Intersect(b)) {
 				if (depth > 0) {
-					var aa = this.Bet();
-					var bb = b.Bet();
-					if (!aa.Intersect(bb)) return false;
-					while (--depth > 0) {
-						aa = aa.Bet();
-						bb = bb.Bet();
-						if (!aa.Intersect(bb)) return false;
+					Chance CA = this;
+					Chance CB = b;
+					while (--depth>=0) {
+						Chance TA = CA;
+						while(TA!=null) {
+							Chance TB = CB;
+							while(TB!=null) {
+								var TBL = TB.Line;
+								TA.Test(TB);
+								TB = TB.Next;
+							}
+							TA = TA.Next;
+						}
+						CA = CA.Exists();
+						CB = CB.Exists();
+						if (CA == null || CB == null) return false;
 					}
 				}
 				return true;
 			}
 			return false;
+			//if (this.Intersect(b)) {
+			//	if (depth > 0) {
+			//		var aa = this.Bet();
+			//		var bb = b.Bet();
+			//		if (!aa.Intersect(bb)) return false;
+			//		while (--depth > 0) {
+			//			aa = aa.Bet();
+			//			bb = bb.Bet();
+			//			if (!aa.Intersect(bb)) return false;
+			//		}
+			//	}
+			//	return true;
+			//}
+			//return false;
 		}
 		#endregion
 		#region #method# IntersectEnd(Aref, Bref, depth) 
@@ -967,8 +1060,8 @@ namespace Wholemy {
 					if (ABB && AAB) { A = AB; goto Next; }
 					if (BBA && BAA) { B = BB; goto Next; }
 				}
-				//int C;
-				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
+				int C;
+				do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
 				var AS = A;
 				do {
 					O = false;
