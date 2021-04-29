@@ -1037,13 +1037,16 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int depth = 7) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
 			bool O = true;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
 			var B = Bref.New;
 			if (Aend ^ Bnot) B = B.NewNot;
-			Inline AB, AA, BB, BA, MAB, MAA, MBB, MBA;
+			var depth = Dmin;
+			var Abak = A;
+			var Bbak = B;
+			Inline AB, AA, BB, BA;
 			if (A.Intersect(B)) {
 			Next:
 				if (A.Depth < MaxDepth && B.Depth < MaxDepth) {
@@ -1134,19 +1137,30 @@ namespace Wholemy {
 				var ASL = AS.Len(B);
 				var BSL = BS.Len(A);
 				if (SSL < ASL && SSL < BSL) {
-					Aref = ASS;
-					Bref = BSS;
-					return SSL;
+					if (SSL < Lmin) {
+						Aref = ASS;
+						Bref = BSS;
+						return SSL;
+					}
 				} else if (ASL < BSL) {
-					Aref = AS;
-					Bref = B;
-					return ASL;
+					if (ASL < Lmin) {
+						Aref = AS;
+						Bref = B;
+						return ASL;
+					}
 				} else {
-					Aref = A;
-					Bref = BS;
-					return BSL;
+					if (BSL < Lmin) {
+						Aref = A;
+						Bref = BS;
+						return BSL;
+					}
 				}
-
+				if(depth<Dmax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
 
 				//if (A.Intersect(B)) {
 				//var L = A.Len(B);
