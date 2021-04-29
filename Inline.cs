@@ -969,76 +969,11 @@ namespace Wholemy {
 		/// <param name="Aend">Истина определяет поиск перечений с конца)</param>
 		/// <param name="Bnot">Истина определяет обратный поиск от Aend)</param>
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
-		/// <param name="depth">Глубина парного перебора в битвине)</param>
+		/// <param name="Dmin">Минимальная глубина сравнения)</param>
+		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <returns></returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int depth = 7) {
-			var A = Aref.New;
-			if (Aend) A = A.NewNot;
-			var B = Bref.New;
-			if (Aend ^ Bnot) B = B.NewNot;
-			Inline AB, AA, BB, BA;
-			if (A.Intersect(B)) {
-			Next:
-				if (A.Depth < MaxDepth && B.Depth < MaxDepth) {
-					AB = A.Below; AA = A.Above; BB = B.Below; BA = B.Above;
-					var ABB = AB.Intersect(B, depth);
-					var AAB = AA.Intersect(B, depth);
-					if (AAB && !ABB) { A = AA; goto Next; }
-					if (ABB && !AAB) { A = AB; goto Next; }
-					var BBA = BB.Intersect(A, depth);
-					var BAA = BA.Intersect(A, depth);
-					if (BAA && !BBA) { B = BA; goto Next; }
-					if (BBA && !BAA) { B = BB; goto Next; }
-
-					if (ABB && AAB) { A = AB; goto Next; }
-					if (BBA && BAA) { B = BB; goto Next; }
-				}
-				//int C;
-				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
-				bool O;
-				do {
-					O = false;
-					AA = A.OtherGreater(B);
-					if (AA != null) {
-						A = AA; O = true;
-					}
-					BB = B.OtherGreater(A);
-					if (BB != null) {
-						B = BB; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					AB = A.Above;
-					AA = A.Below;
-					BB = B.Above;
-					BA = B.Below;
-					var abl = AB.Len(B);
-					var aal = AA.Len(B);
-					var bbl = BB.Len(A);
-					var bal = BA.Len(A);
-					var al = abl < aal ? abl : aal;
-					var bl = bbl < bal ? bbl : bal;
-					if (al < bl || bbl == bal) {
-						if (abl < aal) { A = AB; O = true; }
-						if (abl > aal) { A = AA; O = true; }
-					}
-					if (al > bl || abl == aal) {
-						if (bbl < bal) { B = BB; O = true; }
-						if (bbl > bal) { B = BA; O = true; }
-					}
-				} while (O);
-				if ((A.X == B.X && A.Y == B.Y) || (A.Len(B) <= Lmin)) {
-					Aref = A;
-					Bref = B;
-					return true;
-				}
-			}
-			return false;
-		}
-		#endregion
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
-			bool O = true;
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
+			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
 			var B = Bref.New;
@@ -1063,8 +998,8 @@ namespace Wholemy {
 					if (ABB && AAB) { A = AB; goto Next; }
 					if (BBA && BAA) { B = BB; goto Next; }
 				}
-				int C;
-				do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
+				//int C;
+				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
 				var AS = A;
 				do {
 					O = false;
@@ -1137,19 +1072,147 @@ namespace Wholemy {
 				var ASL = AS.Len(B);
 				var BSL = BS.Len(A);
 				if (SSL < ASL && SSL < BSL) {
-					if (SSL < Lmin) {
+					if (SSL < Lmin || depth == Dmax) {
+						Aref = ASS;
+						Bref = BSS;
+						return true;
+					}
+				} else if (ASL < BSL) {
+					if (ASL < Lmin || depth == Dmax) {
+						Aref = AS;
+						Bref = B;
+						return true;
+					}
+				} else {
+					if (BSL < Lmin || depth == Dmax) {
+						Aref = A;
+						Bref = BS;
+						return true;
+					}
+				}
+				if (depth < Dmax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
+			}
+			return false;
+		}
+		#endregion
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
+			bool O;
+			var A = Aref.New;
+			if (Aend) A = A.NewNot;
+			var B = Bref.New;
+			if (Aend ^ Bnot) B = B.NewNot;
+			var depth = Dmin;
+			var Abak = A;
+			var Bbak = B;
+			Inline AB, AA, BB, BA;
+			if (A.Intersect(B)) {
+			Next:
+				if (A.Depth < MaxDepth && B.Depth < MaxDepth) {
+					AB = A.Below; AA = A.Above; BB = B.Below; BA = B.Above;
+					var ABB = AB.Intersect(B, depth);
+					var AAB = AA.Intersect(B, depth);
+					if (AAB && !ABB) { A = AA; goto Next; }
+					if (ABB && !AAB) { A = AB; goto Next; }
+					var BBA = BB.Intersect(A, depth);
+					var BAA = BA.Intersect(A, depth);
+					if (BAA && !BBA) { B = BA; goto Next; }
+					if (BBA && !BAA) { B = BB; goto Next; }
+
+					if (ABB && AAB) { A = AB; goto Next; }
+					if (BBA && BAA) { B = BB; goto Next; }
+				}
+				//int C;
+				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
+				var AS = A;
+				do {
+					O = false;
+					AA = AS.OtherGreater(B);
+					if (AA != null) {
+						AS = AA; O = true;
+					}
+				} while (O);
+				do {
+					O = false;
+					AB = AS.Above;
+					AA = AS.Below;
+					var abl = AB.Len(B);
+					var aal = AA.Len(B);
+					if (abl < aal) { AS = AB; O = true; }
+					if (abl > aal) { AS = AA; O = true; }
+				} while (O);
+				var BS = B;
+				do {
+					O = false;
+					BB = BS.OtherGreater(A);
+					if (BB != null) {
+						BS = BB; O = true;
+					}
+				} while (O);
+				do {
+					O = false;
+					BB = BS.Above;
+					BA = BS.Below;
+					var bbl = BB.Len(A);
+					var bal = BA.Len(A);
+					if (bbl < bal) { BS = BB; O = true; }
+					if (bbl > bal) { BS = BA; O = true; }
+				} while (O);
+				var ASS = A;
+				var BSS = B;
+				do {
+					O = false;
+					AA = ASS.OtherGreater(BSS);
+					if (AA != null) {
+						ASS = AA; O = true;
+					}
+					BB = BSS.OtherGreater(ASS);
+					if (BB != null) {
+						BSS = BB; O = true;
+					}
+				} while (O);
+				do {
+					O = false;
+					AB = ASS.Above;
+					AA = ASS.Below;
+					BB = BSS.Above;
+					BA = BSS.Below;
+					var abl = AB.Len(BSS);
+					var aal = AA.Len(BSS);
+					var bbl = BB.Len(ASS);
+					var bal = BA.Len(ASS);
+					var al = abl < aal ? abl : aal;
+					var bl = bbl < bal ? bbl : bal;
+					if (al < bl || bbl == bal) {
+						if (abl < aal) { ASS = AB; O = true; }
+						if (abl > aal) { ASS = AA; O = true; }
+					}
+					if (al > bl || abl == aal) {
+						if (bbl < bal) { BSS = BB; O = true; }
+						if (bbl > bal) { BSS = BA; O = true; }
+					}
+				} while (O);
+				var SSL = ASS.Len(BSS);
+				var ASL = AS.Len(B);
+				var BSL = BS.Len(A);
+				if (SSL < ASL && SSL < BSL) {
+					if (SSL < Lmin || depth == Dmax) {
 						Aref = ASS;
 						Bref = BSS;
 						return SSL;
 					}
 				} else if (ASL < BSL) {
-					if (ASL < Lmin) {
+					if (ASL < Lmin || depth == Dmax) {
 						Aref = AS;
 						Bref = B;
 						return ASL;
 					}
 				} else {
-					if (BSL < Lmin) {
+					if (BSL < Lmin|| depth == Dmax) {
 						Aref = A;
 						Bref = BS;
 						return BSL;
@@ -1161,13 +1224,6 @@ namespace Wholemy {
 					B = Bbak;
 					goto Next;
 				}
-
-				//if (A.Intersect(B)) {
-				//var L = A.Len(B);
-				//Aref = A;
-				//Bref = B;
-				//return L;
-				//}
 			}
 			return -1.0;
 		}
