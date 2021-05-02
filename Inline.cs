@@ -30,14 +30,14 @@ namespace Wholemy {
 				if (y1 > v) v = y1;
 				if (y2 > v) v = y2;
 				B = v;
-				var x10 = (x0 - x1) * 0.5 + x1;
-				var y10 = (y0 - y1) * 0.5 + y1;
-				var x21 = (x1 - x2) * 0.5 + x2;
-				var y21 = (y1 - y2) * 0.5 + y2;
-				this.X = (x10 - x21) * 0.5 + x21;
-				this.Y = (y10 - y21) * 0.5 + y21;
-				this.bx2 = x10; this.by2 = y10;
-				this.ax2 = x21; this.ay2 = y21;
+				var x01 = (x1 - x0) * 0.5 + x0;
+				var y01 = (y1 - y0) * 0.5 + y0;
+				var x12 = (x2 - x1) * 0.5 + x1;
+				var y12 = (y2 - y1) * 0.5 + y1;
+				this.X = (x12 - x01) * 0.5 + x01;
+				this.Y = (y12 - y01) * 0.5 + y01;
+				this.bx2 = x01; this.by2 = y01;
+				this.ax2 = x12; this.ay2 = y12;
 			}
 			#endregion
 			#region #override# #method# Div(root, b0, b1) 
