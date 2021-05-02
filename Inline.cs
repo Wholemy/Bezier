@@ -48,15 +48,14 @@ namespace Wholemy {
 				var y11 = y2;
 				var x22 = x1;
 				var y22 = y1;
-				var x10 = (x00 - x11) * root + x11;
-				var y10 = (y00 - y11) * root + y11;
-				var x21 = (x11 - x22) * root + x22;
-				var y21 = (y11 - y22) * root + y22;
-				var x20 = (x10 - x21) * root + x21;
-				var y20 = (y10 - y21) * root + y21;
-				var S = root * this.Size;
-				b0 = new Quadratic(x00, y00, x10, y10, x20, y20);
-				b1 = new Quadratic(x20, y20, x21, y21, x22, y22);
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				b0 = new Quadratic(x00, y00, x01, y01, x02, y02);
+				b1 = new Quadratic(x02, y02, x12, y12, x22, y22);
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -67,14 +66,14 @@ namespace Wholemy {
 				var y11 = y2;
 				var x22 = x1;
 				var y22 = y1;
-				var x10 = (x00 - x11) * root + x11;
-				var y10 = (y00 - y11) * root + y11;
-				var x21 = (x11 - x22) * root + x22;
-				var y21 = (y11 - y22) * root + y22;
-				var x20 = (x10 - x21) * root + x21;
-				var y20 = (y10 - y21) * root + y21;
-				X = x20;
-				Y = y20;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				X = x02;
+				Y = y02;
 			}
 			#endregion
 			#region #invisible# #get# New 
@@ -247,7 +246,6 @@ namespace Wholemy {
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
 				var y03 = (y13 - y02) * root + y02;
-				var S = root * this.Size;
 				b0 = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03);
 				b1 = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33);
 			}
@@ -649,7 +647,6 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			var S = root * this.Size;
 			b0 = new Inline(x00, y00, x01, y01);
 			b1 = new Inline(x01, y01, x11, y11);
 		}
