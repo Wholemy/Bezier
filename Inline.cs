@@ -11,11 +11,6 @@ namespace Wholemy {
 			private readonly double bx2;
 			private readonly double by2;
 			#region #new# (x0, y0, x1, y1, x2, y2, S = 0.5, I = 0.5, O = null) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
 			public Quadratic(double x0, double y0, double x1, double y1, double x2, double y2, double S = 0.5, double I = 0.5, Inline O = null, bool Not = false) : base(O, S, I, x0, y0, x2, y2, Not) {
 				this.x2 = x1;
 				this.y2 = y1;
@@ -35,20 +30,14 @@ namespace Wholemy {
 				if (y1 > v) v = y1;
 				if (y2 > v) v = y2;
 				B = v;
-				var x00 = x0;
-				var y00 = y0;
-				var x11 = x2;
-				var y11 = y2;
-				var x22 = x1;
-				var y22 = y1;
-				var x01 = (x11 - x00) * 0.5 + x00;
-				var y01 = (y11 - y00) * 0.5 + y00;
-				var x12 = (x22 - x11) * 0.5 + x11;
-				var y12 = (y22 - y11) * 0.5 + y11;
-				this.X = (x01 - x12) * 0.5 + x12;
-				this.Y = (y01 - x12) * 0.5 + x12;
-				this.bx2 = x01; this.by2 = y01;
-				this.ax2 = x12; this.ay2 = y12;
+				var x10 = (x0 - x1) * 0.5 + x1;
+				var y10 = (y0 - y1) * 0.5 + y1;
+				var x21 = (x1 - x2) * 0.5 + x2;
+				var y21 = (y1 - y2) * 0.5 + y2;
+				this.X = (x10 - x21) * 0.5 + x21;
+				this.Y = (y10 - y21) * 0.5 + y21;
+				this.bx2 = x10; this.by2 = y10;
+				this.ax2 = x21; this.ay2 = y21;
 			}
 			#endregion
 			#region #override# #method# Div(root, b0, b1) 
@@ -59,15 +48,15 @@ namespace Wholemy {
 				var y11 = y2;
 				var x22 = x1;
 				var y22 = y1;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x02 = (x01 - x12) * root + x12;
-				var y02 = (y01 - x12) * root + x12;
+				var x10 = (x00 - x11) * root + x11;
+				var y10 = (y00 - y11) * root + y11;
+				var x21 = (x11 - x22) * root + x22;
+				var y21 = (y11 - y22) * root + y22;
+				var x20 = (x10 - x21) * root + x21;
+				var y20 = (y10 - y21) * root + y21;
 				var S = root * this.Size;
-				b0 = new Quadratic(x00, y00, x01, y01, x02, y02);
-				b1 = new Quadratic(x02, y02, x12, y12, x22, y22);
+				b0 = new Quadratic(x00, y00, x10, y10, x20, y20);
+				b1 = new Quadratic(x20, y20, x21, y21, x22, y22);
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -78,14 +67,14 @@ namespace Wholemy {
 				var y11 = y2;
 				var x22 = x1;
 				var y22 = y1;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x02 = (x01 - x12) * root + x12;
-				var y02 = (y01 - x12) * root + x12;
-				X = x02;
-				Y = y02;
+				var x10 = (x00 - x11) * root + x11;
+				var y10 = (y00 - y11) * root + y11;
+				var x21 = (x11 - x22) * root + x22;
+				var y21 = (y11 - y22) * root + y22;
+				var x20 = (x10 - x21) * root + x21;
+				var y20 = (y10 - y21) * root + y21;
+				X = x20;
+				Y = y20;
 			}
 			#endregion
 			#region #invisible# #get# New 
@@ -872,10 +861,10 @@ namespace Wholemy {
 			public Chance Exists() {
 				var C = this;
 				Chance R = null;
-				while(C!=null) {
+				while (C != null){
 					var I = C.Line;
-					if (C.ExistsBelow) R += I.Below;
-					if (C.ExistsAbove) R += I.Above;
+					if (C.ExistsAbove) { R += I.Above; }
+					if (C.ExistsBelow) { R += I.Below; }
 					C = C.Next;
 				}
 				return R;
@@ -890,15 +879,15 @@ namespace Wholemy {
 #endif
 		#endregion
 		private bool Intersect(Inline b, int depth) {
-			if(this.Intersect(b)) {
+			if (this.Intersect(b)) {
 				if (depth > 0) {
 					Chance CA = this;
 					Chance CB = b;
-					while (--depth>=0) {
+					while (--depth >= 0) {
 						Chance TA = CA;
-						while(TA!=null) {
+						while (TA != null) {
 							Chance TB = CB;
-							while(TB!=null) {
+							while (TB != null) {
 								var TBL = TB.Line;
 								TA.Test(TB);
 								TB = TB.Next;
@@ -1100,7 +1089,7 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 11) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1212,13 +1201,13 @@ namespace Wholemy {
 						return ASL;
 					}
 				} else {
-					if (BSL < Lmin|| depth == Dmax) {
+					if (BSL < Lmin || depth == Dmax) {
 						Aref = A;
 						Bref = BS;
 						return BSL;
 					}
 				}
-				if(depth<Dmax) {
+				if (depth < Dmax) {
 					depth++;
 					A = Abak;
 					B = Bbak;
