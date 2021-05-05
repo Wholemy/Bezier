@@ -974,7 +974,107 @@ namespace Wholemy {
 			return C;
 		}
 		#endregion
-
+		#region #method# CorrectionBtoA(A, B, Aout, Bout) 
+		private static double CorrectionBtoA(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+			Inline AB, AA, BB, BA; bool O;
+			do {
+				O = false;
+				BB = B.OtherGreater(A);
+				if (BB != null) {
+					B = BB; O = true;
+				}
+			} while (O);
+			do {
+				O = false;
+				BB = B.Above;
+				BA = B.Below;
+				var bbl = BB.Len(A);
+				var bal = BA.Len(A);
+				if (bbl < bal) { B = BB; O = true; }
+				if (bbl > bal) { B = BA; O = true; }
+			} while (O);
+			do {
+				O = false;
+				AB = A.Above;
+				AA = A.Below;
+				var abl = AB.Len(B);
+				var aal = AA.Len(B);
+				if (abl < aal) { A = AB; O = true; }
+				if (abl > aal) { A = AA; O = true; }
+			} while (O);
+			Aout = A;
+			Bout = B;
+			return A.Len(B);
+		}
+		#endregion
+		#region #method# CorrectionAtoB(A, B, Aout, Bout) 
+		private static double CorrectionAtoB(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+			Inline AB, AA, BB, BA; bool O;
+			do {
+				O = false;
+				AA = A.OtherGreater(B);
+				if (AA != null) { A = AA; O = true; }
+			} while (O);
+			do {
+				O = false;
+				AB = A.Above;
+				AA = A.Below;
+				var abl = AB.Len(B);
+				var aal = AA.Len(B);
+				if (abl < aal) { A = AB; O = true; }
+				if (abl > aal) { A = AA; O = true; }
+			} while (O);
+			var ASB = B;
+			do {
+				O = false;
+				BB = B.Above;
+				BA = B.Below;
+				var bbl = BB.Len(A);
+				var bal = BA.Len(A);
+				if (bbl < bal) { B = BB; O = true; }
+				if (bbl > bal) { B = BA; O = true; }
+			} while (O);
+			Aout = A;
+			Bout = B;
+			return A.Len(B);
+		}
+		#endregion
+		#region #method# CorrectionToAB(A, B, Aout, Bout) 
+		private static double CorrectionToAB(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+			Inline AB, AA, BB, BA; bool O;
+			do {
+				O = false;
+				AA = A.OtherGreater(B);
+				if (AA != null) { A = AA; O = true; }
+				BB = B.OtherGreater(A);
+				if (BB != null) { B = BB; O = true; }
+			} while (O);
+			do {
+				O = false;
+				AB = A.Above;
+				AA = A.Below;
+				BB = B.Above;
+				BA = B.Below;
+				var abl = AB.Len(B);
+				var aal = AA.Len(B);
+				var bbl = BB.Len(A);
+				var bal = BA.Len(A);
+				var al = abl < aal ? abl : aal;
+				var bl = bbl < bal ? bbl : bal;
+				if (al < bl || bbl == bal) {
+					if (abl < aal) { A = AB; O = true; }
+					if (abl > aal) { A = AA; O = true; }
+				}
+				if (al > bl || abl == aal) {
+					if (bbl < bal) { B = BB; O = true; }
+					if (bbl > bal) { B = BA; O = true; }
+				}
+			} while (O);
+			Aout = A;
+			Bout = B;
+			return A.Len(B);
+		}
+		#endregion
 		#region #method# Intersect(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax) 
 		/// <summary>Возвращает истину если инлайны пересекаются и пересечения)</summary>
 		/// <param name="Aref">Первый инлайн)</param>
@@ -987,7 +1087,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 3, int Dmax = 12, int bound = 20) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1017,103 +1117,15 @@ namespace Wholemy {
 				}
 				//int C;
 				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
-				var AS = A;
-				do {
-					O = false;
-					AA = AS.OtherGreater(B);
-					if (AA != null) {
-						AS = AA; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					AB = AS.Above;
-					AA = AS.Below;
-					var abl = AB.Len(B);
-					var aal = AA.Len(B);
-					if (abl < aal) { AS = AB; O = true; }
-					if (abl > aal) { AS = AA; O = true; }
-				} while (O);
-				var ASB = B;
-				do {
-					O = false;
-					BB = ASB.Above;
-					BA = ASB.Below;
-					var bbl = BB.Len(AS);
-					var bal = BA.Len(AS);
-					if (bbl < bal) { ASB = BB; O = true; }
-					if (bbl > bal) { ASB = BA; O = true; }
-				} while (O);
-				var BS = B;
-				do {
-					O = false;
-					BB = BS.OtherGreater(B);
-					if (BB != null) {
-						BS = BB; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					BB = BS.Above;
-					BA = BS.Below;
-					var bbl = BB.Len(A);
-					var bal = BA.Len(A);
-					if (bbl < bal) { BS = BB; O = true; }
-					if (bbl > bal) { BS = BA; O = true; }
-				} while (O);
-				var BSA = A;
-				do {
-					O = false;
-					AB = BSA.Above;
-					AA = BSA.Below;
-					var abl = AB.Len(BS);
-					var aal = AA.Len(BS);
-					if (abl < aal) { BSA = AB; O = true; }
-					if (abl > aal) { BSA = AA; O = true; }
-				} while (O);
-				var ASS = A;
-				var BSS = B;
-				do {
-					O = false;
-					AA = ASS.OtherGreater(BSS);
-					if (AA != null) {
-						ASS = AA; O = true;
-					}
-					BB = BSS.OtherGreater(ASS);
-					if (BB != null) {
-						BSS = BB; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					AB = ASS.Above;
-					AA = ASS.Below;
-					BB = BSS.Above;
-					BA = BSS.Below;
-					var abl = AB.Len(BSS);
-					var aal = AA.Len(BSS);
-					var bbl = BB.Len(ASS);
-					var bal = BA.Len(ASS);
-					var al = abl < aal ? abl : aal;
-					var bl = bbl < bal ? bbl : bal;
-					if (al < bl || bbl == bal) {
-						if (abl < aal) { ASS = AB; O = true; }
-						if (abl > aal) { ASS = AA; O = true; }
-					}
-					if (al > bl || abl == aal) {
-						if (bbl < bal) { BSS = BB; O = true; }
-						if (bbl > bal) { BSS = BA; O = true; }
-					}
-				} while (O);
-				var SSL = ASS.Len(BSS);
-				var ASL = AS.Len(ASB);
-				var BSL = BS.Len(BSA);
+				var SSL = CorrectionToAB(A, B, out var ASS, out var BSS);
+				var ASL = CorrectionBtoA(A, B, out var AS, out var ASB);
+				var BSL = CorrectionAtoB(A, B, out var BS, out var BSA);
 				if (SSL < ASL && SSL < BSL) {
 					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
-					if (PL > ASL) { PL = SSL; PA = AS; PB = B; }
+					if (PL > ASL) { PL = SSL; PA = AS; PB = ASB; }
 				} else {
-					if (PL > BSL) { PL = BSL; PA = A; PB = BS; }
+					if (PL > BSL) { PL = BSL; PB = BS; PA = BSA; }
 				}
 				if (PL <= Lmin) {
 					Aref = PA;
@@ -1141,7 +1153,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 3, int Dmax = 12, int bound = 20) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1171,103 +1183,15 @@ namespace Wholemy {
 				}
 				//int C;
 				//do { C = IntersectEnd(ref A, ref B, depth); } while (C > 1 && A.Depth < MaxDepth && B.Depth < MaxDepth);
-				var AS = A;
-				do {
-					O = false;
-					AA = AS.OtherGreater(B);
-					if (AA != null) {
-						AS = AA; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					AB = AS.Above;
-					AA = AS.Below;
-					var abl = AB.Len(B);
-					var aal = AA.Len(B);
-					if (abl < aal) { AS = AB; O = true; }
-					if (abl > aal) { AS = AA; O = true; }
-				} while (O);
-				var ASB = B;
-				do {
-					O = false;
-					BB = ASB.Above;
-					BA = ASB.Below;
-					var bbl = BB.Len(AS);
-					var bal = BA.Len(AS);
-					if (bbl < bal) { ASB = BB; O = true; }
-					if (bbl > bal) { ASB = BA; O = true; }
-				} while (O);
-				var BS = B;
-				do {
-					O = false;
-					BB = BS.OtherGreater(B);
-					if (BB != null) {
-						BS = BB; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					BB = BS.Above;
-					BA = BS.Below;
-					var bbl = BB.Len(A);
-					var bal = BA.Len(A);
-					if (bbl < bal) { BS = BB; O = true; }
-					if (bbl > bal) { BS = BA; O = true; }
-				} while (O);
-				var BSA = A;
-				do {
-					O = false;
-					AB = BSA.Above;
-					AA = BSA.Below;
-					var abl = AB.Len(BS);
-					var aal = AA.Len(BS);
-					if (abl < aal) { BSA = AB; O = true; }
-					if (abl > aal) { BSA = AA; O = true; }
-				} while (O);
-				var ASS = A;
-				var BSS = B;
-				do {
-					O = false;
-					AA = ASS.OtherGreater(BSS);
-					if (AA != null) {
-						ASS = AA; O = true;
-					}
-					BB = BSS.OtherGreater(ASS);
-					if (BB != null) {
-						BSS = BB; O = true;
-					}
-				} while (O);
-				do {
-					O = false;
-					AB = ASS.Above;
-					AA = ASS.Below;
-					BB = BSS.Above;
-					BA = BSS.Below;
-					var abl = AB.Len(BSS);
-					var aal = AA.Len(BSS);
-					var bbl = BB.Len(ASS);
-					var bal = BA.Len(ASS);
-					var al = abl < aal ? abl : aal;
-					var bl = bbl < bal ? bbl : bal;
-					if (al < bl || bbl == bal) {
-						if (abl < aal) { ASS = AB; O = true; }
-						if (abl > aal) { ASS = AA; O = true; }
-					}
-					if (al > bl || abl == aal) {
-						if (bbl < bal) { BSS = BB; O = true; }
-						if (bbl > bal) { BSS = BA; O = true; }
-					}
-				} while (O);
-				var SSL = ASS.Len(BSS);
-				var ASL = AS.Len(ASB);
-				var BSL = BS.Len(BSA);
+				var SSL = CorrectionToAB(A, B, out var ASS, out var BSS);
+				var ASL = CorrectionBtoA(A, B, out var AS, out var ASB);
+				var BSL = CorrectionAtoB(A, B, out var BS, out var BSA);
 				if (SSL < ASL && SSL < BSL) {
 					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
-					if (PL > ASL) { PL = SSL; PA = AS; PB = B; }
+					if (PL > ASL) { PL = SSL; PA = AS; PB = ASB; }
 				} else {
-					if (PL > BSL) { PL = BSL; PA = A; PB = BS; }
+					if (PL > BSL) { PL = BSL; PB = BS; PA = BSA; }
 				}
 				if (PL <= Lmin || depth == Dmax) {
 					Aref = PA;
