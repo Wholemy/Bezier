@@ -803,6 +803,7 @@ namespace Wholemy {
 			public readonly int Cout;
 			public readonly Inline Line;
 			public readonly Chance Next;
+			private Chance Prev;
 			public bool ExistsBelow;
 			public bool ExistsAbove;
 			#region #new# (Next, Line) 
@@ -814,7 +815,13 @@ namespace Wholemy {
 			private Chance(Chance Next, Inline Line) {
 				this.Line = Line;
 				this.Next = Next;
-				this.Cout = (Next != null)?Next.Cout + 1: 1;
+				this.Cout = (Next != null) ? Next.Cout + 1 : 1;
+				if (Next != null) {
+					this.Prev = Next.Prev;
+					Next.Prev = this;
+				} else {
+					this.Prev = this;
+				}
 			}
 			#endregion
 			#region #operator# + (Next, Line) 
@@ -861,20 +868,22 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Exists 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Chance Exists() {
-				var C = this;
+			public Chance Exists(int Bound) {
 				Chance R = null;
-				while (C != null) {
-					var I = C.Line;
-					if (C.ExistsAbove) { R += I.Above; }
-					if (C.ExistsBelow) { R += I.Below; }
-					C = C.Next;
+				Inline L;
+				var C = this.Prev;
+				var M = this.Cout - Bound;
+				while (C != this) {
+					if (C.Cout < Bound || C.Cout < M) {
+						L = C.Line;
+						if (C.ExistsAbove) { R += L.Above; }
+						if (C.ExistsBelow) { R += L.Below; }
+					}
+					C = C.Prev;
 				}
+				L = this.Line;
+				if (this.ExistsAbove) { R += L.Above; }
+				if (this.ExistsBelow) { R += L.Below; }
 				return R;
 			}
 			#endregion
@@ -884,12 +893,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
-		#region #through# 
-#if TRACE
-		[System.Diagnostics.DebuggerStepThrough]
-#endif
-		#endregion
-		private bool Intersect(Inline b, int depth) {
+		private bool Intersect(Inline b, int depth, int bound) {
 			if (this.Intersect(b)) {
 				if (depth > 0) {
 					Chance CA = this;
@@ -905,8 +909,8 @@ namespace Wholemy {
 							}
 							TA = TA.Next;
 						}
-						CA = CA.Exists();
-						CB = CB.Exists();
+						CA = CA.Exists(bound);
+						CB = CB.Exists(bound);
 						if (CA == null || CB == null) return false;
 					}
 				}
@@ -952,8 +956,8 @@ namespace Wholemy {
 						aa = aa.Bet();
 						bb = bb.Bet();
 						if (aa.Intersect(ref A, ref B, bb)) {
-							Aref = A;
-							Bref = B;
+							Aref = A.Parent;
+							Bref = B.Parent;
 							C++;
 						}
 					}
@@ -972,8 +976,10 @@ namespace Wholemy {
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
+		/// <param name="Dmax">Максимальная глубина сравнения)</param>
+		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 5, int Dmax = 12, int bound = 10) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -987,12 +993,12 @@ namespace Wholemy {
 			Next:
 				if (A.Depth < MaxDepth && B.Depth < MaxDepth) {
 					AB = A.Below; AA = A.Above; BB = B.Below; BA = B.Above;
-					var ABB = AB.Intersect(B, depth);
-					var AAB = AA.Intersect(B, depth);
+					var ABB = AB.Intersect(B, depth, bound);
+					var AAB = AA.Intersect(B, depth, bound);
 					if (AAB && !ABB) { A = AA; goto Next; }
 					if (ABB && !AAB) { A = AB; goto Next; }
-					var BBA = BB.Intersect(A, depth);
-					var BAA = BA.Intersect(A, depth);
+					var BBA = BB.Intersect(A, depth, bound);
+					var BAA = BA.Intersect(A, depth, bound);
 					if (BAA && !BBA) { B = BA; goto Next; }
 					if (BBA && !BAA) { B = BB; goto Next; }
 
@@ -1110,8 +1116,9 @@ namespace Wholemy {
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
+		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 11) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 5, int Dmax = 12, int bound = 10) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1125,12 +1132,12 @@ namespace Wholemy {
 			Next:
 				if (A.Depth < MaxDepth && B.Depth < MaxDepth) {
 					AB = A.Below; AA = A.Above; BB = B.Below; BA = B.Above;
-					var ABB = AB.Intersect(B, depth);
-					var AAB = AA.Intersect(B, depth);
+					var ABB = AB.Intersect(B, depth, bound);
+					var AAB = AA.Intersect(B, depth, bound);
 					if (AAB && !ABB) { A = AA; goto Next; }
 					if (ABB && !AAB) { A = AB; goto Next; }
-					var BBA = BB.Intersect(A, depth);
-					var BAA = BA.Intersect(A, depth);
+					var BBA = BB.Intersect(A, depth, bound);
+					var BAA = BA.Intersect(A, depth, bound);
 					if (BAA && !BBA) { B = BA; goto Next; }
 					if (BBA && !BAA) { B = BB; goto Next; }
 
@@ -1229,6 +1236,12 @@ namespace Wholemy {
 						return BSL;
 					}
 				}
+				//var L = A.Len(B);
+				//if (L < Lmin || depth == Dmax) {
+				//	Aref = A;
+				//	Bref = B;
+				//	return L;
+				//}
 				if (depth < Dmax) {
 					depth++;
 					A = Abak;
