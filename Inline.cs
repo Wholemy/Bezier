@@ -872,18 +872,26 @@ namespace Wholemy {
 				Chance R = null;
 				Inline L;
 				var C = this.Prev;
-				var M = this.Cout - bound;
-				while (C != this) {
-					if (bound < 4 || C.Cout < bound || C.Cout > M) {
+				var S = this;
+				int Min = 0, Max = 0;
+				if (bound >= 2) {
+					while (S != null && !S.ExistsAbove && !S.ExistsBelow) { S = S.Next; }
+					if (S == null) S = this;
+					Max = S.Cout - bound;
+					while (C != S && !C.ExistsAbove && !C.ExistsBelow) { C = C.Prev; }
+					Min = C.Cout + bound;
+				}
+				while (C != S) {
+					if (bound < 2 || C.Cout <= Min || C.Cout >= Max) {
 						L = C.Line;
 						if (C.ExistsAbove) { R += L.Above; }
 						if (C.ExistsBelow) { R += L.Below; }
 					}
 					C = C.Prev;
 				}
-				L = this.Line;
-				if (this.ExistsAbove) { R += L.Above; }
-				if (this.ExistsBelow) { R += L.Below; }
+				L = S.Line;
+				if (S.ExistsAbove) { R += L.Above; }
+				if (S.ExistsBelow) { R += L.Below; }
 				return R;
 			}
 			#endregion
@@ -979,7 +987,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 12, int bound = 20) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 10) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -988,6 +996,8 @@ namespace Wholemy {
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
+			Inline PA = null, PB = null;
+			var PL = double.MaxValue;
 			Inline AB, AA, BB, BA;
 			if (A.Intersect(B)) {
 			Next:
@@ -1079,23 +1089,16 @@ namespace Wholemy {
 				var ASL = AS.Len(B);
 				var BSL = BS.Len(A);
 				if (SSL < ASL && SSL < BSL) {
-					if (SSL < Lmin) {
-						Aref = ASS;
-						Bref = BSS;
-						return true;
-					}
+					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
-					if (ASL < Lmin) {
-						Aref = AS;
-						Bref = B;
-						return true;
-					}
+					if (PL > ASL) { PL = SSL; PA = AS; PB = B; }
 				} else {
-					if (BSL < Lmin) {
-						Aref = A;
-						Bref = BS;
-						return true;
-					}
+					if (PL > BSL) { PL = BSL; PA = A; PB = BS; }
+				}
+				if (PL <= Lmin) {
+					Aref = PA;
+					Bref = PB;
+					return true;
 				}
 				if (depth < Dmax) {
 					depth++;
@@ -1118,7 +1121,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 10, int Dmax = 12, int bound = 20) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 10) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1127,6 +1130,8 @@ namespace Wholemy {
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
+			Inline PA = null, PB = null;
+			var PL = double.MaxValue;
 			Inline AB, AA, BB, BA;
 			if (A.Intersect(B)) {
 			Next:
@@ -1218,30 +1223,17 @@ namespace Wholemy {
 				var ASL = AS.Len(B);
 				var BSL = BS.Len(A);
 				if (SSL < ASL && SSL < BSL) {
-					if (SSL < Lmin || depth == Dmax) {
-						Aref = ASS;
-						Bref = BSS;
-						return SSL;
-					}
+					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
-					if (ASL < Lmin || depth == Dmax) {
-						Aref = AS;
-						Bref = B;
-						return ASL;
-					}
+					if (PL > ASL) { PL = SSL; PA = AS; PB = B; }
 				} else {
-					if (BSL < Lmin || depth == Dmax) {
-						Aref = A;
-						Bref = BS;
-						return BSL;
-					}
+					if (PL > BSL) { PL = BSL; PA = A; PB = BS; }
 				}
-				//var L = A.Len(B);
-				//if (L < Lmin || depth == Dmax) {
-				//	Aref = A;
-				//	Bref = B;
-				//	return L;
-				//}
+				if (PL <= Lmin || depth == Dmax) {
+					Aref = PA;
+					Bref = PB;
+					return PL;
+				}
 				if (depth < Dmax) {
 					depth++;
 					A = Abak;
