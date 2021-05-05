@@ -868,13 +868,13 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Exists 
-			public Chance Exists(int Bound) {
+			public Chance Exists(int bound) {
 				Chance R = null;
 				Inline L;
 				var C = this.Prev;
-				var M = this.Cout - Bound;
+				var M = this.Cout - bound;
 				while (C != this) {
-					if (C.Cout < Bound || C.Cout < M) {
+					if (bound < 4 || C.Cout < bound || C.Cout > M) {
 						L = C.Line;
 						if (C.ExistsAbove) { R += L.Above; }
 						if (C.ExistsBelow) { R += L.Below; }
@@ -979,7 +979,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 5, int Dmax = 12, int bound = 10) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1118,7 +1118,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 5, int Dmax = 12, int bound = 10) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 10, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
