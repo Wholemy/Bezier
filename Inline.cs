@@ -568,7 +568,6 @@ namespace Wholemy {
 			return null;
 		}
 		#endregion
-
 		#region #method# Greater(a, b) 
 		/// <summary>Возвращает истину, если X и Y этой линии больше чем A и меньше или равно B)</summary>
 		public bool Greater(Inline a, Inline b, bool equ = false) {
@@ -707,7 +706,7 @@ namespace Wholemy {
 				return this.between;
 			}
 			#endregion
-			public Inline[] A;
+			public readonly Inline[] A;
 			#region #new# (Inline a) 
 			public Between(Inline a) {
 				#region #debug# 
@@ -801,6 +800,7 @@ namespace Wholemy {
 		#endregion
 		#region #class# Chance 
 		private class Chance {
+			public readonly int Cout;
 			public readonly Inline Line;
 			public readonly Chance Next;
 			public bool ExistsBelow;
@@ -814,6 +814,7 @@ namespace Wholemy {
 			private Chance(Chance Next, Inline Line) {
 				this.Line = Line;
 				this.Next = Next;
+				this.Cout = (Next != null)?Next.Cout + 1: 1;
 			}
 			#endregion
 			#region #operator# + (Next, Line) 
@@ -837,6 +838,11 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Test(cb) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
 			public void Test(Chance cb) {
 				var A = Line;
 				var B = cb.Line;
@@ -855,10 +861,15 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Exists 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
 			public Chance Exists() {
 				var C = this;
 				Chance R = null;
-				while (C != null){
+				while (C != null) {
 					var I = C.Line;
 					if (C.ExistsAbove) { R += I.Above; }
 					if (C.ExistsBelow) { R += I.Below; }
@@ -867,6 +878,9 @@ namespace Wholemy {
 				return R;
 			}
 			#endregion
+			public override string ToString() {
+				return $"Cout = {Cout}";
+			}
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -948,7 +962,8 @@ namespace Wholemy {
 			return C;
 		}
 		#endregion
-		#region #method# Intersect(Aref, Bref, Aend, Bnot, Lmin = 0.5, depth = 5) 
+
+		#region #method# Intersect(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax) 
 		/// <summary>Возвращает истину если инлайны пересекаются и пересечения)</summary>
 		/// <param name="Aref">Первый инлайн)</param>
 		/// <param name="Bref">Второй инлайн)</param>
@@ -957,7 +972,7 @@ namespace Wholemy {
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
-		/// <returns></returns>
+		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
 		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 10) {
 			bool O;
 			var A = Aref.New;
@@ -1058,19 +1073,19 @@ namespace Wholemy {
 				var ASL = AS.Len(B);
 				var BSL = BS.Len(A);
 				if (SSL < ASL && SSL < BSL) {
-					if (SSL < Lmin || depth == Dmax) {
+					if (SSL < Lmin) {
 						Aref = ASS;
 						Bref = BSS;
 						return true;
 					}
 				} else if (ASL < BSL) {
-					if (ASL < Lmin || depth == Dmax) {
+					if (ASL < Lmin) {
 						Aref = AS;
 						Bref = B;
 						return true;
 					}
 				} else {
-					if (BSL < Lmin || depth == Dmax) {
+					if (BSL < Lmin) {
 						Aref = A;
 						Bref = BS;
 						return true;
@@ -1086,6 +1101,16 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
+		#region #method# IntersectTest(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax) 
+		/// <summary>Возвращает длину и инлайны даже если они не пересекаются)</summary>
+		/// <param name="Aref">Первый инлайн)</param>
+		/// <param name="Bref">Второй инлайн)</param>
+		/// <param name="Aend">Истина определяет поиск перечений с конца)</param>
+		/// <param name="Bnot">Истина определяет обратный поиск от Aend)</param>
+		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
+		/// <param name="Dmin">Минимальная глубина сравнения)</param>
+		/// <param name="Dmax">Максимальная глубина сравнения)</param>
+		/// <returns>Растояние между пересечениями)</returns>
 		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.1, int Dmin = 7, int Dmax = 11) {
 			bool O;
 			var A = Aref.New;
@@ -1213,6 +1238,7 @@ namespace Wholemy {
 			}
 			return -1.0;
 		}
+		#endregion
 		#region #method# ToString 
 		public override string ToString() {
 			var I = System.Globalization.CultureInfo.InvariantCulture;
