@@ -987,7 +987,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 10) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 3, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1034,10 +1034,20 @@ namespace Wholemy {
 					if (abl < aal) { AS = AB; O = true; }
 					if (abl > aal) { AS = AA; O = true; }
 				} while (O);
+				var ASB = B;
+				do {
+					O = false;
+					BB = ASB.Above;
+					BA = ASB.Below;
+					var bbl = BB.Len(AS);
+					var bal = BA.Len(AS);
+					if (bbl < bal) { ASB = BB; O = true; }
+					if (bbl > bal) { ASB = BA; O = true; }
+				} while (O);
 				var BS = B;
 				do {
 					O = false;
-					BB = BS.OtherGreater(A);
+					BB = BS.OtherGreater(B);
 					if (BB != null) {
 						BS = BB; O = true;
 					}
@@ -1050,6 +1060,16 @@ namespace Wholemy {
 					var bal = BA.Len(A);
 					if (bbl < bal) { BS = BB; O = true; }
 					if (bbl > bal) { BS = BA; O = true; }
+				} while (O);
+				var BSA = A;
+				do {
+					O = false;
+					AB = BSA.Above;
+					AA = BSA.Below;
+					var abl = AB.Len(BS);
+					var aal = AA.Len(BS);
+					if (abl < aal) { BSA = AB; O = true; }
+					if (abl > aal) { BSA = AA; O = true; }
 				} while (O);
 				var ASS = A;
 				var BSS = B;
@@ -1086,8 +1106,8 @@ namespace Wholemy {
 					}
 				} while (O);
 				var SSL = ASS.Len(BSS);
-				var ASL = AS.Len(B);
-				var BSL = BS.Len(A);
+				var ASL = AS.Len(ASB);
+				var BSL = BS.Len(BSA);
 				if (SSL < ASL && SSL < BSL) {
 					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
@@ -1121,7 +1141,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 10) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 3, int Dmax = 12, int bound = 20) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1168,10 +1188,20 @@ namespace Wholemy {
 					if (abl < aal) { AS = AB; O = true; }
 					if (abl > aal) { AS = AA; O = true; }
 				} while (O);
+				var ASB = B;
+				do {
+					O = false;
+					BB = ASB.Above;
+					BA = ASB.Below;
+					var bbl = BB.Len(AS);
+					var bal = BA.Len(AS);
+					if (bbl < bal) { ASB = BB; O = true; }
+					if (bbl > bal) { ASB = BA; O = true; }
+				} while (O);
 				var BS = B;
 				do {
 					O = false;
-					BB = BS.OtherGreater(A);
+					BB = BS.OtherGreater(B);
 					if (BB != null) {
 						BS = BB; O = true;
 					}
@@ -1184,6 +1214,16 @@ namespace Wholemy {
 					var bal = BA.Len(A);
 					if (bbl < bal) { BS = BB; O = true; }
 					if (bbl > bal) { BS = BA; O = true; }
+				} while (O);
+				var BSA = A;
+				do {
+					O = false;
+					AB = BSA.Above;
+					AA = BSA.Below;
+					var abl = AB.Len(BS);
+					var aal = AA.Len(BS);
+					if (abl < aal) { BSA = AB; O = true; }
+					if (abl > aal) { BSA = AA; O = true; }
 				} while (O);
 				var ASS = A;
 				var BSS = B;
@@ -1220,8 +1260,8 @@ namespace Wholemy {
 					}
 				} while (O);
 				var SSL = ASS.Len(BSS);
-				var ASL = AS.Len(B);
-				var BSL = BS.Len(A);
+				var ASL = AS.Len(ASB);
+				var BSL = BS.Len(BSA);
 				if (SSL < ASL && SSL < BSL) {
 					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
 				} else if (ASL < BSL) {
