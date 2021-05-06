@@ -160,6 +160,7 @@ namespace Wholemy {
 		#endregion
 		#region #class# Cubic 
 		public class Cubic : Inline {
+			private static readonly double Arc = 4.0 / 3.0 * System.Math.Tan(System.Math.PI * 0.125);
 			public readonly double x2;
 			public readonly double y2;
 			public readonly double x3;
@@ -172,6 +173,57 @@ namespace Wholemy {
 			private readonly double by2;
 			private readonly double bx3;
 			private readonly double by3;
+			public Cubic(double x0, double y0, double x1, double y1, bool cw = false, bool Not = false) : base(null, 0.5, 0.5, x0, y0, x1, y1, Not) {
+				var x2 = x0;
+				var y2 = y0;
+				var x3 = x1;
+				var y3 = y1;
+				if (((x0 < x1 && y0 < y1) || (x0 > x1 && y0 > y1)) ^ cw) {
+					x2 += ((x1 - x0) * Arc);
+					y3 += ((y0 - y1) * Arc);
+				} else {
+					y2 += ((y1 - y0) * Arc);
+					x3 += ((x0 - x1) * Arc);
+				}
+				this.x2 = x2;
+				this.y2 = y2;
+				this.x3 = x3;
+				this.y3 = y3;
+				var v = x0;
+				if (x1 < v) v = x1;
+				if (x2 < v) v = x2;
+				if (x3 < v) v = x3;
+				L = v;
+				v = y0;
+				if (y1 < v) v = y1;
+				if (y2 < v) v = y2;
+				if (y3 < v) v = y3;
+				T = v;
+				v = x0;
+				if (x1 > v) v = x1;
+				if (x2 > v) v = x2;
+				if (x3 > v) v = x3;
+				R = v;
+				v = y0;
+				if (y1 > v) v = y1;
+				if (y2 > v) v = y2;
+				if (y3 > v) v = y3;
+				B = v;
+				var x01 = (x1 - x0) * 0.5 + x0;
+				var y01 = (y1 - y0) * 0.5 + y0;
+				var x12 = (x2 - x1) * 0.5 + x1;
+				var y12 = (y2 - y1) * 0.5 + y1;
+				var x23 = (x3 - x2) * 0.5 + x2;
+				var y23 = (y3 - y2) * 0.5 + y2;
+				var x02 = (x12 - x01) * 0.5 + x01;
+				var y02 = (y12 - y01) * 0.5 + y01;
+				var x13 = (x23 - x12) * 0.5 + x12;
+				var y13 = (y23 - y12) * 0.5 + y12;
+				this.X = (x13 - x02) * 0.5 + x02;
+				this.Y = (y13 - y02) * 0.5 + y02;
+				this.bx2 = x01; this.by2 = y01; this.bx3 = x02; this.by3 = y02;
+				this.ax2 = x13; this.ay2 = y13; this.ax3 = x23; this.ay3 = y23;
+			}
 			#region #new# (x0, y0, x1, y1, x2, y2, x3, y3, S = 0.5, I = 0.5, O = null) 
 			#region #through# 
 #if TRACE
@@ -777,9 +829,11 @@ namespace Wholemy {
 				return R;
 			}
 			#endregion
+			#region #method# ToString 
 			public override string ToString() {
 				return $"Cout = {Cout}";
 			}
+			#endregion
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -807,20 +861,6 @@ namespace Wholemy {
 				return true;
 			}
 			return false;
-			//if (this.Intersect(b)) {
-			//	if (depth > 0) {
-			//		var aa = this.Bet();
-			//		var bb = b.Bet();
-			//		if (!aa.Intersect(bb)) return false;
-			//		while (--depth > 0) {
-			//			aa = aa.Bet();
-			//			bb = bb.Bet();
-			//			if (!aa.Intersect(bb)) return false;
-			//		}
-			//	}
-			//	return true;
-			//}
-			//return false;
 		}
 		#endregion
 		#region #method# IntersectFor(Aref, Bref, depth, bound) 
@@ -990,9 +1030,9 @@ namespace Wholemy {
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
-		/// <param name="bound">Ограничитель разбора при заглублении)</param>
+		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 4) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1003,7 +1043,6 @@ namespace Wholemy {
 			var Bbak = B;
 			Inline PA = null, PB = null;
 			var PL = double.MaxValue;
-			Inline AB, AA, BB, BA;
 			if (A.Intersect(B)) {
 			Next:
 				IntersectFor(ref A, ref B, depth, bound);
@@ -1042,9 +1081,9 @@ namespace Wholemy {
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
-		/// <param name="bound">Ограничитель разбора при заглублении)</param>
+		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 5, int Dmax = 12, int bound = 4) {
+		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
 			var A = Aref.New;
 			if (Aend) A = A.NewNot;
@@ -1055,7 +1094,6 @@ namespace Wholemy {
 			var Bbak = B;
 			Inline PA = null, PB = null;
 			var PL = double.MaxValue;
-			Inline AB, AA, BB, BA;
 			if (A.Intersect(B)) {
 			Next:
 				IntersectFor(ref A, ref B, depth, bound);
