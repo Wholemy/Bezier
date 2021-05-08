@@ -54,8 +54,15 @@ namespace Wholemy {
 				var y12 = (y22 - y11) * root + y11;
 				var x02 = (x12 - x01) * root + x01;
 				var y02 = (y12 - y01) * root + y01;
-				b0 = new Quadratic(x00, y00, x01, y01, x02, y02);
-				b1 = new Quadratic(x02, y02, x12, y12, x22, y22);
+				var A = new Quadratic(x00, y00, x01, y01, x02, y02);
+				var B = new Quadratic(x02, y02, x12, y12, x22, y22);
+				if (Not) {
+					b1 = B;
+					b0 = A;
+				} else {
+					b0 = A;
+					b1 = B;
+				}
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -298,8 +305,15 @@ namespace Wholemy {
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
 				var y03 = (y13 - y02) * root + y02;
-				b0 = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03);
-				b1 = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33);
+				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03);
+				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33);
+				if (Not) {
+					b1 = B;
+					b0 = A;
+				} else {
+					b0 = A;
+					b1 = B;
+				}
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -699,8 +713,15 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			b0 = new Inline(x00, y00, x01, y01);
-			b1 = new Inline(x01, y01, x11, y11);
+			var A = new Inline(x00, y00, x01, y01);
+			var B = new Inline(x01, y01, x11, y11);
+			if (Not) {
+				b1 = B;
+				b0 = A;
+			} else {
+				b0 = A;
+				b1 = B;
+			}
 		}
 		#endregion
 		#region #virtual# #method# Get(root, X, Y) 
@@ -834,6 +855,53 @@ namespace Wholemy {
 				return $"Cout = {Cout}";
 			}
 			#endregion
+		}
+		#endregion
+		#region #class# Combat 
+		public class Combat {
+			public int Zend;
+			public Inline Line;
+			public Combat Next;
+			public Combat Prev;
+			public Combat(Combat Comb, Inline Line) {
+				this.Line = Line;
+				var Zend = this.Zend = (Comb != null) ? Comb.Zend + 1 : 0;
+				if (Comb != null) {
+					#region #debug# 
+#if DEBUG
+					if (Comb.Line.Not != Line.Not) throw new System.InvalidOperationException();
+#endif
+					#endregion
+					if (Line.Not) {
+						this.Prev = Comb;
+						this.Next = Comb.Next;
+						this.Next.Prev = this;
+						Comb.Next = this;
+						var T = this.Next;
+						while (T != this && T.Zend >= Zend) {
+							T.Zend++;
+							T = T.Next;
+						}
+					} else {
+						this.Next = Comb;
+						this.Prev = Comb.Prev;
+						this.Prev.Next = this;
+						Comb.Prev = this;
+						var T = this.Prev;
+						while (T != this && T.Zend >= Zend) {
+							T.Zend++;
+							T = T.Prev;
+						}
+					}
+				} else {
+					this.Prev = this;
+					this.Next = this;
+				}
+			}
+			public bool Loop(out Combat Comb) {
+				Comb = this.Next;
+				return this.Zend != 0;
+			}
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
