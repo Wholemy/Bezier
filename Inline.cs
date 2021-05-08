@@ -902,6 +902,10 @@ namespace Wholemy {
 				Comb = this.Next;
 				return this.Zend != 0;
 			}
+			public void Div(double Root) {
+				this.Line.Div(Root, out var ai0, out var ai1);
+				this.Line = ai1; new Inline.Combat(this, ai0);
+			}
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
