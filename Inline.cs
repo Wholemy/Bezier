@@ -54,14 +54,15 @@ namespace Wholemy {
 				var y12 = (y22 - y11) * root + y11;
 				var x02 = (x12 - x01) * root + x01;
 				var y02 = (y12 - y01) * root + y01;
-				var A = new Quadratic(x00, y00, x01, y01, x02, y02);
-				var B = new Quadratic(x02, y02, x12, y12, x22, y22);
-				if (Not) {
-					b1 = B;
-					b0 = A;
+				var S = 0.5 * this.Size;
+				var A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Size - S, this.Root + S, this, this.Not);
+				var B = new Quadratic(x02, y02, x12, y12, x22, y22, S, this.Root - S, this, this.Not);
+				if (this.Not) {
+					this.aboveb = b1 = B;
+					this.belowb = b0 = A;
 				} else {
-					b0 = A;
-					b1 = B;
+					this.belowb = b0 = A;
+					this.aboveb = b1 = B;
 				}
 			}
 			#endregion
@@ -83,13 +84,13 @@ namespace Wholemy {
 				Y = y02;
 			}
 			#endregion
-			#region #invisible# #get# New 
+			#region #invisible# #get# Pastle 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline New {
+			public override Inline Pastle {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -98,13 +99,13 @@ namespace Wholemy {
 				get => new Quadratic(x0, y0, x2, y2, x1, y1, Not: this.Not);
 			}
 			#endregion
-			#region #invisible# #get# NewNot 
+			#region #invisible# #get# Return 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline NewNot {
+			public override Inline Return {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -113,7 +114,24 @@ namespace Wholemy {
 				get => new Quadratic(x0, y0, x2, y2, x1, y1, Not: !this.Not);
 			}
 			#endregion
-			#region #property# Below 
+			#region #invisible# #get# Invert 
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public override Inline Invert {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					return new Quadratic(x1, y1, x2, y2, x0, y0, Not: !this.Not);
+				}
+			}
+			#endregion
+			#region #get# Below 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -138,7 +156,7 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #property# Above 
+			#region #get# Above 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -180,6 +198,7 @@ namespace Wholemy {
 			private readonly double by2;
 			private readonly double bx3;
 			private readonly double by3;
+			#region #new# (x0, y0, x1, y1, cw, Not) 
 			public Cubic(double x0, double y0, double x1, double y1, bool cw = false, bool Not = false) : base(null, 0.5, 0.5, x0, y0, x1, y1, Not) {
 				var x2 = x0;
 				var y2 = y0;
@@ -231,6 +250,7 @@ namespace Wholemy {
 				this.bx2 = x01; this.by2 = y01; this.bx3 = x02; this.by3 = y02;
 				this.ax2 = x13; this.ay2 = y13; this.ax3 = x23; this.ay3 = y23;
 			}
+			#endregion
 			#region #new# (x0, y0, x1, y1, x2, y2, x3, y3, S = 0.5, I = 0.5, O = null) 
 			#region #through# 
 #if TRACE
@@ -305,14 +325,15 @@ namespace Wholemy {
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
 				var y03 = (y13 - y02) * root + y02;
-				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03);
-				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33);
-				if (Not) {
-					b1 = B;
-					b0 = A;
+				var S = 0.5 * this.Size;
+				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Size - S, this.Root + S, this, this.Not);
+				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, S, this.Root - S, this, this.Not);
+				if (this.Not) {
+					this.aboveb = b1 = B;
+					this.belowb = b0 = A;
 				} else {
-					b0 = A;
-					b1 = B;
+					this.belowb = b0 = A;
+					this.aboveb = b1 = B;
 				}
 			}
 			#endregion
@@ -347,13 +368,13 @@ namespace Wholemy {
 				Y = y03;
 			}
 			#endregion
-			#region #invisible# #get# New 
+			#region #invisible# #get# Pastle 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline New {
+			public override Inline Pastle {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -362,13 +383,13 @@ namespace Wholemy {
 				get => new Cubic(x0, y0, x2, y2, x3, y3, x1, y1, Not: this.Not);
 			}
 			#endregion
-			#region #invisible# #get# NewNot 
+			#region #invisible# #get# Return 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline NewNot {
+			public override Inline Return {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -377,7 +398,24 @@ namespace Wholemy {
 				get => new Cubic(x0, y0, x2, y2, x3, y3, x1, y1, Not: !this.Not);
 			}
 			#endregion
-			#region #property# Below 
+			#region #invisible# #get# Invert 
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public override Inline Invert {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					return new Cubic(x1, y1, x3, y3, x2, y2, x0, y0, Not: !this.Not);
+				}
+			}
+			#endregion
+			#region #get# Below 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -402,7 +440,7 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #property# Above 
+			#region #get# Above 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -465,6 +503,11 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #property# DepthAbove 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
 		public Inline DepthAbove {
 			#region #through# 
 #if TRACE
@@ -486,6 +529,11 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #property# DepthBelow 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
 		public Inline DepthBelow {
 			#region #through# 
 #if TRACE
@@ -506,7 +554,7 @@ namespace Wholemy {
 			}
 		}
 		#endregion
-		#region #property# Below 
+		#region #get# Below 
 		#region #invisible# 
 #if TRACE
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -532,7 +580,7 @@ namespace Wholemy {
 			}
 		}
 		#endregion
-		#region #property# Above 
+		#region #get# Above 
 		#region #invisible# 
 #if TRACE
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -559,6 +607,11 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #property# OtherAbove 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
 		public Inline OtherAbove {
 			#region #through# 
 #if TRACE
@@ -575,6 +628,11 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #property# OtherBelow 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
 		public Inline OtherBelow {
 			#region #through# 
 #if TRACE
@@ -713,14 +771,15 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			var A = new Inline(x00, y00, x01, y01);
-			var B = new Inline(x01, y01, x11, y11);
-			if (Not) {
-				b1 = B;
-				b0 = A;
+			var S = 0.5 * this.Size;
+			var A = new Inline(x00, y00, x01, y01, this.Size - S, this.Root + S, this, this.Not);
+			var B = new Inline(x01, y01, x11, y11, S, this.Root - S, this, this.Not);
+			if (this.Not) {
+				this.aboveb = b1 = B;
+				this.belowb = b0 = A;
 			} else {
-				b0 = A;
-				b1 = B;
+				this.belowb = b0 = A;
+				this.aboveb = b1 = B;
 			}
 		}
 		#endregion
@@ -859,15 +918,25 @@ namespace Wholemy {
 		#endregion
 		#region #class# Combat 
 		public class Combat {
-			public int Zend;
+			#region #class# End 
+			private class End {
+				public Combat Start;
+				#region #new# (Start) 
+				public End(Combat Start) {
+					this.Start = Start;
+				}
+				#endregion
+			}
+			#endregion
+			private End TheEnd;
 			public Inline Line;
 			public Combat Next;
 			public Combat Prev;
-			public bool NextUsed;
-			public bool PrevUsed;
+			public bool Intersect;
+			public int Type;
 			public Combat(Combat Comb, Inline Line) {
 				this.Line = Line;
-				var Zend = this.Zend = (Comb != null) ? Comb.Zend + 1 : 0;
+				this.TheEnd = (Comb != null) ? Comb.TheEnd : new End(this);
 				if (Comb != null) {
 					#region #debug# 
 #if DEBUG
@@ -880,40 +949,24 @@ namespace Wholemy {
 						this.Next.Prev = this;
 						Comb.Next = this;
 						var T = this.Next;
-						while (T != this && T.Zend >= Zend) {
-							T.Zend++;
-							T = T.Next;
-						}
 					} else {
 						this.Next = Comb;
 						this.Prev = Comb.Prev;
 						this.Prev.Next = this;
 						Comb.Prev = this;
 						var T = this.Prev;
-						while (T != this && T.Zend >= Zend) {
-							T.Zend++;
-							T = T.Prev;
-						}
 					}
 				} else {
 					this.Prev = this;
 					this.Next = this;
 				}
 			}
+			public void TheStart() {
+				this.TheEnd.Start = this;
+			}
 			public bool Loop(out Combat Comb) {
 				Comb = this.Next;
-				return this.Zend != 0;
-			}
-			public void Div(double Root) {
-				this.Line.Div(Root, out var ai0, out var ai1);
-				this.Line = ai1; var C = new Inline.Combat(this, ai0);
-				if(this.Line.Not) {
-					this.PrevUsed = true;
-					C.NextUsed = true;
-				} else {
-					this.NextUsed = true;
-					C.PrevUsed = true;
-				}
+				return this.TheEnd.Start == this;
 			}
 		}
 		#endregion
@@ -1115,10 +1168,10 @@ namespace Wholemy {
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
 		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
-			var A = Aref.New;
-			if (Aend) A = A.NewNot;
-			var B = Bref.New;
-			if (Aend ^ Bnot) B = B.NewNot;
+			var A = Aref.Pastle;
+			if (Aend) A = A.Return;
+			var B = Bref.Pastle;
+			if (Aend ^ Bnot) B = B.Return;
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
@@ -1166,10 +1219,10 @@ namespace Wholemy {
 		/// <returns>Растояние между пересечениями)</returns>
 		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
-			var A = Aref.New;
-			if (Aend) A = A.NewNot;
-			var B = Bref.New;
-			if (Aend ^ Bnot) B = B.NewNot;
+			var A = Aref.Pastle;
+			if (Aend) A = A.Return;
+			var B = Bref.Pastle;
+			if (Aend ^ Bnot) B = B.Return;
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
@@ -1210,13 +1263,13 @@ namespace Wholemy {
 			return $" Depth = {(this.Depth).ToString(I)} Root = {(this.Root).ToString("R", I)} X = {(this.X).ToString("R", I)} Y = {(this.Y).ToString("R", I)}";
 		}
 		#endregion
-		#region #invisible# #get# New 
+		#region #invisible# #get# Pastle 
 		#region #invisible# 
 #if TRACE
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public virtual Inline New {
+		public virtual Inline Pastle {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -1225,19 +1278,36 @@ namespace Wholemy {
 			get => new Inline(x0, y0, x1, y1, Not: this.Not);
 		}
 		#endregion
-		#region #invisible# #get# NewNot 
+		#region #invisible# #get# Return 
 		#region #invisible# 
 #if TRACE
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public virtual Inline NewNot {
+		public virtual Inline Return {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
 			get => new Inline(x0, y0, x1, y1, Not: !this.Not);
+		}
+		#endregion
+		#region #invisible# #get# Invert 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
+		public virtual Inline Invert {
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			get {
+				return new Inline(x1, y1, x0, y0, Not: !this.Not);
+			}
 		}
 		#endregion
 	}
