@@ -863,6 +863,8 @@ namespace Wholemy {
 			public Inline Line;
 			public Combat Next;
 			public Combat Prev;
+			public bool NextUsed;
+			public bool PrevUsed;
 			public Combat(Combat Comb, Inline Line) {
 				this.Line = Line;
 				var Zend = this.Zend = (Comb != null) ? Comb.Zend + 1 : 0;
@@ -904,7 +906,14 @@ namespace Wholemy {
 			}
 			public void Div(double Root) {
 				this.Line.Div(Root, out var ai0, out var ai1);
-				this.Line = ai1; new Inline.Combat(this, ai0);
+				this.Line = ai1; var C = new Inline.Combat(this, ai0);
+				if(this.Line.Not) {
+					this.PrevUsed = true;
+					C.NextUsed = true;
+				} else {
+					this.NextUsed = true;
+					C.PrevUsed = true;
+				}
 			}
 		}
 		#endregion
