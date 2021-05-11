@@ -10,8 +10,8 @@ namespace Wholemy {
 			private readonly double ay2;
 			private readonly double bx2;
 			private readonly double by2;
-			#region #new# (x0, y0, x1, y1, x2, y2, S = 0.5, I = 0.5, O = null) 
-			public Quadratic(double x0, double y0, double x1, double y1, double x2, double y2, double S = 0.5, double I = 0.5, Inline O = null, bool Not = false) : base(O, S, I, x0, y0, x2, y2, Not) {
+			#region #new# (x0, y0, x1, y1, x2, y2, RangeBelow = 0.0, RangeAbove = 1.0, O = null) 
+			public Quadratic(double x0, double y0, double x1, double y1, double x2, double y2, double RangeBelow = 0.0, double RangeAbove = 1.0, Inline O = null, bool Not = false) : base(O, RangeBelow, RangeAbove, x0, y0, x2, y2, Not) {
 				this.x2 = x1;
 				this.y2 = y1;
 				var v = x0;
@@ -54,9 +54,9 @@ namespace Wholemy {
 				var y12 = (y22 - y11) * root + y11;
 				var x02 = (x12 - x01) * root + x01;
 				var y02 = (y12 - y01) * root + y01;
-				var S = 0.5 * this.Size;
-				var A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Size - S, this.Root + S, this, this.Not);
-				var B = new Quadratic(x02, y02, x12, y12, x22, y22, S, this.Root - S, this, this.Not);
+				var S = (this.RangeAbove - this.RangeBelow) * 0.5;
+				var A = new Quadratic(x00, y00, x01, y01, x02, y02, this.RangeBelow, this.RangeAbove - S, this, this.Not);
+				var B = new Quadratic(x02, y02, x12, y12, x22, y22, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 				if (this.Not) {
 					this.aboveb = b1 = B;
 					this.belowb = b0 = A;
@@ -145,11 +145,11 @@ namespace Wholemy {
 				#endregion
 				get {
 					if (this.belowb == null) {
-						var S = 0.5 * this.Size;
+						var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 						if (this.Not) {
-							this.belowb = new Quadratic(X, Y, this.ax2, this.ay2, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+							this.belowb = new Quadratic(X, Y, this.ax2, this.ay2, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 						} else {
-							this.belowb = new Quadratic(this.x0, this.y0, this.bx2, this.by2, X, Y, S, this.Root - S, this, this.Not);
+							this.belowb = new Quadratic(this.x0, this.y0, this.bx2, this.by2, X, Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 						}
 					}
 					return this.belowb;
@@ -170,11 +170,11 @@ namespace Wholemy {
 				#endregion
 				get {
 					if (this.aboveb == null) {
-						var S = 0.5 * this.Size;
+						var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 						if (this.Not) {
-							this.aboveb = new Quadratic(this.x0, this.y0, this.bx2, this.by2, X, Y, S, this.Root - S, this, this.Not);
+							this.aboveb = new Quadratic(this.x0, this.y0, this.bx2, this.by2, X, Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 						} else {
-							this.aboveb = new Quadratic(X, Y, this.ax2, this.ay2, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+							this.aboveb = new Quadratic(X, Y, this.ax2, this.ay2, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 						}
 					}
 					return this.aboveb;
@@ -199,7 +199,7 @@ namespace Wholemy {
 			private readonly double bx3;
 			private readonly double by3;
 			#region #new# (x0, y0, x1, y1, cw, Not) 
-			public Cubic(double x0, double y0, double x1, double y1, bool cw = false, bool Not = false) : base(null, 0.5, 0.5, x0, y0, x1, y1, Not) {
+			public Cubic(double x0, double y0, double x1, double y1, bool cw = false, bool Not = false) : base(null, 0.0, 1.0, x0, y0, x1, y1, Not) {
 				var x2 = x0;
 				var y2 = y0;
 				var x3 = x1;
@@ -251,13 +251,13 @@ namespace Wholemy {
 				this.ax2 = x13; this.ay2 = y13; this.ax3 = x23; this.ay3 = y23;
 			}
 			#endregion
-			#region #new# (x0, y0, x1, y1, x2, y2, x3, y3, S = 0.5, I = 0.5, O = null) 
+			#region #new# (x0, y0, x1, y1, x2, y2, x3, y3, RangeBelow = 0.0, RangeAbove = 1.0, O = null) 
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public Cubic(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double S = 0.5, double I = 0.5, Inline O = null, bool Not = false) : base(O, S, I, x0, y0, x3, y3, Not) {
+			public Cubic(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double RangeBelow = 0.0, double RangeAbove = 1.0, Inline O = null, bool Not = false) : base(O, RangeBelow, RangeAbove, x0, y0, x3, y3, Not) {
 				this.x2 = x1;
 				this.y2 = y1;
 				this.x3 = x2;
@@ -299,11 +299,6 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #override# #method# Div(root, b0, b1) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
 			public override void Div(double root, out Inline b0, out Inline b1) {
 				var x00 = x0;
 				var y00 = y0;
@@ -325,9 +320,9 @@ namespace Wholemy {
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
 				var y03 = (y13 - y02) * root + y02;
-				var S = 0.5 * this.Size;
-				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Size - S, this.Root + S, this, this.Not);
-				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, S, this.Root - S, this, this.Not);
+				var S = (this.RangeAbove - this.RangeBelow) * 0.5;
+				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.RangeBelow, this.RangeAbove - S, this, this.Not);
+				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 				if (this.Not) {
 					this.aboveb = b1 = B;
 					this.belowb = b0 = A;
@@ -429,11 +424,11 @@ namespace Wholemy {
 				#endregion
 				get {
 					if (this.belowb == null) {
-						var S = 0.5 * this.Size;
+						var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 						if (this.Not) {
-							this.belowb = new Cubic(X, Y, this.ax2, this.ay2, this.ax3, this.ay3, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+							this.belowb = new Cubic(X, Y, this.ax2, this.ay2, this.ax3, this.ay3, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 						} else {
-							this.belowb = new Cubic(this.x0, this.y0, this.bx2, this.by2, this.bx3, this.by3, X, Y, S, this.Root - S, this, this.Not);
+							this.belowb = new Cubic(this.x0, this.y0, this.bx2, this.by2, this.bx3, this.by3, X, Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 						}
 					}
 					return this.belowb;
@@ -454,11 +449,11 @@ namespace Wholemy {
 				#endregion
 				get {
 					if (this.aboveb == null) {
-						var S = 0.5 * this.Size;
+						var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 						if (this.Not) {
-							this.aboveb = new Cubic(this.x0, this.y0, this.bx2, this.by2, this.bx3, this.by3, X, Y, S, this.Root - S, this, this.Not);
+							this.aboveb = new Cubic(this.x0, this.y0, this.bx2, this.by2, this.bx3, this.by3, X, Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 						} else {
-							this.aboveb = new Cubic(X, Y, this.ax2, this.ay2, this.ax3, this.ay3, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+							this.aboveb = new Cubic(X, Y, this.ax2, this.ay2, this.ax3, this.ay3, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 						}
 					}
 					return this.aboveb;
@@ -467,7 +462,13 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
-		public readonly double Size;
+		public double Root {
+			get {
+				return this.RangeBelow + (this.RangeAbove - this.RangeBelow);
+			}
+		}
+		public readonly double RangeBelow;
+		public readonly double RangeAbove;
 		private double L;
 		private double T;
 		private double R;
@@ -476,7 +477,6 @@ namespace Wholemy {
 		public readonly double y0;
 		public readonly double x1;
 		public readonly double y1;
-		public readonly double Root;
 		public double X;
 		public double Y;
 		public readonly int Depth;
@@ -489,7 +489,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			get => this.Root - this.Size;
+			get => this.RangeBelow - this.RangeAbove;
 		}
 		#endregion
 		#region #property# RootAbove 
@@ -499,7 +499,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			get => this.Root + this.Size;
+			get => this.RangeBelow + this.RangeAbove;
 		}
 		#endregion
 		#region #property# DepthAbove 
@@ -569,11 +569,11 @@ namespace Wholemy {
 			#endregion
 			get {
 				if (this.belowb == null) {
-					var S = 0.5 * this.Size;
+					var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 					if (this.Not) {
-						this.belowb = new Inline(this.X, this.Y, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+						this.belowb = new Inline(this.X, this.Y, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 					} else {
-						this.belowb = new Inline(this.x0, this.y0, this.X, this.Y, S, this.Root - S, this, this.Not);
+						this.belowb = new Inline(this.x0, this.y0, this.X, this.Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 					}
 				}
 				return this.belowb;
@@ -595,11 +595,11 @@ namespace Wholemy {
 			#endregion
 			get {
 				if (this.aboveb == null) {
-					var S = 0.5 * this.Size;
+					var S = (this.RangeAbove - this.RangeBelow) * 0.5;
 					if (this.Not) {
-						this.aboveb = new Inline(this.x0, this.y0, this.X, this.Y, S, this.Root - S, this, this.Not);
+						this.aboveb = new Inline(this.x0, this.y0, this.X, this.Y, this.RangeBelow, this.RangeAbove - S, this, this.Not);
 					} else {
-						this.aboveb = new Inline(this.X, this.Y, this.x1, this.y1, this.Size - S, this.Root + S, this, this.Not);
+						this.aboveb = new Inline(this.X, this.Y, this.x1, this.y1, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 					}
 				}
 				return this.aboveb;
@@ -729,10 +729,10 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		private Inline(Inline O, double S, double I, double x0, double y0, double x1, double y1, bool Not) {
+		private Inline(Inline O, double RangeBelow, double RangeAbove, double x0, double y0, double x1, double y1, bool Not) {
 			this.Parent = O;
-			this.Size = S;
-			this.Root = I;
+			this.RangeBelow = RangeBelow;
+			this.RangeAbove = RangeAbove;
 			this.x0 = x0;
 			this.y0 = y0;
 			this.x1 = x1;
@@ -741,16 +741,16 @@ namespace Wholemy {
 			this.Not = Not;
 		}
 		#endregion
-		#region #new# (x0, y0, x1, y1, S = 0.5, I = 0.5, O = null) 
+		#region #new# (x0, y0, x1, y1, RangeBelow = 0.0, RangeAbove = 1.0, O = null) 
 		#region #through# 
 #if TRACE
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public Inline(double x0, double y0, double x1, double y1, double S = 0.5, double I = 0.5, Inline O = null, bool Not = false) {
+		public Inline(double x0, double y0, double x1, double y1, double RangeBelow = 0.0, double RangeAbove = 1.0, Inline O = null, bool Not = false) {
 			this.Parent = O;
-			this.Size = S;
-			this.Root = I;
+			this.RangeBelow = RangeBelow;
+			this.RangeAbove = RangeAbove;
 			this.x0 = x0;
 			this.y0 = y0;
 			this.x1 = x1;
@@ -771,9 +771,9 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			var S = 0.5 * this.Size;
-			var A = new Inline(x00, y00, x01, y01, this.Size - S, this.Root + S, this, this.Not);
-			var B = new Inline(x01, y01, x11, y11, S, this.Root - S, this, this.Not);
+			var S = (this.RangeAbove - this.RangeBelow) * 0.5;
+			var A = new Inline(x00, y00, x01, y01, this.RangeBelow, this.RangeAbove - S, this, this.Not);
+			var B = new Inline(x01, y01, x11, y11, this.RangeBelow + S, this.RangeAbove, this, this.Not);
 			if (this.Not) {
 				this.aboveb = b1 = B;
 				this.belowb = b0 = A;
@@ -803,11 +803,6 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(a) 
-		#region #through# 
-#if TRACE
-		[System.Diagnostics.DebuggerStepThrough]
-#endif
-		#endregion
 		private bool Intersect(Inline a) {
 			return (a.R >= this.L && this.R >= a.L && a.B >= this.T && this.B >= a.T);
 		}
@@ -921,9 +916,11 @@ namespace Wholemy {
 			#region #class# End 
 			private class End {
 				public Combat Start;
+				public int Count;
 				#region #new# (Start) 
 				public End(Combat Start) {
 					this.Start = Start;
+					this.Count = 1;
 				}
 				#endregion
 			}
@@ -936,7 +933,12 @@ namespace Wholemy {
 			public int Type;
 			public Combat(Combat Comb, Inline Line) {
 				this.Line = Line;
-				this.TheEnd = (Comb != null) ? Comb.TheEnd : new End(this);
+				if (Comb != null) {
+					this.TheEnd = Comb.TheEnd;
+					this.TheEnd.Count++;
+				} else {
+					this.TheEnd = new End(this);
+				}
 				if (Comb != null) {
 					#region #debug# 
 #if DEBUG
@@ -964,9 +966,34 @@ namespace Wholemy {
 			public void TheStart() {
 				this.TheEnd.Start = this;
 			}
+			public Combat CutNext() {
+				var Comb = this.Next;
+				Comb.Prev = this.Prev;
+				Comb.Prev.Next = Comb;
+				this.Prev = this;
+				this.Next = this;
+				this.TheEnd.Count--;
+				if (this.TheEnd.Start == this) this.TheEnd.Start = Comb;
+				this.TheEnd = new End(this);
+				return Comb;
+			}
 			public bool Loop(out Combat Comb) {
 				Comb = this.Next;
-				return this.TheEnd.Start == this;
+				return this.TheEnd.Start != this;
+			}
+			public Inline[] Items {
+				get {
+					var C = this.TheEnd.Count;
+					var A = new Inline[C];
+					var I = 1;
+					A[0] = this.Line;
+					var B = this;
+					while (B.Next != this) {
+						B = B.Next;
+						A[I++] = B.Line;
+					}
+					return A;
+				}
 			}
 		}
 		#endregion
@@ -1033,14 +1060,13 @@ namespace Wholemy {
 					while (TA != null) {
 						Chance TB = CB;
 						while (TB != null) {
-							var TBL = TB.Line;
 							TA.Test(TB);
 							TB = TB.Next;
 						}
 						TA = TA.Next;
 					}
-					if(A.Depth < MaxDepth) CA = CA.Exists(bound);
-					if (B.Depth < MaxDepth) CB = CB.Exists(bound);
+					if (A.Depth <= MaxDepth) CA = CA.Exists(bound);
+					if (B.Depth <= MaxDepth) CB = CB.Exists(bound);
 					if (CA != null && CB != null) {
 						A = CA.Line;
 						B = CB.Line;
@@ -1053,73 +1079,8 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		#region #method# CorrectionBtoA(A, B, Aout, Bout) 
-		private static double CorrectionBtoA(Inline A, Inline B, out Inline Aout, out Inline Bout) {
-			Inline AB, AA, BB, BA; bool O;
-			do {
-				O = false;
-				BB = B.OtherGreater(A);
-				if (BB != null) {
-					B = BB; O = true;
-				}
-			} while (O);
-			do {
-				O = false;
-				BB = B.Above;
-				BA = B.Below;
-				var bbl = BB.Len(A);
-				var bal = BA.Len(A);
-				if (bbl < bal) { B = BB; O = true; }
-				if (bbl > bal) { B = BA; O = true; }
-			} while (O);
-			do {
-				O = false;
-				AB = A.Above;
-				AA = A.Below;
-				var abl = AB.Len(B);
-				var aal = AA.Len(B);
-				if (abl < aal) { A = AB; O = true; }
-				if (abl > aal) { A = AA; O = true; }
-			} while (O);
-			Aout = A;
-			Bout = B;
-			return A.Len(B);
-		}
-		#endregion
-		#region #method# CorrectionAtoB(A, B, Aout, Bout) 
-		private static double CorrectionAtoB(Inline A, Inline B, out Inline Aout, out Inline Bout) {
-			Inline AB, AA, BB, BA; bool O;
-			do {
-				O = false;
-				AA = A.OtherGreater(B);
-				if (AA != null) { A = AA; O = true; }
-			} while (O);
-			do {
-				O = false;
-				AB = A.Above;
-				AA = A.Below;
-				var abl = AB.Len(B);
-				var aal = AA.Len(B);
-				if (abl < aal) { A = AB; O = true; }
-				if (abl > aal) { A = AA; O = true; }
-			} while (O);
-			var ASB = B;
-			do {
-				O = false;
-				BB = B.Above;
-				BA = B.Below;
-				var bbl = BB.Len(A);
-				var bal = BA.Len(A);
-				if (bbl < bal) { B = BB; O = true; }
-				if (bbl > bal) { B = BA; O = true; }
-			} while (O);
-			Aout = A;
-			Bout = B;
-			return A.Len(B);
-		}
-		#endregion
-		#region #method# CorrectionToAB(A, B, Aout, Bout) 
-		private static double CorrectionToAB(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+		#region #method# Correction0(A, B, Aout, Bout) 
+		private static double Correction0(Inline A, Inline B, out Inline Aout, out Inline Bout) {
 			Inline AB, AA, BB, BA; bool O;
 			do {
 				O = false;
@@ -1154,6 +1115,71 @@ namespace Wholemy {
 			return A.Len(B);
 		}
 		#endregion
+		#region #method# Correction1(A, B, Aout, Bout) 
+		private static double Correction1(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+			Inline AB, AA, BB, BA; bool O;
+			do {
+				O = false;
+				BB = B.OtherGreater(A);
+				if (BB != null) {
+					B = BB; O = true;
+				}
+			} while (O);
+			do {
+				O = false;
+				BB = B.Above;
+				BA = B.Below;
+				var bbl = BB.Len(A);
+				var bal = BA.Len(A);
+				if (bbl < bal) { B = BB; O = true; }
+				if (bbl > bal) { B = BA; O = true; }
+			} while (O);
+			do {
+				O = false;
+				AB = A.Above;
+				AA = A.Below;
+				var abl = AB.Len(B);
+				var aal = AA.Len(B);
+				if (abl < aal) { A = AB; O = true; }
+				if (abl > aal) { A = AA; O = true; }
+			} while (O);
+			Aout = A;
+			Bout = B;
+			return A.Len(B);
+		}
+		#endregion
+		#region #method# Correction2(A, B, Aout, Bout) 
+		private static double Correction2(Inline A, Inline B, out Inline Aout, out Inline Bout) {
+			Inline AB, AA, BB, BA; bool O;
+			do {
+				O = false;
+				AA = A.OtherGreater(B);
+				if (AA != null) { A = AA; O = true; }
+			} while (O);
+			do {
+				O = false;
+				AB = A.Above;
+				AA = A.Below;
+				var abl = AB.Len(B);
+				var aal = AA.Len(B);
+				if (abl < aal) { A = AB; O = true; }
+				if (abl > aal) { A = AA; O = true; }
+			} while (O);
+			var ASB = B;
+			do {
+				O = false;
+				BB = B.Above;
+				BA = B.Below;
+				var bbl = BB.Len(A);
+				var bal = BA.Len(A);
+				if (bbl < bal) { B = BB; O = true; }
+				if (bbl > bal) { B = BA; O = true; }
+			} while (O);
+			Aout = A;
+			Bout = B;
+			return A.Len(B);
+		}
+		#endregion
 		#region #method# Intersect(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
 		/// <summary>Возвращает истину если инлайны пересекаются и пересечения)</summary>
 		/// <param name="Aref">Первый инлайн)</param>
@@ -1166,7 +1192,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
+		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			var A = Aref.Pastle;
 			if (Aend) A = A.Return;
@@ -1181,15 +1207,15 @@ namespace Wholemy {
 			Next:
 				IntersectFor(ref A, ref B, depth, bound);
 				IntersectEnd(ref A, ref B, bound);
-				var SSL = CorrectionToAB(A, B, out var ASS, out var BSS);
-				var ASL = CorrectionBtoA(A, B, out var AS, out var ASB);
-				var BSL = CorrectionAtoB(A, B, out var BS, out var BSA);
-				if (SSL < ASL && SSL < BSL) {
-					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
-				} else if (ASL < BSL) {
-					if (PL > ASL) { PL = SSL; PA = AS; PB = ASB; }
+				var L0 = Correction0(A, B, out var A0, out var B0);
+				var L1 = Correction1(A, B, out var A1, out var B1);
+				var L2 = Correction2(A, B, out var A2, out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
 				} else {
-					if (PL > BSL) { PL = BSL; PB = BS; PA = BSA; }
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
 				}
 				if (PL <= Lmin) {
 					Aref = PA;
@@ -1232,15 +1258,15 @@ namespace Wholemy {
 			Next:
 				IntersectFor(ref A, ref B, depth, bound);
 				IntersectEnd(ref A, ref B, bound);
-				var SSL = CorrectionToAB(A, B, out var ASS, out var BSS);
-				var ASL = CorrectionBtoA(A, B, out var AS, out var ASB);
-				var BSL = CorrectionAtoB(A, B, out var BS, out var BSA);
-				if (SSL < ASL && SSL < BSL) {
-					if (PL > SSL) { PL = SSL; PA = ASS; PB = BSS; }
-				} else if (ASL < BSL) {
-					if (PL > ASL) { PL = SSL; PA = AS; PB = ASB; }
+				var L0 = Correction0(A, B, out var A0, out var B0);
+				var L1 = Correction1(A, B, out var A1, out var B1);
+				var L2 = Correction2(A, B, out var A2, out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
 				} else {
-					if (PL > BSL) { PL = BSL; PB = BS; PA = BSA; }
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
 				}
 				if (PL <= Lmin || depth == Dmax) {
 					Aref = PA;
@@ -1260,7 +1286,7 @@ namespace Wholemy {
 		#region #method# ToString 
 		public override string ToString() {
 			var I = System.Globalization.CultureInfo.InvariantCulture;
-			return $" Depth = {(this.Depth).ToString(I)} Root = {(this.Root).ToString("R", I)} X = {(this.X).ToString("R", I)} Y = {(this.Y).ToString("R", I)}";
+			return $" x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)} Depth = {(this.Depth).ToString(I)} Root = {(this.RangeBelow).ToString("R", I)} X = {(this.X).ToString("R", I)} Y = {(this.Y).ToString("R", I)}";
 		}
 		#endregion
 		#region #invisible# #get# Pastle 
@@ -1308,6 +1334,16 @@ namespace Wholemy {
 			get {
 				return new Inline(x1, y1, x0, y0, Not: !this.Not);
 			}
+		}
+		#endregion
+		#region #method# Neq(B) 
+		#region #through# 
+#if TRACE
+		[System.Diagnostics.DebuggerStepThrough]
+#endif
+		#endregion
+		public bool Neq(Inline B) {
+			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
 	}
