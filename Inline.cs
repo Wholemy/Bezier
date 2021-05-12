@@ -1175,6 +1175,132 @@ namespace Wholemy {
 			return A.Len(B);
 		}
 		#endregion
+		#region #method# Intersect(A, AX, AY, B, BX, BY, Lmin, Dmin, Dmax, bound) 
+		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+			bool O;
+			A = A.Pastle;
+			B = B.Pastle;
+			var depth = Dmin;
+			var Abak = A;
+			var Bbak = B;
+			Inline PA = null, PB = null;
+			var PL = double.MaxValue;
+			if (A.Intersect(B)) {
+			Next:
+				IntersectFor(ref A, ref B, depth, bound);
+				IntersectEnd(ref A, ref B, bound);
+				var L0 = Correction0(A, B, out var A0, out var B0);
+				var L1 = Correction1(A, B, out var A1, out var B1);
+				var L2 = Correction2(A, B, out var A2, out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
+				} else {
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
+				}
+				var PAR = System.Math.Round(PA.Root, 1);
+				var PBR = System.Math.Round(PB.Root, 1);
+				Abak.Get(PAR, out var PAX, out var PAY);
+				Bbak.Get(PBR, out var PBX, out var PBY);
+				var x1 = PAX - PBX; var y1 = PAY - PBY;
+				L0 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				x1 = PA.X - PBX; y1 = PA.Y - PBY;
+				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				x1 = PAX - PB.X; y1 = PAY - PB.Y;
+				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
+					PL = L0;
+					AX = PAX; AY = PAY;
+					BX = PBX; BY = PBY;
+				} else if (L1 <= PL && L1 <= L2) {
+					PL = L1;
+					AX = PA.X; AY = PA.Y;
+					BX = PBX; BY = PBY;
+				} else if (L2 <= PL) {
+					PL = L2;
+					AX = PAX; AY = PAY;
+					BX = PB.X; BY = PB.Y;
+				} else {
+					AX = PA.X; AY = PA.Y;
+					BX = PB.X; BY = PB.Y;
+				}
+				if (PL <= Lmin) {
+					return true;
+				}
+				if (depth < Dmax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
+			}
+			return false;
+		}
+		#endregion
+		#region #method# Intersect(A, AR, B, BR, Lmin, Dmin, Dmax, bound) 
+		public static bool Intersect(Inline A, ref double AR, Inline B, ref double BR, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+			bool O;
+			A = A.Pastle;
+			B = B.Pastle;
+			var depth = Dmin;
+			var Abak = A;
+			var Bbak = B;
+			Inline PA = null, PB = null;
+			var PL = double.MaxValue;
+			if (A.Intersect(B)) {
+			Next:
+				IntersectFor(ref A, ref B, depth, bound);
+				IntersectEnd(ref A, ref B, bound);
+				var L0 = Correction0(A, B, out var A0, out var B0);
+				var L1 = Correction1(A, B, out var A1, out var B1);
+				var L2 = Correction2(A, B, out var A2, out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
+				} else {
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
+				}
+				var PAR = System.Math.Round(PA.Root, 1);
+				var PBR = System.Math.Round(PB.Root, 1);
+				Abak.Get(PAR, out var PAX, out var PAY);
+				Bbak.Get(PBR, out var PBX, out var PBY);
+				var x1 = PAX - PBX; var y1 = PAY - PBY;
+				L0 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				x1 = PA.X - PBX; y1 = PA.Y - PBY;
+				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				x1 = PAX - PB.X; y1 = PAY - PB.Y;
+				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
+					PL = L0;
+					AR = PAR;
+					BR = PBR;
+				} else if (L1 <= PL && L1 <= L2) {
+					PL = L1;
+					AR = PA.Root;
+					BR = PBR;
+				} else if (L2 <= PL) {
+					PL = L2;
+					AR = PAR;
+					BR = PB.Root;
+				} else {
+					AR = PA.Root;
+					BR = PB.Root;
+				}
+				if (PL <= Lmin) {
+					return true;
+				}
+				if (depth < Dmax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
+			}
+			return false;
+		}
+		#endregion
 		#region #method# Intersect(A, AR, AX, AY, B, BR, BX, BY, Lmin, Dmin, Dmax, bound) 
 		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
@@ -1209,15 +1335,15 @@ namespace Wholemy {
 				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
 				x1 = PAX - PB.X; y1 = PAY - PB.Y;
 				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				if (L0 < PL && L0 <= L1 && L0 <= L2) {
+				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
 					PL = L0;
 					AR = PAR; AX = PAX; AY = PAY;
 					BR = PBR; BX = PBX; BY = PBY;
-				} else if (L1 < PL && L1 < L2) {
+				} else if (L1 <= PL && L1 <= L2) {
 					PL = L1;
 					AR = PA.Root; AX = PA.X; AY = PA.Y;
 					BR = PBR; BX = PBX; BY = PBY;
-				} else if (L2 < PL) {
+				} else if (L2 <= PL) {
 					PL = L2;
 					AR = PAR; AX = PAX; AY = PAY;
 					BR = PB.Root; BX = PB.X; BY = PB.Y;
