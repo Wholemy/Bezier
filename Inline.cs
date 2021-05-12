@@ -791,10 +791,15 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Len(a) 
-		public double Len(Inline a) {
+		private double Len(Inline a) {
 			var x1 = this.X - a.X;
 			var y1 = this.Y - a.Y;
 			return System.Math.Sqrt(x1 * x1 + y1 * y1);
+		}
+		#endregion
+		#region #method# Len(x, y) 
+		private static double Len(double x,double y) {
+			return System.Math.Sqrt(x * x + y * y);
 		}
 		#endregion
 		#region #method# Intersect(a) 
@@ -1175,6 +1180,7 @@ namespace Wholemy {
 			return A.Len(B);
 		}
 		#endregion
+
 		#region #method# Intersect(A, AX, AY, B, BX, BY, Lmin, Dmin, Dmax, bound) 
 		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
@@ -1203,12 +1209,9 @@ namespace Wholemy {
 				var PBR = System.Math.Round(PB.Root, 1);
 				Abak.Get(PAR, out var PAX, out var PAY);
 				Bbak.Get(PBR, out var PBX, out var PBY);
-				var x1 = PAX - PBX; var y1 = PAY - PBY;
-				L0 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PA.X - PBX; y1 = PA.Y - PBY;
-				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PAX - PB.X; y1 = PAY - PB.Y;
-				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				L0 = Len(PAX - PBX, PAY - PBY);
+				L1 = Len(PA.X - PBX, PA.Y - PBY);
+				L2 = Len(PAX - PB.X, PAY - PB.Y);
 				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
 					PL = L0;
 					AX = PAX; AY = PAY;
@@ -1266,12 +1269,9 @@ namespace Wholemy {
 				var PBR = System.Math.Round(PB.Root, 1);
 				Abak.Get(PAR, out var PAX, out var PAY);
 				Bbak.Get(PBR, out var PBX, out var PBY);
-				var x1 = PAX - PBX; var y1 = PAY - PBY;
-				L0 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PA.X - PBX; y1 = PA.Y - PBY;
-				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PAX - PB.X; y1 = PAY - PB.Y;
-				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				L0 = Len(PAX - PBX, PAY - PBY);
+				L1 = Len(PA.X - PBX, PA.Y - PBY);
+				L2 = Len(PAX - PB.X, PAY - PB.Y);
 				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
 					PL = L0;
 					AR = PAR;
@@ -1329,12 +1329,9 @@ namespace Wholemy {
 				var PBR = System.Math.Round(PB.Root, 1);
 				Abak.Get(PAR, out var PAX, out var PAY);
 				Bbak.Get(PBR, out var PBX, out var PBY);
-				var x1 = PAX - PBX; var y1 = PAY - PBY;
-				L0 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PA.X - PBX; y1 = PA.Y - PBY;
-				L1 = System.Math.Sqrt(x1 * x1 + y1 * y1);
-				x1 = PAX - PB.X; y1 = PAY - PB.Y;
-				L2 = System.Math.Sqrt(x1 * x1 + y1 * y1);
+				L0 = Len(PAX - PBX, PAY - PBY);
+				L1 = Len(PA.X - PBX, PA.Y - PBY);
+				L2 = Len(PAX - PB.X, PAY - PB.Y);
 				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
 					PL = L0;
 					AR = PAR; AX = PAX; AY = PAY;
