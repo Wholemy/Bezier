@@ -66,6 +66,34 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			#region #method# Div(root, X, Y, b0, b1) 
+			public override void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+				var x00 = x0;
+				var y00 = y0;
+				var x11 = x2;
+				var y11 = y2;
+				var x22 = x1;
+				var y22 = y1;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				if (System.Math.Round(x02, 1) != System.Math.Round(X, 1) || System.Math.Round(y02, 1) != System.Math.Round(Y, 1))
+					throw new System.InvalidOperationException();
+				var S = this.Size * 0.5;
+				var A = new Quadratic(x00, y00, x01, y01, X, Y, this.Root - S, S, this, this.Not);
+				var B = new Quadratic(X, Y, x12, y12, x22, y22, this.Root + S, S, this, this.Not);
+				if (this.Not) {
+					this.aboveb = b1 = B;
+					this.belowb = b0 = A;
+				} else {
+					this.belowb = b0 = A;
+					this.aboveb = b1 = B;
+				}
+			}
+			#endregion
 			#region #override# #method# Get(root, X, Y) 
 			public override void Get(double root, out double X, out double Y) {
 				var x00 = x0;
@@ -323,6 +351,42 @@ namespace Wholemy {
 				var S = this.Size * 0.5;
 				var A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Root - S, S, this, this.Not);
 				var B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Root + S, S, this, this.Not);
+				if (this.Not) {
+					this.aboveb = b1 = B;
+					this.belowb = b0 = A;
+				} else {
+					this.belowb = b0 = A;
+					this.aboveb = b1 = B;
+				}
+			}
+			#endregion
+			#region #method# Div(root, X, Y, b0, b1) 
+			public override void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+				var x00 = x0;
+				var y00 = y0;
+				var x11 = x2;
+				var y11 = y2;
+				var x22 = x3;
+				var y22 = y3;
+				var x33 = x1;
+				var y33 = y1;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x23 = (x33 - x22) * root + x22;
+				var y23 = (y33 - y22) * root + y22;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var x13 = (x23 - x12) * root + x12;
+				var y13 = (y23 - y12) * root + y12;
+				var x03 = (x13 - x02) * root + x02;
+				var y03 = (y13 - y02) * root + y02;
+				if (System.Math.Round(x03, 1) != System.Math.Round(X, 1) || System.Math.Round(y03, 1) != System.Math.Round(Y, 1))
+					throw new System.InvalidOperationException();
+				var S = this.Size * 0.5;
+				var A = new Cubic(x00, y00, x01, y01, x02, y02, X, Y, this.Root - S, S, this, this.Not);
+				var B = new Cubic(X, Y, x13, y13, x23, y23, x33, y33, this.Root + S, S, this, this.Not);
 				if (this.Not) {
 					this.aboveb = b1 = B;
 					this.belowb = b0 = A;
@@ -778,6 +842,28 @@ namespace Wholemy {
 			}
 		}
 		#endregion
+		#region #method# Div(root, X, Y, b0, b1) 
+		public virtual void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+			var x00 = x0;
+			var y00 = y0;
+			var x11 = x1;
+			var y11 = y1;
+			var x01 = (x11 - x00) * root + x00;
+			var y01 = (y11 - y00) * root + y00;
+			if (System.Math.Round(x01, 1) != System.Math.Round(X, 1) || System.Math.Round(y01, 1) != System.Math.Round(Y, 1))
+				throw new System.InvalidOperationException();
+			var S = this.Size * 0.5;
+			var A = new Inline(x00, y00, X, Y, this.Root - S, S, this, this.Not);
+			var B = new Inline(X, Y, x11, y11, this.Root + S, S, this, this.Not);
+			if (this.Not) {
+				this.aboveb = b1 = B;
+				this.belowb = b0 = A;
+			} else {
+				this.belowb = b0 = A;
+				this.aboveb = b1 = B;
+			}
+		}
+		#endregion
 		#region #virtual# #method# Get(root, X, Y) 
 		public virtual void Get(double root, out double X, out double Y) {
 			var x00 = x0;
@@ -798,7 +884,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Len(x, y) 
-		private static double Len(double x,double y) {
+		private static double Len(double x, double y) {
 			return System.Math.Sqrt(x * x + y * y);
 		}
 		#endregion
