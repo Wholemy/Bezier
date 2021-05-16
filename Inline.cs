@@ -842,7 +842,7 @@ namespace Wholemy {
 			}
 		}
 		#endregion
-		#region #method# Div(root, X, Y, b0, b1) 
+		#region #virtual# #method# Div(root, X, Y, b0, b1) 
 		public virtual void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
 			var x00 = x0;
 			var y00 = y0;
@@ -850,7 +850,8 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			if (System.Math.Round(x01, 1) != System.Math.Round(X, 1) || System.Math.Round(y01, 1) != System.Math.Round(Y, 1))
+			if (System.Math.Round(x01, 1) != System.Math.Round(X, 1)
+			|| System.Math.Round(y01, 1) != System.Math.Round(Y, 1))
 				throw new System.InvalidOperationException();
 			var S = this.Size * 0.5;
 			var A = new Inline(x00, y00, X, Y, this.Root - S, S, this, this.Not);
@@ -997,14 +998,14 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
-		#region #class# Combat 
-		public class Combat {
+		#region #class# Compote 
+		public class Compote {
 			#region #class# End 
 			private class End {
-				public Combat Start;
+				public Compote Start;
 				public int Count;
 				#region #new# (Start) 
-				public End(Combat Start) {
+				public End(Compote Start) {
 					this.Start = Start;
 					this.Count = 1;
 				}
@@ -1013,35 +1014,38 @@ namespace Wholemy {
 			#endregion
 			private End TheEnd;
 			public Inline Line;
-			public Combat Next;
-			public Combat Prev;
+			public Compote Next;
+			public Compote Prev;
+			public Compote AltNext;
+			public Compote AltPrev;
 			public bool Intersect;
 			public int Type;
-			public Combat(Combat Comb, Inline Line) {
-				this.Line = Line;
-				if (Comb != null) {
-					this.TheEnd = Comb.TheEnd;
+			#region #new# (Compote, Inline) 
+			public Compote(Compote Compote, Inline Inline) {
+				this.Line = Inline;
+				if (Compote != null) {
+					this.TheEnd = Compote.TheEnd;
 					this.TheEnd.Count++;
 				} else {
 					this.TheEnd = new End(this);
 				}
-				if (Comb != null) {
+				if (Compote != null) {
 					#region #debug# 
 #if DEBUG
-					if (Comb.Line.Not != Line.Not) throw new System.InvalidOperationException();
+					if (Compote.Line.Not != Inline.Not) throw new System.InvalidOperationException();
 #endif
 					#endregion
-					if (Line.Not) {
-						this.Prev = Comb;
-						this.Next = Comb.Next;
+					if (Inline.Not) {
+						this.Prev = Compote;
+						this.Next = Compote.Next;
 						this.Next.Prev = this;
-						Comb.Next = this;
+						Compote.Next = this;
 						var T = this.Next;
 					} else {
-						this.Next = Comb;
-						this.Prev = Comb.Prev;
+						this.Next = Compote;
+						this.Prev = Compote.Prev;
 						this.Prev.Next = this;
-						Comb.Prev = this;
+						Compote.Prev = this;
 						var T = this.Prev;
 					}
 				} else {
@@ -1049,10 +1053,14 @@ namespace Wholemy {
 					this.Next = this;
 				}
 			}
+			#endregion
+			#region #method# TheStart 
 			public void TheStart() {
 				this.TheEnd.Start = this;
 			}
-			public Combat CutNext() {
+			#endregion
+			#region #method# CutNext 
+			public Compote CutNext() {
 				var Comb = this.Next;
 				Comb.Prev = this.Prev;
 				Comb.Prev.Next = Comb;
@@ -1063,10 +1071,14 @@ namespace Wholemy {
 				this.TheEnd = new End(this);
 				return Comb;
 			}
-			public bool Loop(out Combat Comb) {
-				Comb = this.Next;
+			#endregion
+			#region #method# Loop(Compote) 
+			public bool Loop(out Compote Compote) {
+				Compote = this.Next;
 				return this.TheEnd.Start != this;
 			}
+			#endregion
+			#region #get# Items 
 			public Inline[] Items {
 				get {
 					var C = this.TheEnd.Count;
@@ -1081,6 +1093,60 @@ namespace Wholemy {
 					return A;
 				}
 			}
+			#endregion
+		}
+		#endregion
+		#region #method# Combine(#ref# A, #ref# B) 
+		public static void Combine(ref Compote A, ref Compote B) {
+			var AC = A;
+			var BC = B;
+			Inline.Compote ACC = null, BCC = null, acc = null, bcc = null;
+			do {
+				do {
+					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
+					if (AC.Line.Neq(BC.Line)) {
+						if (Inline.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
+							if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
+							if (AR > 0.0 && AR < 1.0) {
+								AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
+								AC.Line = ai1; new Inline.Compote(AC, ai0);
+							}
+							if (BR > 0.0 && BR < 1.0) {
+								BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
+								BC.Line = bi1; new Inline.Compote(BC, bi0);
+							}
+						}
+					}
+				} while (BC.Loop(out BC));
+			} while (AC.Loop(out AC));
+			do {
+				do {
+					if (AC.Line.eq10(BC.Line)) {
+						if (AC.AltNext != null || BC.AltPrev != null) throw new System.InvalidOperationException();
+						AC.AltNext = BC;
+						BC.AltPrev = AC;
+						if (ACC == null) ACC = AC;
+					}
+					if (AC.Line.eq01(BC.Line)) {
+						if (BC.AltNext != null || AC.AltPrev != null) throw new System.InvalidOperationException();
+						BC.AltNext = AC;
+						AC.AltPrev = BC;
+						if (BCC == null) BCC = BC;
+					}
+				} while (BC.Loop(out BC));
+			} while (AC.Loop(out AC));
+			AC = ACC;
+			do {
+				bcc = new Inline.Compote(bcc, AC.Line);
+				if (AC.AltPrev != null) AC = AC.AltPrev; else AC = AC.Prev;
+			} while (AC != ACC);
+			BC = BCC;
+			do {
+				acc = new Inline.Compote(acc, BC.Line);
+				if (BC.AltPrev != null) BC = BC.AltPrev; else BC = BC.Prev;
+			} while (BC != BCC);
+			A = AC;
+			B = BC;
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -1267,7 +1333,7 @@ namespace Wholemy {
 		}
 		#endregion
 
-		#region #method# Intersect(A, AX, AY, B, BX, BY, Lmin, Dmin, Dmax, bound) 
+		#region #method# Intersect(A, #ref#AX, #ref#AY, B, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
 		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			A = A.Pastle;
@@ -1327,7 +1393,7 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		#region #method# Intersect(A, AR, B, BR, Lmin, Dmin, Dmax, bound) 
+		#region #method# Intersect(A, #ref#AR, B, #ref#BR, Lmin, Dmin, Dmax, bound) 
 		public static bool Intersect(Inline A, ref double AR, Inline B, ref double BR, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			A = A.Pastle;
@@ -1387,7 +1453,7 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		#region #method# Intersect(A, AR, AX, AY, B, BR, BX, BY, Lmin, Dmin, Dmax, bound) 
+		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
 		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			A = A.Pastle;
@@ -1447,7 +1513,7 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		#region #method# Intersect(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
+		#region #method# Intersect(#ref#Aref, #ref#Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
 		/// <summary>Возвращает истину если инлайны пересекаются и пересечения)</summary>
 		/// <param name="Aref">Первый инлайн)</param>
 		/// <param name="Bref">Второй инлайн)</param>
@@ -1503,7 +1569,7 @@ namespace Wholemy {
 			return false;
 		}
 		#endregion
-		#region #method# IntersectTest(Aref, Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
+		#region #method# IntersectTest(#ref#Aref, #ref#Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
 		/// <summary>Возвращает длину и инлайны даже если они не пересекаются)</summary>
 		/// <param name="Aref">Первый инлайн)</param>
 		/// <param name="Bref">Второй инлайн)</param>
@@ -1615,6 +1681,16 @@ namespace Wholemy {
 		#endregion
 		public bool Neq(Inline B) {
 			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+		}
+		#endregion
+		#region #method# eq10(B) 
+		public bool eq10(Inline B) {
+			return this.x1 == B.x0 && this.y1 == B.y0;
+		}
+		#endregion
+		#region #method# eq01(B) 
+		public bool eq01(Inline B) {
+			return this.x0 == B.x1 && this.y0 == B.y1;
 		}
 		#endregion
 	}
