@@ -209,6 +209,11 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			#region #property# Line 
+			public override Wins.PathSource.Line Line {
+				get { return new Wins.PathSource.Line2(x0, y0, x2, y2, x1, y1); }
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Cubic 
@@ -522,6 +527,11 @@ namespace Wholemy {
 					}
 					return this.aboveb;
 				}
+			}
+			#endregion
+			#region #property# Line 
+			public override Wins.PathSource.Line Line {
+				get { return new Wins.PathSource.Line3(x0, y0, x2, y2, x3, y3, x1, y1); }
 			}
 			#endregion
 		}
@@ -998,54 +1008,61 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
-		#region #class# Compote 
-		public class Compote {
+		#region #class# Figure 
+		public class Figure {
 			#region #class# End 
-			private class End {
-				public Compote Start;
+			private class Base {
+				public Figure Start;
 				public int Count;
 				#region #new# (Start) 
-				public End(Compote Start) {
+				public Base(Figure Start) {
+					var Line = Start.Line;
 					this.Start = Start;
 					this.Count = 1;
+					this.L = Line.L;
+					this.T = Line.T;
+					this.R = Line.R;
+					this.B = Line.B;
 				}
 				#endregion
+				public double L; public double T; public double R; public double B;
 			}
 			#endregion
-			private End TheEnd;
+			private Base Over;
 			public Inline Line;
-			public Compote Next;
-			public Compote Prev;
-			public Compote AltNext;
-			public Compote AltPrev;
-			public bool Intersect;
-			public int Type;
+			public Figure Next;
+			public Figure Prev;
+			public Figure AltNext;
+			public Figure AltPrev;
 			#region #new# (Compote, Inline) 
-			public Compote(Compote Compote, Inline Inline) {
+			public Figure(Figure Figure, Inline Inline) {
 				this.Line = Inline;
-				if (Compote != null) {
-					this.TheEnd = Compote.TheEnd;
-					this.TheEnd.Count++;
+				if (Figure != null) {
+					var Over = this.Over = Figure.Over; Over.Count++;
+					if (Over.L > Inline.L) Over.L = Inline.L;
+					if (Over.T > Inline.T) Over.T = Inline.T;
+					if (Over.R < Inline.R) Over.R = Inline.R;
+					if (Over.B < Inline.B) Over.B = Inline.B;
 				} else {
-					this.TheEnd = new End(this);
+					this.Over = new Base(this);
 				}
-				if (Compote != null) {
+				if (Figure != null) {
 					#region #debug# 
 #if DEBUG
-					if (Compote.Line.Not != Inline.Not) throw new System.InvalidOperationException();
+					if (Figure.Line.Not != Inline.Not) throw new System.InvalidOperationException();
 #endif
 					#endregion
 					if (Inline.Not) {
-						this.Prev = Compote;
-						this.Next = Compote.Next;
+						this.Prev = Figure;
+						this.Next = Figure.Next;
 						this.Next.Prev = this;
-						Compote.Next = this;
+						Figure.Next = this;
 						var T = this.Next;
 					} else {
-						this.Next = Compote;
-						this.Prev = Compote.Prev;
+						this.Next = Figure;
+						this.Prev = Figure.Prev;
 						this.Prev.Next = this;
-						Compote.Prev = this;
+						Figure.Prev = this;
 						var T = this.Prev;
 					}
 				} else {
@@ -1054,34 +1071,35 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			public Figure Start { get => this.Over.Start; }
 			#region #method# TheStart 
 			public void TheStart() {
-				this.TheEnd.Start = this;
+				this.Over.Start = this;
 			}
 			#endregion
 			#region #method# CutNext 
-			public Compote CutNext() {
+			public Figure CutNext() {
 				var Comb = this.Next;
 				Comb.Prev = this.Prev;
 				Comb.Prev.Next = Comb;
 				this.Prev = this;
 				this.Next = this;
-				this.TheEnd.Count--;
-				if (this.TheEnd.Start == this) this.TheEnd.Start = Comb;
-				this.TheEnd = new End(this);
+				this.Over.Count--;
+				if (this.Over.Start == this) this.Over.Start = Comb;
+				this.Over = new Base(this);
 				return Comb;
 			}
 			#endregion
 			#region #method# Loop(Compote) 
-			public bool Loop(out Compote Compote) {
+			public bool Loop(out Figure Compote) {
 				Compote = this.Next;
-				return this.TheEnd.Start != this;
+				return this.Over.Start != this;
 			}
 			#endregion
 			#region #get# Items 
 			public Inline[] Items {
 				get {
-					var C = this.TheEnd.Count;
+					var C = this.Over.Count;
 					var A = new Inline[C];
 					var I = 1;
 					A[0] = this.Line;
@@ -1094,13 +1112,21 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			private bool Intersect(Figure a) {
+				if (a == null) return false;
+				var A = this.Over;
+				var B = a.Over;
+				if (A == B) throw new System.InvalidOperationException();
+				return (A.R >= B.L && B.R >= A.L && A.B >= B.T && B.B >= A.T);
+			}
 		}
 		#endregion
 		#region #method# Combine(#ref# A, #ref# B) 
-		public static void Combine(ref Compote A, ref Compote B) {
+		public static bool Combine(ref Figure A, ref Figure B) {
 			var AC = A;
 			var BC = B;
-			Inline.Compote ACC = null, BCC = null, acc = null, bcc = null;
+			var RT = false;
+			Inline.Figure ACC = null, BCC = null, acc = null, bcc = null;
 			do {
 				do {
 					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
@@ -1109,11 +1135,11 @@ namespace Wholemy {
 							if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
 							if (AR > 0.0 && AR < 1.0) {
 								AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
-								AC.Line = ai1; new Inline.Compote(AC, ai0);
+								AC.Line = ai1; new Inline.Figure(AC, ai0);
 							}
 							if (BR > 0.0 && BR < 1.0) {
 								BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
-								BC.Line = bi1; new Inline.Compote(BC, bi0);
+								BC.Line = bi1; new Inline.Figure(BC, bi0);
 							}
 						}
 					}
@@ -1126,27 +1152,32 @@ namespace Wholemy {
 						AC.AltNext = BC;
 						BC.AltPrev = AC;
 						if (ACC == null) ACC = AC;
+						RT = true;
 					}
-					if (AC.Line.eq01(BC.Line)) {
+					if (BC.Line.eq10(AC.Line)) {
 						if (BC.AltNext != null || AC.AltPrev != null) throw new System.InvalidOperationException();
 						BC.AltNext = AC;
 						AC.AltPrev = BC;
 						if (BCC == null) BCC = BC;
+						RT = true;
 					}
 				} while (BC.Loop(out BC));
 			} while (AC.Loop(out AC));
-			AC = ACC;
-			do {
-				bcc = new Inline.Compote(bcc, AC.Line);
-				if (AC.AltPrev != null) AC = AC.AltPrev; else AC = AC.Prev;
-			} while (AC != ACC);
-			BC = BCC;
-			do {
-				acc = new Inline.Compote(acc, BC.Line);
-				if (BC.AltPrev != null) BC = BC.AltPrev; else BC = BC.Prev;
-			} while (BC != BCC);
-			A = AC;
-			B = BC;
+			if (RT) {
+				AC = ACC;
+				do {
+					bcc = new Inline.Figure(bcc, AC.Line);
+					if (AC.AltPrev != null) AC = AC.AltPrev; else AC = AC.Prev;
+				} while (AC != ACC);
+				BC = BCC;
+				do {
+					acc = new Inline.Figure(acc, BC.Line);
+					if (BC.AltPrev != null) BC = BC.AltPrev; else BC = BC.Prev;
+				} while (BC != BCC);
+				A = acc;
+				B = bcc;
+			}
+			return RT;
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -1691,6 +1722,11 @@ namespace Wholemy {
 		#region #method# eq01(B) 
 		public bool eq01(Inline B) {
 			return this.x0 == B.x1 && this.y0 == B.y1;
+		}
+		#endregion
+		#region #property# Line 
+		public virtual Wins.PathSource.Line Line {
+			get { return new Wins.PathSource.Line(x0, y0, x1, y1); }
 		}
 		#endregion
 	}
