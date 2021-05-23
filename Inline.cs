@@ -214,6 +214,12 @@ namespace Wholemy {
 				get { return new Wins.PathSource.Line2(x0, y0, x2, y2, x1, y1); }
 			}
 			#endregion
+			#region #method# ToString 
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"Q x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Cubic 
@@ -532,6 +538,12 @@ namespace Wholemy {
 			#region #property# Line 
 			public override Wins.PathSource.Line Line {
 				get { return new Wins.PathSource.Line3(x0, y0, x2, y2, x3, y3, x1, y1); }
+			}
+			#endregion
+			#region #method# ToString 
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"C x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x3={(this.x3).ToString("R", I)} y3={(this.y3).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
 			}
 			#endregion
 		}
@@ -1112,7 +1124,7 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			private bool Intersect(Figure a) {
+			public bool Intersect(Figure a) {
 				if (a == null) return false;
 				var A = this.Over;
 				var B = a.Over;
@@ -1135,11 +1147,11 @@ namespace Wholemy {
 							if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
 							if (AR > 0.0 && AR < 1.0) {
 								AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
-								AC.Line = ai1; new Inline.Figure(AC, ai0);
+								AC.Line = ai1; AC = new Inline.Figure(AC, ai0);
 							}
 							if (BR > 0.0 && BR < 1.0) {
 								BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
-								BC.Line = bi1; new Inline.Figure(BC, bi0);
+								BC.Line = bi1; BC = new Inline.Figure(BC, bi0);
 							}
 						}
 					}
@@ -1151,25 +1163,25 @@ namespace Wholemy {
 						if (AC.AltNext != null || BC.AltPrev != null) throw new System.InvalidOperationException();
 						AC.AltNext = BC;
 						BC.AltPrev = AC;
-						if (ACC == null) ACC = AC;
+						if (ACC == null) ACC = BC;
 						RT = true;
 					}
 					if (BC.Line.eq10(AC.Line)) {
 						if (BC.AltNext != null || AC.AltPrev != null) throw new System.InvalidOperationException();
 						BC.AltNext = AC;
 						AC.AltPrev = BC;
-						if (BCC == null) BCC = BC;
+						if (BCC == null) BCC = AC;
 						RT = true;
 					}
 				} while (BC.Loop(out BC));
 			} while (AC.Loop(out AC));
 			if (RT) {
-				AC = ACC;
+				ACC = AC;
 				do {
 					bcc = new Inline.Figure(bcc, AC.Line);
 					if (AC.AltPrev != null) AC = AC.AltPrev; else AC = AC.Prev;
 				} while (AC != ACC);
-				BC = BCC;
+				BCC = BC;
 				do {
 					acc = new Inline.Figure(acc, BC.Line);
 					if (BC.AltPrev != null) BC = BC.AltPrev; else BC = BC.Prev;
@@ -1365,7 +1377,7 @@ namespace Wholemy {
 		#endregion
 
 		#region #method# Intersect(A, #ref#AX, #ref#AY, B, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
 			bool O;
 			A = A.Pastle;
 			B = B.Pastle;
@@ -1425,7 +1437,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(A, #ref#AR, B, #ref#BR, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AR, Inline B, ref double BR, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+		public static bool Intersect(Inline A, ref double AR, Inline B, ref double BR, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
 			bool O;
 			A = A.Pastle;
 			B = B.Pastle;
@@ -1485,7 +1497,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
 			bool O;
 			A = A.Pastle;
 			B = B.Pastle;
@@ -1654,7 +1666,7 @@ namespace Wholemy {
 		#region #method# ToString 
 		public override string ToString() {
 			var I = System.Globalization.CultureInfo.InvariantCulture;
-			return $" x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)} Depth = {(this.Depth).ToString(I)} Root = {(this.Root).ToString("R", I)} X = {(this.X).ToString("R", I)} Y = {(this.Y).ToString("R", I)}";
+			return $"L x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
 		}
 		#endregion
 		#region #invisible# #get# Pastle 
