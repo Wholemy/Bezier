@@ -1020,9 +1020,12 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
+		private class Holder {
+
+		}
 		#region #class# Figure 
 		public class Figure {
-			#region #class# End 
+			#region #class# Base 
 			private class Base {
 				public Figure Start;
 				public int Count;
@@ -1040,14 +1043,42 @@ namespace Wholemy {
 				public double L; public double T; public double R; public double B;
 			}
 			#endregion
+			public class Type {
+				public Type Next;
+				public int Root;
+				public Figure Base;
+				public Type(Type Next, int Root, Figure Base) {
+					this.Next = Next;
+					this.Root = Root;
+					this.Base = Base;
+				}
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				public bool Exists(int Root) {
+					var T = this;
+					while (T != null) { if (T.Root == Root) return true; T = T.Next; }
+					return false;
+				}
+			}
+			public void Set(int Root, Figure Base) {
+				if (AltType != null) {
+					if (AltType.Exists(Root)) throw new System.InvalidOperationException();
+				}
+				AltType = new Type(AltType, Root, Base);
+			}
 			private Base Over;
 			public Inline Line;
 			public Figure Next;
 			public Figure Prev;
 			public Figure AltNext;
 			public Figure AltPrev;
+			private Type AltType;
+			public int AltIndex;
 			#region #new# (Compote, Inline) 
-			public Figure(Figure Figure, Inline Inline) {
+			public Figure(Figure Figure, Inline Inline, bool Invert = false) {
 				this.Line = Inline;
 				if (Figure != null) {
 					var Over = this.Over = Figure.Over; Over.Count++;
@@ -1064,7 +1095,8 @@ namespace Wholemy {
 					if (Figure.Line.Not != Inline.Not) throw new System.InvalidOperationException();
 #endif
 					#endregion
-					if (Inline.Not) {
+					Invert ^= Inline.Not;
+					if (Invert) {
 						this.Prev = Figure;
 						this.Next = Figure.Next;
 						this.Next.Prev = this;
@@ -1084,6 +1116,7 @@ namespace Wholemy {
 			}
 			#endregion
 			public Figure Start { get => this.Over.Start; }
+			public bool IsStart { get { return this == this.Over.Start; } set { if (value) this.Over.Start = this; } }
 			#region #method# TheStart 
 			public void TheStart() {
 				this.Over.Start = this;
@@ -1111,19 +1144,33 @@ namespace Wholemy {
 			#region #get# Items 
 			public Inline[] Items {
 				get {
-					var C = this.Over.Count;
+					var C = 1;
+					var I = this.Next;
+					while (I != this) { C++; I = I.Next; }
 					var A = new Inline[C];
-					var I = 1;
-					A[0] = this.Line;
-					var B = this;
-					while (B.Next != this) {
-						B = B.Next;
-						A[I++] = B.Line;
+					var i = 0;
+					A[i++] = this.Line;
+					I = this.Next;
+					while (I != this) {
+						A[i++] = I.Line;
+						I = I.Next;
 					}
 					return A;
 				}
 			}
 			#endregion
+			public Figure AltBig {
+				get {
+					var T = this;
+					var tt = this.AltPrev;
+					while (tt != null) {
+						if (tt.Count >= T.Count) { T = tt; }
+						tt = tt.AltPrev;
+					}
+					return T;
+				}
+			}
+			public int Count { get { return Over.Count; } }
 			public bool Intersect(Figure a) {
 				if (a == null) return false;
 				var A = this.Over;
@@ -1131,65 +1178,81 @@ namespace Wholemy {
 				if (A == B) throw new System.InvalidOperationException();
 				return (A.R >= B.L && B.R >= A.L && A.B >= B.T && B.B >= A.T);
 			}
+			public void ToAlt(Figure B, ref Figure Alt) {
+				if (this.AltNext != null || this.AltPrev != null || this.AltIndex > 0) throw new System.InvalidOperationException();
+				this.AltNext = B;
+				if (Alt != null) {
+					this.AltPrev = Alt;
+					this.AltIndex = Alt.AltIndex + 1;
+				}
+				Alt = this;
+			}
+			//public void ToB(Figure A, ref Figure Alt) {
+			//	if (this.BNext != null || this.BPrev != null || this.BIndex > 0) throw new System.InvalidOperationException();
+			//	this.BNext = A;
+			//	if (Alt != null) {
+			//		this.BPrev = Alt;
+			//		this.BIndex = Alt.BIndex + 1;
+			//	}
+			//	Alt = this;
+			//}
 		}
 		#endregion
 		#region #method# Combine(#ref# A, #ref# B) 
-		public static bool Combine(ref Figure A, ref Figure B) {
+		public static Figure Combine(Figure A, Figure B) {
 			var AC = A;
 			var BC = B;
-			var RT = false;
-			Inline.Figure ACC = null, BCC = null, acc = null, bcc = null;
-			do {
-				do {
+			Figure acc = null, bcc = null;
+			Figure AB = null, BA = null;
+			var acCount = AC.Count;
+			var bcCount = BC.Count;
+			for (var ac = 0; ac < acCount; ac++) {
+				for (var bc = 0; bc < bcCount; bc++) {
 					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
-					if (AC.Line.Neq(BC.Line)) {
-						if (Inline.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
-							if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
-							if (AR > 0.0 && AR < 1.0) {
-								AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
-								AC.Line = ai1; AC = new Inline.Figure(AC, ai0);
-							}
-							if (BR > 0.0 && BR < 1.0) {
-								BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
-								BC.Line = bi1; BC = new Inline.Figure(BC, bi0);
-							}
+					if (AC.Line.Neq(BC.Line) && Inline.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
+						if (BR > 0.0 && BR < 1.0) {
+							BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
+							BC.Line = bi1; BC = new Figure(BC, bi0); bcCount++;
+						}
+						if (AR > 0.0 && AR < 1.0) {
+							AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
+							AC.Line = ai1; AC = new Figure(AC, ai0); acCount++;
 						}
 					}
-				} while (BC.Loop(out BC));
-			} while (AC.Loop(out AC));
+					BC = BC.Next;
+				}
+				AC = AC.Next;
+			}
+			var ACC = AC;
+			var BCC = BC;
 			do {
 				do {
-					if (AC.Line.eq10(BC.Line)) {
-						if (AC.AltNext != null || BC.AltPrev != null) throw new System.InvalidOperationException();
-						AC.AltNext = BC;
-						BC.AltPrev = AC;
-						if (ACC == null) ACC = BC;
-						RT = true;
-					}
-					if (BC.Line.eq10(AC.Line)) {
-						if (BC.AltNext != null || AC.AltPrev != null) throw new System.InvalidOperationException();
-						BC.AltNext = AC;
-						AC.AltPrev = BC;
-						if (BCC == null) BCC = AC;
-						RT = true;
-					}
-				} while (BC.Loop(out BC));
-			} while (AC.Loop(out AC));
-			if (RT) {
-				ACC = AC;
-				do {
-					bcc = new Inline.Figure(bcc, AC.Line);
-					if (AC.AltPrev != null) AC = AC.AltPrev; else AC = AC.Prev;
-				} while (AC != ACC);
-				BCC = BC;
-				do {
-					acc = new Inline.Figure(acc, BC.Line);
-					if (BC.AltPrev != null) BC = BC.AltPrev; else BC = BC.Prev;
+					if (AC.Line.eq10(BC.Line)) { AC.ToAlt(BC, ref AB); }
+					if (BC.Line.eq10(AC.Line)) { BC.ToAlt(AC, ref BA); }
+					BC = BC.Next;
 				} while (BC != BCC);
-				A = acc;
-				B = bcc;
+				AC = AC.Next;
+			} while (AC != ACC);
+			acc = null;
+			bcc = null;
+			if (AB != null) {
+				var I = 1;
+				var ab = AB;
+				while (ab != null) {
+					var aa = ab;
+					do {
+						acc = new Inline.Figure(acc, aa.Line, true);
+						//aa.Set(I, acc);
+						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
+					} while (aa != ab);
+					acc.AltPrev = bcc;
+					bcc = acc; acc = null;
+					I++;
+					ab = ab.AltPrev;
+				}
+				return bcc;
 			}
-			return RT;
+			return null;
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -1376,128 +1439,8 @@ namespace Wholemy {
 		}
 		#endregion
 
-		#region #method# Intersect(A, #ref#AX, #ref#AY, B, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AX, ref double AY, Inline B, ref double BX, ref double BY, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
-			bool O;
-			A = A.Pastle;
-			B = B.Pastle;
-			var depth = Dmin;
-			var Abak = A;
-			var Bbak = B;
-			Inline PA = null, PB = null;
-			var PL = double.MaxValue;
-			if (A.Intersect(B)) {
-			Next:
-				IntersectFor(ref A, ref B, depth, bound);
-				IntersectEnd(ref A, ref B, bound);
-				var L0 = Correction0(A, B, out var A0, out var B0);
-				var L1 = Correction1(A, B, out var A1, out var B1);
-				var L2 = Correction2(A, B, out var A2, out var B2);
-				if (L0 < L1 && L0 < L2) {
-					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
-				} else if (L1 < L2) {
-					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
-				} else {
-					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
-				}
-				var PAR = System.Math.Round(PA.Root, 1);
-				var PBR = System.Math.Round(PB.Root, 1);
-				Abak.Get(PAR, out var PAX, out var PAY);
-				Bbak.Get(PBR, out var PBX, out var PBY);
-				L0 = Len(PAX - PBX, PAY - PBY);
-				L1 = Len(PA.X - PBX, PA.Y - PBY);
-				L2 = Len(PAX - PB.X, PAY - PB.Y);
-				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
-					PL = L0;
-					AX = PAX; AY = PAY;
-					BX = PBX; BY = PBY;
-				} else if (L1 <= PL && L1 <= L2) {
-					PL = L1;
-					AX = PA.X; AY = PA.Y;
-					BX = PBX; BY = PBY;
-				} else if (L2 <= PL) {
-					PL = L2;
-					AX = PAX; AY = PAY;
-					BX = PB.X; BY = PB.Y;
-				} else {
-					AX = PA.X; AY = PA.Y;
-					BX = PB.X; BY = PB.Y;
-				}
-				if (PL <= Lmin) {
-					return true;
-				}
-				if (depth < Dmax) {
-					depth++;
-					A = Abak;
-					B = Bbak;
-					goto Next;
-				}
-			}
-			return false;
-		}
-		#endregion
-		#region #method# Intersect(A, #ref#AR, B, #ref#BR, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AR, Inline B, ref double BR, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
-			bool O;
-			A = A.Pastle;
-			B = B.Pastle;
-			var depth = Dmin;
-			var Abak = A;
-			var Bbak = B;
-			Inline PA = null, PB = null;
-			var PL = double.MaxValue;
-			if (A.Intersect(B)) {
-			Next:
-				IntersectFor(ref A, ref B, depth, bound);
-				IntersectEnd(ref A, ref B, bound);
-				var L0 = Correction0(A, B, out var A0, out var B0);
-				var L1 = Correction1(A, B, out var A1, out var B1);
-				var L2 = Correction2(A, B, out var A2, out var B2);
-				if (L0 < L1 && L0 < L2) {
-					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
-				} else if (L1 < L2) {
-					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
-				} else {
-					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
-				}
-				var PAR = System.Math.Round(PA.Root, 1);
-				var PBR = System.Math.Round(PB.Root, 1);
-				Abak.Get(PAR, out var PAX, out var PAY);
-				Bbak.Get(PBR, out var PBX, out var PBY);
-				L0 = Len(PAX - PBX, PAY - PBY);
-				L1 = Len(PA.X - PBX, PA.Y - PBY);
-				L2 = Len(PAX - PB.X, PAY - PB.Y);
-				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
-					PL = L0;
-					AR = PAR;
-					BR = PBR;
-				} else if (L1 <= PL && L1 <= L2) {
-					PL = L1;
-					AR = PA.Root;
-					BR = PBR;
-				} else if (L2 <= PL) {
-					PL = L2;
-					AR = PAR;
-					BR = PB.Root;
-				} else {
-					AR = PA.Root;
-					BR = PB.Root;
-				}
-				if (PL <= Lmin) {
-					return true;
-				}
-				if (depth < Dmax) {
-					depth++;
-					A = Abak;
-					B = Bbak;
-					goto Next;
-				}
-			}
-			return false;
-		}
-		#endregion
 		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.25, int Dmin = 5, int Dmax = 10, int bound = 4) {
+		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.1, int Dmin = 5, int Dmax = 10, int bound = 8) {
 			bool O;
 			A = A.Pastle;
 			B = B.Pastle;
@@ -1544,6 +1487,7 @@ namespace Wholemy {
 					BR = PB.Root; BX = PB.X; BY = PB.Y;
 				}
 				if (PL <= Lmin) {
+					if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
 					return true;
 				}
 				if (depth < Dmax) {
@@ -1723,7 +1667,7 @@ namespace Wholemy {
 #endif
 		#endregion
 		public bool Neq(Inline B) {
-			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
 		#region #method# eq10(B) 
