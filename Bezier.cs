@@ -1,9 +1,9 @@
 namespace Wholemy {
-	#region #class# Inline 
-	public class Inline {
+	#region #class# Bezier 
+	public class Bezier {
 		public const int MaxDepth = 64;
 		#region #class# Quadratic 
-		public class Quadratic : Inline {
+		public class Quadratic : Bezier {
 			public readonly double x2;
 			public readonly double y2;
 			private readonly double ax2;
@@ -11,7 +11,7 @@ namespace Wholemy {
 			private readonly double bx2;
 			private readonly double by2;
 			#region #new# (x0, y0, x1, y1, x2, y2, Root = 0.5, Size = 0.5, O = null) 
-			public Quadratic(double x0, double y0, double x1, double y1, double x2, double y2, double Root = 0.5, double Size = 0.5, Inline O = null, bool Not = false) : base(O, Root, Size, x0, y0, x2, y2, Not) {
+			public Quadratic(double x0, double y0, double x1, double y1, double x2, double y2, double Root = 0.5, double Size = 0.5, Bezier O = null, bool Not = false) : base(O, Root, Size, x0, y0, x2, y2, Not) {
 				this.x2 = x1;
 				this.y2 = y1;
 				var v = x0;
@@ -41,7 +41,7 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #override# #method# Div(root, b0, b1) 
-			public override void Div(double root, out Inline b0, out Inline b1) {
+			public override void Div(double root, out Bezier b0, out Bezier b1) {
 				var x00 = x0;
 				var y00 = y0;
 				var x11 = x2;
@@ -67,7 +67,7 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Div(root, X, Y, b0, b1) 
-			public override void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+			public override void Div(double root, double X, double Y, out Bezier b0, out Bezier b1) {
 				var x00 = x0;
 				var y00 = y0;
 				var x11 = x2;
@@ -118,7 +118,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Pastle {
+			public override Bezier Pastle {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -133,7 +133,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Return {
+			public override Bezier Return {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -148,7 +148,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Invert {
+			public override Bezier Invert {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -165,7 +165,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Below {
+			public override Bezier Below {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -190,7 +190,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Above {
+			public override Bezier Above {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -223,7 +223,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #class# Cubic 
-		public class Cubic : Inline {
+		public class Cubic : Bezier {
 			private static readonly double Arc = 4.0 / 3.0 * System.Math.Tan(System.Math.PI * 0.125);
 			public readonly double x2;
 			public readonly double y2;
@@ -296,7 +296,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public Cubic(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double Root = 0.5, double Size = 0.5, Inline O = null, bool Not = false) : base(O, Root, Size, x0, y0, x3, y3, Not) {
+			public Cubic(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double Root = 0.5, double Size = 0.5, Bezier O = null, bool Not = false) : base(O, Root, Size, x0, y0, x3, y3, Not) {
 				this.x2 = x1;
 				this.y2 = y1;
 				this.x3 = x2;
@@ -338,7 +338,7 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #override# #method# Div(root, b0, b1) 
-			public override void Div(double root, out Inline b0, out Inline b1) {
+			public override void Div(double root, out Bezier b0, out Bezier b1) {
 				var x00 = x0;
 				var y00 = y0;
 				var x11 = x2;
@@ -372,7 +372,7 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Div(root, X, Y, b0, b1) 
-			public override void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+			public override void Div(double root, double X, double Y, out Bezier b0, out Bezier b1) {
 				var x00 = x0;
 				var y00 = y0;
 				var x11 = x2;
@@ -444,7 +444,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Pastle {
+			public override Bezier Pastle {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -459,7 +459,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Return {
+			public override Bezier Return {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -474,7 +474,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Invert {
+			public override Bezier Invert {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -491,7 +491,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Below {
+			public override Bezier Below {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -516,7 +516,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public override Inline Above {
+			public override Bezier Above {
 				#region #through# 
 #if TRACE
 				[System.Diagnostics.DebuggerStepThrough]
@@ -561,7 +561,7 @@ namespace Wholemy {
 		public double X;
 		public double Y;
 		public readonly int Depth;
-		private readonly Inline Parent;
+		private readonly Bezier Parent;
 		public readonly bool Not;
 		#region #property# RootBelow 
 		public double RootBelow {
@@ -589,7 +589,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline DepthAbove {
+		public Bezier DepthAbove {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -615,7 +615,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline DepthBelow {
+		public Bezier DepthBelow {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -641,8 +641,8 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		private Inline belowb;
-		public virtual Inline Below {
+		private Bezier belowb;
+		public virtual Bezier Below {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -652,9 +652,9 @@ namespace Wholemy {
 				if (this.belowb == null) {
 					var S = this.Size * 0.5;
 					if (this.Not) {
-						this.belowb = new Inline(this.X, this.Y, this.x1, this.y1, this.Root + S, S, this, this.Not);
+						this.belowb = new Bezier(this.X, this.Y, this.x1, this.y1, this.Root + S, S, this, this.Not);
 					} else {
-						this.belowb = new Inline(this.x0, this.y0, this.X, this.Y, this.Root - S, S, this, this.Not);
+						this.belowb = new Bezier(this.x0, this.y0, this.X, this.Y, this.Root - S, S, this, this.Not);
 					}
 				}
 				return this.belowb;
@@ -667,8 +667,8 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		private Inline aboveb;
-		public virtual Inline Above {
+		private Bezier aboveb;
+		public virtual Bezier Above {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -678,9 +678,9 @@ namespace Wholemy {
 				if (this.aboveb == null) {
 					var S = this.Size * 0.5;
 					if (this.Not) {
-						this.aboveb = new Inline(this.x0, this.y0, this.X, this.Y, this.Root - S, S, this, this.Not);
+						this.aboveb = new Bezier(this.x0, this.y0, this.X, this.Y, this.Root - S, S, this, this.Not);
 					} else {
-						this.aboveb = new Inline(this.X, this.Y, this.x1, this.y1, this.Root + S, S, this, this.Not);
+						this.aboveb = new Bezier(this.X, this.Y, this.x1, this.y1, this.Root + S, S, this, this.Not);
 					}
 				}
 				return this.aboveb;
@@ -693,7 +693,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline OtherAbove {
+		public Bezier OtherAbove {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -714,7 +714,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline OtherBelow {
+		public Bezier OtherBelow {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -735,7 +735,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline MaxBelow {
+		public Bezier MaxBelow {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -753,7 +753,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public Inline MaxAbove {
+		public Bezier MaxAbove {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
@@ -766,7 +766,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# OtherGreater(B) 
-		public Inline OtherGreater(Inline B) {
+		public Bezier OtherGreater(Bezier B) {
 			var OA = this.OtherAbove;
 			if (OA != null && OA.Greater(this, B)) return OA;
 			var OB = this.OtherBelow;
@@ -776,7 +776,7 @@ namespace Wholemy {
 		#endregion
 		#region #method# Greater(a, b) 
 		/// <summary>Возвращает истину, если X и Y этой линии больше чем A и меньше или равно B)</summary>
-		public bool Greater(Inline a, Inline b, bool equ = false) {
+		public bool Greater(Bezier a, Bezier b, bool equ = false) {
 			var aX = a.X;
 			var aY = a.Y;
 			var bX = b.X;
@@ -810,7 +810,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		private Inline(Inline O, double RangeBelow, double RangeAbove, double x0, double y0, double x1, double y1, bool Not) {
+		private Bezier(Bezier O, double RangeBelow, double RangeAbove, double x0, double y0, double x1, double y1, bool Not) {
 			this.Parent = O;
 			this.Root = RangeBelow;
 			this.Size = RangeAbove;
@@ -828,7 +828,7 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public Inline(double x0, double y0, double x1, double y1, double Root = 0.5, double Size = 0.5, Inline O = null, bool Not = false) {
+		public Bezier(double x0, double y0, double x1, double y1, double Root = 0.5, double Size = 0.5, Bezier O = null, bool Not = false) {
 			this.Parent = O;
 			this.Root = Root;
 			this.Size = Size;
@@ -845,7 +845,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #virtual# #method# Div(root, b0, b1) 
-		public virtual void Div(double root, out Inline b0, out Inline b1) {
+		public virtual void Div(double root, out Bezier b0, out Bezier b1) {
 			var x00 = x0;
 			var y00 = y0;
 			var x11 = x1;
@@ -853,8 +853,8 @@ namespace Wholemy {
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
 			var S = this.Size * 0.5;
-			var A = new Inline(x00, y00, x01, y01, this.Root - S, S, this, this.Not);
-			var B = new Inline(x01, y01, x11, y11, this.Root + S, S, this, this.Not);
+			var A = new Bezier(x00, y00, x01, y01, this.Root - S, S, this, this.Not);
+			var B = new Bezier(x01, y01, x11, y11, this.Root + S, S, this, this.Not);
 			if (this.Not) {
 				this.aboveb = b1 = B;
 				this.belowb = b0 = A;
@@ -865,7 +865,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #virtual# #method# Div(root, X, Y, b0, b1) 
-		public virtual void Div(double root, double X, double Y, out Inline b0, out Inline b1) {
+		public virtual void Div(double root, double X, double Y, out Bezier b0, out Bezier b1) {
 			var x00 = x0;
 			var y00 = y0;
 			var x11 = x1;
@@ -876,8 +876,8 @@ namespace Wholemy {
 			|| System.Math.Round(y01, 1) != System.Math.Round(Y, 1))
 				throw new System.InvalidOperationException();
 			var S = this.Size * 0.5;
-			var A = new Inline(x00, y00, X, Y, this.Root - S, S, this, this.Not);
-			var B = new Inline(X, Y, x11, y11, this.Root + S, S, this, this.Not);
+			var A = new Bezier(x00, y00, X, Y, this.Root - S, S, this, this.Not);
+			var B = new Bezier(X, Y, x11, y11, this.Root + S, S, this, this.Not);
 			if (this.Not) {
 				this.aboveb = b1 = B;
 				this.belowb = b0 = A;
@@ -900,7 +900,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Len(a) 
-		private double Len(Inline a) {
+		private double Len(Bezier a) {
 			var x1 = this.X - a.X;
 			var y1 = this.Y - a.Y;
 			return System.Math.Sqrt(x1 * x1 + y1 * y1);
@@ -912,14 +912,14 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(a) 
-		private bool Intersect(Inline a) {
+		private bool Intersect(Bezier a) {
 			return (a.R >= this.L && this.R >= a.L && a.B >= this.T && this.B >= a.T);
 		}
 		#endregion
 		#region #class# Chance 
 		private class Chance {
 			public readonly int Cout;
-			public readonly Inline Line;
+			public readonly Bezier Line;
 			public readonly Chance Next;
 			private Chance Prev;
 			public bool ExistsBelow;
@@ -930,7 +930,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			private Chance(Chance Next, Inline Line) {
+			private Chance(Chance Next, Bezier Line) {
 				this.Line = Line;
 				this.Next = Next;
 				this.Cout = (Next != null) ? Next.Cout + 1 : 1;
@@ -948,7 +948,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public static Chance operator +(Chance Next, Inline Line) {
+			public static Chance operator +(Chance Next, Bezier Line) {
 				return new Chance(Next, Line);
 			}
 			#endregion
@@ -958,7 +958,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public static implicit operator Chance(Inline Line) {
+			public static implicit operator Chance(Bezier Line) {
 				return new Chance(null, Line);
 			}
 			#endregion
@@ -988,7 +988,7 @@ namespace Wholemy {
 			#region #method# Exists 
 			public Chance Exists(int bound) {
 				Chance R = null;
-				Inline L;
+				Bezier L;
 				var C = this.Prev;
 				var S = this;
 				int Min = 0, Max = 0;
@@ -1020,9 +1020,6 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
-		private class Holder {
-
-		}
 		#region #class# Figure 
 		public class Figure {
 			#region #class# Base 
@@ -1044,7 +1041,7 @@ namespace Wholemy {
 			}
 			#endregion
 			private Base Over;
-			public Inline Line;
+			public Bezier Line;
 			public Figure Next;
 			public Figure Prev;
 			public Figure AltNext;
@@ -1052,7 +1049,7 @@ namespace Wholemy {
 			public int AltTyped;
 			public int AltIndex;
 			#region #new# (Compote, Inline) 
-			public Figure(Figure Figure, Inline Inline, bool Invert = false) {
+			public Figure(Figure Figure, Bezier Inline, bool Invert = false) {
 				this.Line = Inline;
 				if (Figure != null) {
 					var Over = this.Over = Figure.Over; Over.Count++;
@@ -1092,12 +1089,12 @@ namespace Wholemy {
 			public Figure Start { get => this.Over.Start; }
 			public bool IsStart { get { return this == this.Over.Start; } set { if (value) this.Over.Start = this; } }
 			#region #get# Items 
-			public Inline[] Items {
+			public Bezier[] Items {
 				get {
 					var C = 1;
 					var I = this.Next;
 					while (I != this) { C++; I = I.Next; }
-					var A = new Inline[C];
+					var A = new Bezier[C];
 					var i = 0;
 					A[i++] = this.Line;
 					I = this.Next;
@@ -1150,7 +1147,7 @@ namespace Wholemy {
 			for (var ac = 0; ac < acCount; ac++) {
 				for (var bc = 0; bc < bcCount; bc++) {
 					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
-					if (AC.Line.Neq(BC.Line) && Inline.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
+					if (AC.Line.Neq(BC.Line) && Bezier.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
 						if (BR > 0.0 && BR < 1.0) {
 							BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
 							BC.Line = bi1; BC = new Figure(BC, bi0); bcCount++;
@@ -1183,7 +1180,7 @@ namespace Wholemy {
 					var aa = ab;
 					var ex = false;
 					do {
-						acc = new Inline.Figure(acc, aa.Line, true);
+						acc = new Bezier.Figure(acc, aa.Line, true);
 						if (aa.AltTyped == 0) ex = true;
 						aa.AltTyped = I;
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
@@ -1203,7 +1200,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
-		private bool Intersect(Inline b, int depth, int bound) {
+		private bool Intersect(Bezier b, int depth, int bound) {
 			if (this.Intersect(b)) {
 				if (depth > 0) {
 					Chance CA = this;
@@ -1230,8 +1227,8 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# IntersectFor(Aref, Bref, depth, bound) 
-		private static void IntersectFor(ref Inline Aref, ref Inline Bref, int depth, int bound) {
-			Inline AB, AA, BB, BA;
+		private static void IntersectFor(ref Bezier Aref, ref Bezier Bref, int depth, int bound) {
+			Bezier AB, AA, BB, BA;
 			var A = Aref;
 			var B = Bref;
 		Next:
@@ -1254,7 +1251,7 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# IntersectEnd(Aref, Bref, bound) 
-		private static bool IntersectEnd(ref Inline Aref, ref Inline Bref, int bound) {
+		private static bool IntersectEnd(ref Bezier Aref, ref Bezier Bref, int bound) {
 			var A = Aref;
 			var B = Bref;
 			if (A.Intersect(B)) {
@@ -1285,8 +1282,8 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Correction0(A, B, Aout, Bout) 
-		private static double Correction0(Inline A, Inline B, out Inline Aout, out Inline Bout) {
-			Inline AB, AA, BB, BA; bool O;
+		private static double Correction0(Bezier A, Bezier B, out Bezier Aout, out Bezier Bout) {
+			Bezier AB, AA, BB, BA; bool O;
 			do {
 				O = false;
 				AA = A.OtherGreater(B);
@@ -1321,8 +1318,8 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Correction1(A, B, Aout, Bout) 
-		private static double Correction1(Inline A, Inline B, out Inline Aout, out Inline Bout) {
-			Inline AB, AA, BB, BA; bool O;
+		private static double Correction1(Bezier A, Bezier B, out Bezier Aout, out Bezier Bout) {
+			Bezier AB, AA, BB, BA; bool O;
 			do {
 				O = false;
 				BB = B.OtherGreater(A);
@@ -1354,8 +1351,8 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Correction2(A, B, Aout, Bout) 
-		private static double Correction2(Inline A, Inline B, out Inline Aout, out Inline Bout) {
-			Inline AB, AA, BB, BA; bool O;
+		private static double Correction2(Bezier A, Bezier B, out Bezier Aout, out Bezier Bout) {
+			Bezier AB, AA, BB, BA; bool O;
 			do {
 				O = false;
 				AA = A.OtherGreater(B);
@@ -1387,14 +1384,14 @@ namespace Wholemy {
 		#endregion
 
 		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
-		public static bool Intersect(Inline A, ref double AR, ref double AX, ref double AY, Inline B, ref double BR, ref double BX, ref double BY, double Lmin = 0.1, int Dmin = 5, int Dmax = 10, int bound = 8) {
+		public static bool Intersect(Bezier A, ref double AR, ref double AX, ref double AY, Bezier B, ref double BR, ref double BX, ref double BY, double Lmin = 0.1, int Dmin = 5, int Dmax = 10, int bound = 8) {
 			bool O;
 			A = A.Pastle;
 			B = B.Pastle;
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
-			Inline PA = null, PB = null;
+			Bezier PA = null, PB = null;
 			var PL = double.MaxValue;
 			if (A.Intersect(B)) {
 			Next:
@@ -1459,7 +1456,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
 		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
-		public static bool Intersect(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
+		public static bool Intersect(ref Bezier Aref, ref Bezier Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			var A = Aref.Pastle;
 			if (Aend) A = A.Return;
@@ -1468,7 +1465,7 @@ namespace Wholemy {
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
-			Inline PA = null, PB = null;
+			Bezier PA = null, PB = null;
 			var PL = double.MaxValue;
 			if (A.Intersect(B)) {
 			Next:
@@ -1514,7 +1511,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
 		/// <returns>Растояние между пересечениями)</returns>
-		public static double IntersectTest(ref Inline Aref, ref Inline Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
+		public static double IntersectTest(ref Bezier Aref, ref Bezier Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
 			var A = Aref.Pastle;
 			if (Aend) A = A.Return;
@@ -1523,7 +1520,7 @@ namespace Wholemy {
 			var depth = Dmin;
 			var Abak = A;
 			var Bbak = B;
-			Inline PA = null, PB = null;
+			Bezier PA = null, PB = null;
 			var PL = double.MaxValue;
 			if (A.Intersect(B)) {
 			Next:
@@ -1566,13 +1563,13 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public virtual Inline Pastle {
+		public virtual Bezier Pastle {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			get => new Inline(x0, y0, x1, y1, Not: this.Not);
+			get => new Bezier(x0, y0, x1, y1, Not: this.Not);
 		}
 		#endregion
 		#region #invisible# #get# Return 
@@ -1581,13 +1578,13 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public virtual Inline Return {
+		public virtual Bezier Return {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			get => new Inline(x0, y0, x1, y1, Not: !this.Not);
+			get => new Bezier(x0, y0, x1, y1, Not: !this.Not);
 		}
 		#endregion
 		#region #invisible# #get# Invert 
@@ -1596,14 +1593,14 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 		#endregion
-		public virtual Inline Invert {
+		public virtual Bezier Invert {
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
 			get {
-				return new Inline(x1, y1, x0, y0, Not: !this.Not);
+				return new Bezier(x1, y1, x0, y0, Not: !this.Not);
 			}
 		}
 		#endregion
@@ -1613,12 +1610,12 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public bool Neq(Inline B) {
+		public bool Neq(Bezier B) {
 			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
 		#region #method# eq10(B) 
-		public bool eq10(Inline B) {
+		public bool eq10(Bezier B) {
 			return this.x1 == B.x0 && this.y1 == B.y0;
 		}
 		#endregion
