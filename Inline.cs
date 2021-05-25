@@ -1043,39 +1043,13 @@ namespace Wholemy {
 				public double L; public double T; public double R; public double B;
 			}
 			#endregion
-			public class Type {
-				public Type Next;
-				public int Root;
-				public Figure Base;
-				public Type(Type Next, int Root, Figure Base) {
-					this.Next = Next;
-					this.Root = Root;
-					this.Base = Base;
-				}
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				public bool Exists(int Root) {
-					var T = this;
-					while (T != null) { if (T.Root == Root) return true; T = T.Next; }
-					return false;
-				}
-			}
-			public void Set(int Root, Figure Base) {
-				if (AltType != null) {
-					if (AltType.Exists(Root)) throw new System.InvalidOperationException();
-				}
-				AltType = new Type(AltType, Root, Base);
-			}
 			private Base Over;
 			public Inline Line;
 			public Figure Next;
 			public Figure Prev;
 			public Figure AltNext;
 			public Figure AltPrev;
-			private Type AltType;
+			public int AltTyped;
 			public int AltIndex;
 			#region #new# (Compote, Inline) 
 			public Figure(Figure Figure, Inline Inline, bool Invert = false) {
@@ -1187,15 +1161,6 @@ namespace Wholemy {
 				}
 				Alt = this;
 			}
-			//public void ToB(Figure A, ref Figure Alt) {
-			//	if (this.BNext != null || this.BPrev != null || this.BIndex > 0) throw new System.InvalidOperationException();
-			//	this.BNext = A;
-			//	if (Alt != null) {
-			//		this.BPrev = Alt;
-			//		this.BIndex = Alt.BIndex + 1;
-			//	}
-			//	Alt = this;
-			//}
 		}
 		#endregion
 		#region #method# Combine(#ref# A, #ref# B) 
@@ -1240,14 +1205,22 @@ namespace Wholemy {
 				var ab = AB;
 				while (ab != null) {
 					var aa = ab;
+					var exists0 = false;
+					var exists1 = false;
 					do {
 						acc = new Inline.Figure(acc, aa.Line, true);
-						//aa.Set(I, acc);
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
 					} while (aa != ab);
-					acc.AltPrev = bcc;
-					bcc = acc; acc = null;
-					I++;
+					if (exists0 && exists1) {
+						acc.AltPrev = bcc?.AltPrev;
+						bcc = acc;
+						I++;
+					} else if (exists0) {
+						acc.AltPrev = bcc;
+						bcc = acc;
+						I++;
+					}
+					acc = null;
 					ab = ab.AltPrev;
 				}
 				return bcc;
