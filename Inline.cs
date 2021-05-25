@@ -1091,30 +1091,6 @@ namespace Wholemy {
 			#endregion
 			public Figure Start { get => this.Over.Start; }
 			public bool IsStart { get { return this == this.Over.Start; } set { if (value) this.Over.Start = this; } }
-			#region #method# TheStart 
-			public void TheStart() {
-				this.Over.Start = this;
-			}
-			#endregion
-			#region #method# CutNext 
-			public Figure CutNext() {
-				var Comb = this.Next;
-				Comb.Prev = this.Prev;
-				Comb.Prev.Next = Comb;
-				this.Prev = this;
-				this.Next = this;
-				this.Over.Count--;
-				if (this.Over.Start == this) this.Over.Start = Comb;
-				this.Over = new Base(this);
-				return Comb;
-			}
-			#endregion
-			#region #method# Loop(Compote) 
-			public bool Loop(out Figure Compote) {
-				Compote = this.Next;
-				return this.Over.Start != this;
-			}
-			#endregion
 			#region #get# Items 
 			public Inline[] Items {
 				get {
@@ -1205,13 +1181,19 @@ namespace Wholemy {
 				var ab = AB;
 				while (ab != null) {
 					var aa = ab;
+					var ex = false;
 					do {
 						acc = new Inline.Figure(acc, aa.Line, true);
+						if (aa.AltTyped == 0) ex = true;
+						aa.AltTyped = I;
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
 					} while (aa != ab);
-					acc.AltPrev = bcc;
-					bcc = acc;
-					I++;
+					if (ex) {
+						acc.AltPrev = bcc;
+						if (bcc != null) acc.AltIndex = bcc.AltIndex + 1;
+						bcc = acc;
+						I++;
+					}
 					acc = null;
 					ab = ab.AltPrev;
 				}
@@ -1638,11 +1620,6 @@ namespace Wholemy {
 		#region #method# eq10(B) 
 		public bool eq10(Inline B) {
 			return this.x1 == B.x0 && this.y1 == B.y0;
-		}
-		#endregion
-		#region #method# eq01(B) 
-		public bool eq01(Inline B) {
-			return this.x0 == B.x1 && this.y0 == B.y1;
 		}
 		#endregion
 		#region #property# Line 
