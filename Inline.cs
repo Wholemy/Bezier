@@ -1205,21 +1205,13 @@ namespace Wholemy {
 				var ab = AB;
 				while (ab != null) {
 					var aa = ab;
-					var exists0 = false;
-					var exists1 = false;
 					do {
 						acc = new Inline.Figure(acc, aa.Line, true);
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
 					} while (aa != ab);
-					if (exists0 && exists1) {
-						acc.AltPrev = bcc?.AltPrev;
-						bcc = acc;
-						I++;
-					} else if (exists0) {
-						acc.AltPrev = bcc;
-						bcc = acc;
-						I++;
-					}
+					acc.AltPrev = bcc;
+					bcc = acc;
+					I++;
 					acc = null;
 					ab = ab.AltPrev;
 				}
