@@ -1023,24 +1023,23 @@ namespace Wholemy {
 		#region #class# Figure 
 		public class Figure {
 			#region #class# Base 
-			private class Base {
-				public Figure Start;
+			public class Base {
 				public int Count;
 				#region #new# (Start) 
 				public Base(Figure Start) {
 					var Line = Start.Line;
-					this.Start = Start;
 					this.Count = 1;
 					this.L = Line.L;
 					this.T = Line.T;
 					this.R = Line.R;
 					this.B = Line.B;
+
 				}
 				#endregion
 				public double L; public double T; public double R; public double B;
 			}
 			#endregion
-			private Base Over;
+			public Base Over;
 			public Bezier Line;
 			public Figure Next;
 			public Figure Prev;
@@ -1048,6 +1047,12 @@ namespace Wholemy {
 			public Figure AltPrev;
 			public int AltTyped;
 			public int AltIndex;
+			/// <summary>Если фигура внутри другой фигуры)</summary>
+			public bool Inside;
+			/// <summary>Если фигура вдоль борта наружной фигуры)</summary>
+			public bool Insect;
+			/// <summary>Тип фигуры устанавливаемый комбайном)</summary>
+			public int Type;
 			#region #new# (Compote, Inline) 
 			public Figure(Figure Figure, Bezier Inline, bool Invert = false) {
 				this.Line = Inline;
@@ -1086,8 +1091,6 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public Figure Start { get => this.Over.Start; }
-			public bool IsStart { get { return this == this.Over.Start; } set { if (value) this.Over.Start = this; } }
 			#region #get# Items 
 			public Bezier[] Items {
 				get {
@@ -1134,10 +1137,51 @@ namespace Wholemy {
 				}
 				Alt = this;
 			}
+			#region #method# SetType(T) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public void SetType(int T) {
+				var I = this; do { I.Type = T; I = I.Next; } while (I != this);
+			}
+			#endregion
+			public Figure Final() {
+				return this;
+			}
 		}
 		#endregion
+		public static bool Inside(Figure A, double X, double Y) {
+			Figure AC = null;
+			var AS = A;
+			do { AC = new Figure(AC, A.Line.Pastle); A = A.Prev; } while (A != AS);
+			var BC = new Figure(null, new Bezier(AC.Over.L - 10.0, AC.Over.T - 10.0, X, Y));
+			int Count = 0;
+			var acCount = AC.Count;
+			var bcCount = BC.Count;
+			for (var ac = 0; ac < acCount; ac++) {
+				for (var bc = 0; bc < bcCount; bc++) {
+					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
+					if (AC.Line.Neq(BC.Line) && Bezier.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
+						if (BR > 0.0 && BR < 1.0) {
+							BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
+							BC.Line = bi1; BC = new Figure(BC, bi0); bcCount++;
+							Count++;
+						}
+						if (AR > 0.0 && AR < 1.0) {
+							AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
+							AC.Line = ai1; AC = new Figure(AC, ai0); acCount++;
+						}
+					}
+					BC = BC.Next;
+				}
+				AC = AC.Next;
+			}
+			return Count % 2 == 1;
+		}
 		#region #method# Combine(#ref# A, #ref# B) 
-		public static Figure Combine(Figure A, Figure B) {
+		public static Figure Combine(ref Figure A, ref Figure B) {
 			var AC = A;
 			var BC = B;
 			Figure acc = null, bcc = null;
@@ -1163,6 +1207,8 @@ namespace Wholemy {
 			}
 			var ACC = AC;
 			var BCC = BC;
+			AC.SetType(1);
+			BC.SetType(2);
 			do {
 				do {
 					if (AC.Line.eq10(BC.Line)) { AC.ToAlt(BC, ref AB); }
@@ -1181,6 +1227,7 @@ namespace Wholemy {
 					var ex = false;
 					do {
 						acc = new Bezier.Figure(acc, aa.Line, true);
+						acc.Type = aa.Type;
 						if (aa.AltTyped == 0) ex = true;
 						aa.AltTyped = I;
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
@@ -1194,6 +1241,8 @@ namespace Wholemy {
 					acc = null;
 					ab = ab.AltPrev;
 				}
+				A = AC;
+				B = BC;
 				return bcc;
 			}
 			return null;
