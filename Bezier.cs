@@ -220,6 +220,29 @@ namespace Wholemy {
 				return $"Q x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
 			}
 			#endregion
+			#region #method# Equ(B) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public override bool Equ(Bezier B) {
+				if (this.GetType() == B.GetType()) {
+					var BB = (Quadratic)B;
+					return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x2 == BB.x2 && this.y2 == BB.y2) && (this.x1 == B.x1 && this.y1 == B.y1);
+				}
+				return false;
+			}
+			#endregion
+			#region #property# Length 
+			public override double Length {
+				get {
+					var x = System.Math.Abs(x0 - X) + System.Math.Abs(x1 - X);
+					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
+					return System.Math.Sqrt(x * x + y * y);
+				}
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Cubic 
@@ -544,6 +567,29 @@ namespace Wholemy {
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
 				return $"C x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x3={(this.x3).ToString("R", I)} y3={(this.y3).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
+			}
+			#endregion
+			#region #method# Equ(B) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public override bool Equ(Bezier B) {
+				if (this.GetType() == B.GetType()) {
+					var BB = (Cubic)B;
+					return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x2 == BB.x2 && this.y2 == BB.y2) && (this.x3 == BB.x3 && this.y3 == BB.y3) && (this.x1 == B.x1 && this.y1 == B.y1);
+				}
+				return false;
+			}
+			#endregion
+			#region #property# Length 
+			public override double Length {
+				get {
+					var x = System.Math.Abs(x0 - X) + System.Math.Abs(x1 - X);
+					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
+					return System.Math.Sqrt(x * x + y * y);
+				}
 			}
 			#endregion
 		}
@@ -899,6 +945,15 @@ namespace Wholemy {
 			Y = y01;
 		}
 		#endregion
+		#region #property# Length 
+		public virtual double Length {
+			get {
+				var x = x0 - x1;
+				var y = y0 - y1;
+				return System.Math.Sqrt(x * x + y * y);
+			}
+		}
+		#endregion
 		#region #method# Len(a) 
 		private double Len(Bezier a) {
 			var x1 = this.X - a.X;
@@ -1025,9 +1080,11 @@ namespace Wholemy {
 			#region #class# Base 
 			public class Base {
 				public int Count;
+				public double Length;
 				#region #new# (Start) 
 				public Base(Figure Start) {
 					var Line = Start.Line;
+					this.Length = Line.Length;
 					this.Count = 1;
 					this.L = Line.L;
 					this.T = Line.T;
@@ -1045,19 +1102,24 @@ namespace Wholemy {
 			public Figure Prev;
 			public Figure AltNext;
 			public Figure AltPrev;
-			public int AltTyped;
+			private int AltTyped;
+			public void Typed(int I,ref bool T) {
+				if (this.AltTyped == 0) T = true;
+				this.AltTyped = I;
+			}
 			public int AltIndex;
-			/// <summary>Если фигура внутри другой фигуры)</summary>
+			/// <summary>Если фигура вдоль и внутри другой фигуры)</summary>
 			public bool Inside;
-			/// <summary>Если фигура вдоль борта наружной фигуры)</summary>
+			/// <summary>Если фигура вдоль борта внутренних)</summary>
 			public bool Insect;
 			/// <summary>Тип фигуры устанавливаемый комбайном)</summary>
 			public int Type;
-			#region #new# (Compote, Inline) 
+			#region #new# (Figure, Inline) 
 			public Figure(Figure Figure, Bezier Inline, bool Invert = false) {
 				this.Line = Inline;
 				if (Figure != null) {
 					var Over = this.Over = Figure.Over; Over.Count++;
+					Over.Length += Inline.Length;
 					if (Over.L > Inline.L) Over.L = Inline.L;
 					if (Over.T > Inline.T) Over.T = Inline.T;
 					if (Over.R < Inline.R) Over.R = Inline.R;
@@ -1114,12 +1176,13 @@ namespace Wholemy {
 					var T = this;
 					var tt = this.AltPrev;
 					while (tt != null) {
-						if (tt.Count >= T.Count) { T = tt; }
+						if (tt.Length > T.Length) { T = tt; }
 						tt = tt.AltPrev;
 					}
 					return T;
 				}
 			}
+			public double Length { get { return Over.Length; } }
 			public int Count { get { return Over.Count; } }
 			public bool Intersect(Figure a) {
 				if (a == null) return false;
@@ -1147,11 +1210,41 @@ namespace Wholemy {
 				var I = this; do { I.Type = T; I = I.Next; } while (I != this);
 			}
 			#endregion
-			public Figure Final() {
-				return this;
+			#region #method# Equ(B) 
+			public bool Equ(Figure B) {
+				var AC = this;
+				var BC = B;
+				var ACC = AC;
+				var BCC = BC;
+				do {
+					do {
+						if(AC.Line.Equ(BC.Line)) return true;
+						BC = BC.Next;
+					} while (BC != BCC);
+					AC = AC.Next;
+				} while (AC != ACC);
+				return false;
 			}
+			#endregion
+			#region #method# Eor(B) 
+			public bool Eor(Figure B) {
+				var AC = this;
+				var BC = B;
+				var ACC = AC;
+				var BCC = BC;
+				do {
+					do {
+						if (AC.Line.Eor(BC.Line)) return true;
+						BC = BC.Next;
+					} while (BC != BCC);
+					AC = AC.Next;
+				} while (AC != ACC);
+				return false;
+			}
+			#endregion
 		}
 		#endregion
+		#region #method# Inside(A, X, Y) 
 		public static bool Inside(Figure A, double X, double Y) {
 			Figure AC = null;
 			var AS = A;
@@ -1180,8 +1273,9 @@ namespace Wholemy {
 			}
 			return Count % 2 == 1;
 		}
-		#region #method# Combine(#ref# A, #ref# B) 
-		public static Figure Combine(ref Figure A, ref Figure B) {
+		#endregion
+		#region #method# Combine(A, B) 
+		public static Figure Combine(Figure A, Figure B) {
 			var AC = A;
 			var BC = B;
 			Figure acc = null, bcc = null;
@@ -1228,8 +1322,7 @@ namespace Wholemy {
 					do {
 						acc = new Bezier.Figure(acc, aa.Line, true);
 						acc.Type = aa.Type;
-						if (aa.AltTyped == 0) ex = true;
-						aa.AltTyped = I;
+						aa.Typed(I,ref ex);
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
 					} while (aa != ab);
 					if (ex) {
@@ -1241,8 +1334,6 @@ namespace Wholemy {
 					acc = null;
 					ab = ab.AltPrev;
 				}
-				A = AC;
-				B = BC;
 				return bcc;
 			}
 			return null;
@@ -1651,6 +1742,26 @@ namespace Wholemy {
 			get {
 				return new Bezier(x1, y1, x0, y0, Not: !this.Not);
 			}
+		}
+		#endregion
+		#region #method# Equ(B) 
+		#region #through# 
+#if TRACE
+		[System.Diagnostics.DebuggerStepThrough]
+#endif
+		#endregion
+		public virtual bool Equ(Bezier B) {
+			return (this.GetType() == B.GetType()) && (this.x0 == B.x0 && this.y0 == B.y0) && (this.x1 == B.x1 && this.y1 == B.y1);
+		}
+		#endregion
+		#region #method# Eor(B) 
+		#region #through# 
+#if TRACE
+		[System.Diagnostics.DebuggerStepThrough]
+#endif
+		#endregion
+		public bool Eor(Bezier B) {
+			return (this.x0 == B.x1 && this.y0 == B.y1) || (this.x1 == B.x0 && this.y1 == B.y0);
 		}
 		#endregion
 		#region #method# Neq(B) 
