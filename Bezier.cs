@@ -220,20 +220,6 @@ namespace Wholemy {
 				return $"Q x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
 			}
 			#endregion
-			#region #method# Equ(B) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override bool Equ(Bezier B) {
-				if (this.GetType() == B.GetType()) {
-					var BB = (Quadratic)B;
-					return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x2 == BB.x2 && this.y2 == BB.y2) && (this.x1 == B.x1 && this.y1 == B.y1);
-				}
-				return false;
-			}
-			#endregion
 			#region #property# Length 
 			public override double Length {
 				get {
@@ -241,6 +227,19 @@ namespace Wholemy {
 					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
 					return System.Math.Sqrt(x * x + y * y);
 				}
+			}
+			#endregion
+			#region #method# Neq(B) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public override bool Neq(Bezier bb) {
+				var B = bb as Quadratic;
+				if (B != null)
+					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+				return false;
 			}
 			#endregion
 		}
@@ -569,20 +568,6 @@ namespace Wholemy {
 				return $"C x0={(this.x0).ToString("R", I)} y0={(this.y0).ToString("R", I)} x2={(this.x2).ToString("R", I)} y2={(this.y2).ToString("R", I)} x3={(this.x3).ToString("R", I)} y3={(this.y3).ToString("R", I)} x1={(this.x1).ToString("R", I)} y1={(this.y1).ToString("R", I)}";
 			}
 			#endregion
-			#region #method# Equ(B) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override bool Equ(Bezier B) {
-				if (this.GetType() == B.GetType()) {
-					var BB = (Cubic)B;
-					return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x2 == BB.x2 && this.y2 == BB.y2) && (this.x3 == BB.x3 && this.y3 == BB.y3) && (this.x1 == B.x1 && this.y1 == B.y1);
-				}
-				return false;
-			}
-			#endregion
 			#region #property# Length 
 			public override double Length {
 				get {
@@ -590,6 +575,19 @@ namespace Wholemy {
 					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
 					return System.Math.Sqrt(x * x + y * y);
 				}
+			}
+			#endregion
+			#region #method# Neq(B) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public override bool Neq(Bezier bb) {
+				var B = bb as Cubic;
+				if (B != null)
+					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x3 != B.x3 || this.y3 != B.y3) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+				return false;
 			}
 			#endregion
 		}
@@ -1233,38 +1231,20 @@ namespace Wholemy {
 				var I = this; do { I.Type = T; I = I.Next; } while (I != this);
 			}
 			#endregion
-			#region #method# Equ(B) 
-			public bool Equ(Figure B) {
+			public bool Neq(Figure B) {
 				var AC = this;
 				var BC = B;
 				var ACC = AC;
 				var BCC = BC;
 				do {
 					do {
-						if (AC.Line.Equ(BC.Line)) return true;
+						if (!AC.Line.Neq(BC.Line)) return false;
 						BC = BC.Next;
 					} while (BC != BCC);
 					AC = AC.Next;
 				} while (AC != ACC);
-				return false;
+				return true;
 			}
-			#endregion
-			#region #method# Eor(B) 
-			public bool Eor(Figure B) {
-				var AC = this;
-				var BC = B;
-				var ACC = AC;
-				var BCC = BC;
-				do {
-					do {
-						if (AC.Line.Eor(BC.Line)) return true;
-						BC = BC.Next;
-					} while (BC != BCC);
-					AC = AC.Next;
-				} while (AC != ACC);
-				return false;
-			}
-			#endregion
 			public double Area {
 				get {
 					Bezier PL, NL;
@@ -1289,40 +1269,6 @@ namespace Wholemy {
 					return A;
 				}
 			}
-		}
-		public virtual void Area(ref double X, ref double Y) {
-			X -= this.x1;
-			Y -= this.y1;
-		}
-		#endregion
-		#region #method# Inside(A, X, Y) 
-		public static bool Inside(Figure A, double X, double Y) {
-			Figure AC = null;
-			var AS = A;
-			do { AC = new Figure(AC, A.Line.Pastle); A = A.Prev; } while (A != AS);
-			var BC = new Figure(null, new Bezier(AC.Over.L - 10.0, AC.Over.T - 10.0, X, Y));
-			int Count = 0;
-			var acCount = AC.Count;
-			var bcCount = BC.Count;
-			for (var ac = 0; ac < acCount; ac++) {
-				for (var bc = 0; bc < bcCount; bc++) {
-					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
-					if (AC.Line.Neq(BC.Line) && Bezier.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
-						if (BR > 0.0 && BR < 1.0) {
-							BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
-							BC.Line = bi1; BC = new Figure(BC, bi0); bcCount++;
-							Count++;
-						}
-						if (AR > 0.0 && AR < 1.0) {
-							AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
-							AC.Line = ai1; AC = new Figure(AC, ai0); acCount++;
-						}
-					}
-					BC = BC.Next;
-				}
-				AC = AC.Next;
-			}
-			return Count % 2 == 1;
 		}
 		#endregion
 		#region #method# Combine(A, B) 
@@ -1795,33 +1741,13 @@ namespace Wholemy {
 			}
 		}
 		#endregion
-		#region #method# Equ(B) 
-		#region #through# 
-#if TRACE
-		[System.Diagnostics.DebuggerStepThrough]
-#endif
-		#endregion
-		public virtual bool Equ(Bezier B) {
-			return (this.GetType() == B.GetType()) && (this.x0 == B.x0 && this.y0 == B.y0) && (this.x1 == B.x1 && this.y1 == B.y1);
-		}
-		#endregion
-		#region #method# Eor(B) 
-		#region #through# 
-#if TRACE
-		[System.Diagnostics.DebuggerStepThrough]
-#endif
-		#endregion
-		public bool Eor(Bezier B) {
-			return (this.x0 == B.x1 && this.y0 == B.y1) || (this.x1 == B.x0 && this.y1 == B.y0);
-		}
-		#endregion
 		#region #method# Neq(B) 
 		#region #through# 
 #if TRACE
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public bool Neq(Bezier B) {
+		public virtual bool Neq(Bezier B) {
 			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
