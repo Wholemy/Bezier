@@ -229,13 +229,13 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #method# Neq(B) 
+			#region #method# Neo(B) 
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public override bool Neq(Bezier bb) {
+			public override bool Neo(Bezier bb) {
 				var B = bb as Quadratic;
 				if (B != null)
 					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
@@ -577,13 +577,13 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #method# Neq(B) 
+			#region #method# Neo(B) 
 			#region #through# 
 #if TRACE
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public override bool Neq(Bezier bb) {
+			public override bool Neo(Bezier bb) {
 				var B = bb as Cubic;
 				if (B != null)
 					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x3 != B.x3 || this.y3 != B.y3) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
@@ -1231,14 +1231,14 @@ namespace Wholemy {
 				var I = this; do { I.Type = T; I = I.Next; } while (I != this);
 			}
 			#endregion
-			public bool Neq(Figure B) {
+			public bool Neo(Figure B) {
 				var AC = this;
 				var BC = B;
 				var ACC = AC;
 				var BCC = BC;
 				do {
 					do {
-						if (!AC.Line.Neq(BC.Line)) return false;
+						if (!AC.Line.Neo(BC.Line)) return false;
 						BC = BC.Next;
 					} while (BC != BCC);
 					AC = AC.Next;
@@ -1747,7 +1747,17 @@ namespace Wholemy {
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public virtual bool Neq(Bezier B) {
+		public bool Neq(Bezier B) {
+			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+		}
+		#endregion
+		#region #method# Neo(B) 
+		#region #through# 
+#if TRACE
+		[System.Diagnostics.DebuggerStepThrough]
+#endif
+		#endregion
+		public virtual bool Neo(Bezier B) {
 			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
