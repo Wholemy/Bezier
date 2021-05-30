@@ -954,6 +954,30 @@ namespace Wholemy {
 			}
 		}
 		#endregion
+		#region #method# Len(x0, y0, x1, y1) 
+		private static double Len(double x0, double y0, double x1, double y1) {
+			var x = x0 - x1;
+			var y = y0 - y1;
+			return System.Math.Sqrt(x * x + y * y);
+		}
+		#endregion
+		#region #method# Ger(x0, y0, x1, y1, x2, y2) 
+		/// <summary>Возвращает площадь треугольника)</summary>
+		/// <param name="x0">Первая координата X)</param>
+		/// <param name="y0">Первая координата Y)</param>
+		/// <param name="x1">Вторая координата X)</param>
+		/// <param name="y1">Вторая координата Y)</param>
+		/// <param name="x2">Третья координата X)</param>
+		/// <param name="y2">Третья координата Y)</param>
+		/// <returns>Площадь)</returns>
+		private static double Ger(double x0, double y0, double x1, double y1, double x2, double y2) {
+			var a = Len(x0, y0, x1, y1);
+			var b = Len(x1, y1, x2, y2);
+			var c = Len(x2, y2, x0, y0);
+			var p = 0.5 * (a + b + c);
+			return System.Math.Sqrt(p * (p - a) * (p - b) * (p - c));
+		}
+		#endregion
 		#region #method# Len(a) 
 		private double Len(Bezier a) {
 			var x1 = this.X - a.X;
@@ -1090,7 +1114,6 @@ namespace Wholemy {
 					this.T = Line.T;
 					this.R = Line.R;
 					this.B = Line.B;
-
 				}
 				#endregion
 				public double L; public double T; public double R; public double B;
@@ -1103,7 +1126,7 @@ namespace Wholemy {
 			public Figure AltNext;
 			public Figure AltPrev;
 			private int AltTyped;
-			public void Typed(int I,ref bool T) {
+			public void Typed(int I, ref bool T) {
 				if (this.AltTyped == 0) T = true;
 				this.AltTyped = I;
 			}
@@ -1176,7 +1199,7 @@ namespace Wholemy {
 					var T = this;
 					var tt = this.AltPrev;
 					while (tt != null) {
-						if (tt.Length > T.Length) { T = tt; }
+						if (tt.Area > T.Area) { T = tt; }
 						tt = tt.AltPrev;
 					}
 					return T;
@@ -1218,7 +1241,7 @@ namespace Wholemy {
 				var BCC = BC;
 				do {
 					do {
-						if(AC.Line.Equ(BC.Line)) return true;
+						if (AC.Line.Equ(BC.Line)) return true;
 						BC = BC.Next;
 					} while (BC != BCC);
 					AC = AC.Next;
@@ -1242,6 +1265,34 @@ namespace Wholemy {
 				return false;
 			}
 			#endregion
+			public double Area {
+				get {
+					Bezier PL, NL;
+					var A = 0.0;
+					var P = this;
+					var N = this.Next;
+					if (N != this) {
+						Next:
+						PL = P.Line;
+						NL = N.Line;
+						A += Ger(PL.x0, PL.y0, NL.x0, NL.y0, NL.x1, NL.y1);
+						P = N.Next;
+						if (P == this) return A;
+						if (P.Next != this) {
+							N = P.Next;
+							goto Next;
+						}
+					}
+					PL = P.Line;
+					NL = N.Line;
+					A += Ger(NL.x0, NL.y0, PL.x0, PL.y0, PL.x1, PL.y1);
+					return A;
+				}
+			}
+		}
+		public virtual void Area(ref double X, ref double Y) {
+			X -= this.x1;
+			Y -= this.y1;
 		}
 		#endregion
 		#region #method# Inside(A, X, Y) 
@@ -1322,7 +1373,7 @@ namespace Wholemy {
 					do {
 						acc = new Bezier.Figure(acc, aa.Line, true);
 						acc.Type = aa.Type;
-						aa.Typed(I,ref ex);
+						aa.Typed(I, ref ex);
 						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
 					} while (aa != ab);
 					if (ex) {
