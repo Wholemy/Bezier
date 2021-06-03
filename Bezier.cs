@@ -92,6 +92,8 @@ namespace Wholemy {
 					this.belowb = b0 = A;
 					this.aboveb = b1 = B;
 				}
+				//this.belowb = b0 = A;
+				//this.aboveb = b1 = B;
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -156,6 +158,23 @@ namespace Wholemy {
 				#endregion
 				get {
 					return new Quadratic(x1, y1, x2, y2, x0, y0, Not: !this.Not);
+				}
+			}
+			#endregion
+			#region #invisible# #get# Incest 
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public override Bezier Incest {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					return new Quadratic(x1, y1, x2, y2, x0, y0, Not: this.Not);
 				}
 			}
 			#endregion
@@ -227,19 +246,6 @@ namespace Wholemy {
 					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
 					return System.Math.Sqrt(x * x + y * y);
 				}
-			}
-			#endregion
-			#region #method# Neo(B) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override bool Neo(Bezier bb) {
-				var B = bb as Quadratic;
-				if (B != null)
-					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
-				return false;
 			}
 			#endregion
 		}
@@ -427,6 +433,8 @@ namespace Wholemy {
 					this.belowb = b0 = A;
 					this.aboveb = b1 = B;
 				}
+				//this.belowb = b0 = A;
+				//this.aboveb = b1 = B;
 			}
 			#endregion
 			#region #override# #method# Get(root, X, Y) 
@@ -507,6 +515,23 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			#region #invisible# #get# Incest 
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public override Bezier Incest {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					return new Cubic(x1, y1, x3, y3, x2, y2, x0, y0, Not: this.Not);
+				}
+			}
+			#endregion
 			#region #get# Below 
 			#region #invisible# 
 #if TRACE
@@ -575,19 +600,6 @@ namespace Wholemy {
 					var y = System.Math.Abs(y0 - Y) + System.Math.Abs(y1 - Y);
 					return System.Math.Sqrt(x * x + y * y);
 				}
-			}
-			#endregion
-			#region #method# Neo(B) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override bool Neo(Bezier bb) {
-				var B = bb as Cubic;
-				if (B != null)
-					return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x2 != B.x2 || this.y2 != B.y2) && (this.x3 != B.x3 || this.y3 != B.y3) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
-				return false;
 			}
 			#endregion
 		}
@@ -929,6 +941,8 @@ namespace Wholemy {
 				this.belowb = b0 = A;
 				this.aboveb = b1 = B;
 			}
+			//this.belowb = b0 = A;
+			//this.aboveb = b1 = B;
 		}
 		#endregion
 		#region #virtual# #method# Get(root, X, Y) 
@@ -959,7 +973,7 @@ namespace Wholemy {
 			return System.Math.Sqrt(x * x + y * y);
 		}
 		#endregion
-		#region #method# Ger(x0, y0, x1, y1, x2, y2) 
+		#region #method# Geron(x0, y0, x1, y1, x2, y2) 
 		/// <summary>Возвращает площадь треугольника)</summary>
 		/// <param name="x0">Первая координата X)</param>
 		/// <param name="y0">Первая координата Y)</param>
@@ -968,7 +982,7 @@ namespace Wholemy {
 		/// <param name="x2">Третья координата X)</param>
 		/// <param name="y2">Третья координата Y)</param>
 		/// <returns>Площадь)</returns>
-		private static double Ger(double x0, double y0, double x1, double y1, double x2, double y2) {
+		private static double Geron(double x0, double y0, double x1, double y1, double x2, double y2) {
 			var a = Len(x0, y0, x1, y1);
 			var b = Len(x1, y1, x2, y2);
 			var c = Len(x2, y2, x0, y0);
@@ -1102,11 +1116,9 @@ namespace Wholemy {
 			#region #class# Base 
 			public class Base {
 				public int Count;
-				public double Length;
 				#region #new# (Start) 
 				public Base(Figure Start) {
 					var Line = Start.Line;
-					this.Length = Line.Length;
 					this.Count = 1;
 					this.L = Line.L;
 					this.T = Line.T;
@@ -1124,15 +1136,7 @@ namespace Wholemy {
 			public Figure AltNext;
 			public Figure AltPrev;
 			private int AltTyped;
-			public void Typed(int I, ref bool T) {
-				if (this.AltTyped == 0) T = true;
-				this.AltTyped = I;
-			}
 			public int AltIndex;
-			/// <summary>Если фигура вдоль и внутри другой фигуры)</summary>
-			public bool Inside;
-			/// <summary>Если фигура вдоль борта внутренних)</summary>
-			public bool Insect;
 			/// <summary>Тип фигуры устанавливаемый комбайном)</summary>
 			public int Type;
 			#region #new# (Figure, Inline) 
@@ -1140,7 +1144,6 @@ namespace Wholemy {
 				this.Line = Inline;
 				if (Figure != null) {
 					var Over = this.Over = Figure.Over; Over.Count++;
-					Over.Length += Inline.Length;
 					if (Over.L > Inline.L) Over.L = Inline.L;
 					if (Over.T > Inline.T) Over.T = Inline.T;
 					if (Over.R < Inline.R) Over.R = Inline.R;
@@ -1149,12 +1152,13 @@ namespace Wholemy {
 					this.Over = new Base(this);
 				}
 				if (Figure != null) {
-					#region #debug# 
-#if DEBUG
-					if (Figure.Line.Not != Inline.Not) throw new System.InvalidOperationException();
-#endif
-					#endregion
-					Invert ^= Inline.Not;
+
+					if (Figure.Line.Not != Inline.Not) {
+						throw new System.InvalidOperationException();
+						//Inline = Inline.Return;
+					}
+
+					//Invert ^= Inline.Not;
 					if (Invert) {
 						this.Prev = Figure;
 						this.Next = Figure.Next;
@@ -1183,15 +1187,24 @@ namespace Wholemy {
 					var A = new Bezier[C];
 					var i = 0;
 					A[i++] = this.Line;
-					I = this.Next;
-					while (I != this) {
-						A[i++] = I.Line;
-						I = I.Next;
+					if (this.Line.Not) {
+						I = this.Prev;
+						while (I != this) {
+							A[i++] = I.Line;
+							I = I.Prev;
+						}
+					} else {
+						I = this.Next;
+						while (I != this) {
+							A[i++] = I.Line;
+							I = I.Next;
+						}
 					}
 					return A;
 				}
 			}
 			#endregion
+			#region #property# AltBig 
 			public Figure AltBig {
 				get {
 					var T = this;
@@ -1203,8 +1216,38 @@ namespace Wholemy {
 					return T;
 				}
 			}
-			public double Length { get { return Over.Length; } }
+			#endregion
+			#region #get# Count 
 			public int Count { get { return Over.Count; } }
+			#endregion
+			#region #get# Area 
+			/// <summary>Возвращает площадь треугольников фигуры по формуле герона)</summary>
+			public double Area {
+				get {
+					Bezier PL, NL;
+					var A = 0.0;
+					var P = this;
+					var N = this.Next;
+					if (N != this) {
+					Next:
+						PL = P.Line;
+						NL = N.Line;
+						A += Geron(PL.x0, PL.y0, NL.x0, NL.y0, NL.x1, NL.y1);
+						P = N.Next;
+						if (P == this) return A;
+						if (P.Next != this) {
+							N = P.Next;
+							goto Next;
+						}
+					}
+					PL = P.Line;
+					NL = N.Line;
+					A += Geron(NL.x0, NL.y0, PL.x0, PL.y0, PL.x1, PL.y1);
+					return A;
+				}
+			}
+			#endregion
+			#region #method# Intersect(a) 
 			public bool Intersect(Figure a) {
 				if (a == null) return false;
 				var A = this.Over;
@@ -1212,8 +1255,17 @@ namespace Wholemy {
 				if (A == B) throw new System.InvalidOperationException();
 				return (A.R >= B.L && B.R >= A.L && A.B >= B.T && B.B >= A.T);
 			}
+			#endregion
+			public bool Inside(Figure a) {
+				if (a == null) return false;
+				var A = this.Over;
+				var B = a.Over;
+				if (A == B) throw new System.InvalidOperationException();
+				return (A.R > B.L && B.R > A.L && A.B > B.T && B.B > A.T);
+			}
+			#region #method# ToAlt(B, Alt) 
 			public void ToAlt(Figure B, ref Figure Alt) {
-				if (this.AltNext != null || this.AltPrev != null || this.AltIndex > 0) throw new System.InvalidOperationException();
+				if (this.AltNext != null || this.AltPrev != null || this.AltIndex > 0) throw new System.InvalidOperationException(); //return;
 				this.AltNext = B;
 				if (Alt != null) {
 					this.AltPrev = Alt;
@@ -1221,6 +1273,7 @@ namespace Wholemy {
 				}
 				Alt = this;
 			}
+			#endregion
 			#region #method# SetType(T) 
 			#region #through# 
 #if TRACE
@@ -1231,44 +1284,87 @@ namespace Wholemy {
 				var I = this; do { I.Type = T; I = I.Next; } while (I != this);
 			}
 			#endregion
-			public bool Neo(Figure B) {
+			#region #method# Neq(B) 
+			public bool Neq(Figure B) {
 				var AC = this;
 				var BC = B;
 				var ACC = AC;
 				var BCC = BC;
 				do {
 					do {
-						if (!AC.Line.Neo(BC.Line)) return false;
+						if (!AC.Line.Neq(BC.Line)) return false;
 						BC = BC.Next;
 					} while (BC != BCC);
 					AC = AC.Next;
 				} while (AC != ACC);
 				return true;
 			}
-			public double Area {
+			#endregion
+			#region #method# Seq(B) 
+			public int Seq(Figure B) {
+				var AC = this;
+				var BC = B;
+				var ACC = AC;
+				var BCC = BC;
+				var C = 0;
+				do {
+					do {
+						if (AC.Line.Seq(BC.Line)) C++;
+						BC = BC.Next;
+					} while (BC != BCC);
+					AC = AC.Next;
+				} while (AC != ACC);
+				return C;
+			}
+			#endregion
+			#region #method# Meq(B) 
+			public bool Meq(Figure B) {
+				var AC = this;
+				var BC = B;
+				var ACC = AC;
+				var BCC = BC;
+				do {
+					do {
+						if (AC.Line.Meq(BC.Line)) return true;
+						BC = BC.Next;
+					} while (BC != BCC);
+					AC = AC.Next;
+				} while (AC != ACC);
+				return false;
+			}
+			#endregion
+			#region #method# Typed(I, T) 
+			public void Typed(int I, ref bool T) {
+				if (this.AltTyped == 0) T = true;
+				this.AltTyped = I;
+			}
+			#endregion
+			#region #get# Invert 
+			public Figure Invert {
 				get {
-					Bezier PL, NL;
-					var A = 0.0;
-					var P = this;
-					var N = this.Next;
-					if (N != this) {
-						Next:
-						PL = P.Line;
-						NL = N.Line;
-						A += Ger(PL.x0, PL.y0, NL.x0, NL.y0, NL.x1, NL.y1);
-						P = N.Next;
-						if (P == this) return A;
-						if (P.Next != this) {
-							N = P.Next;
-							goto Next;
-						}
+					var F = new Figure(null, this.Line.Return);
+					var I = this.Prev;
+					while (I != this) {
+						F = new Figure(F, I.Line.Return);
+						I = I.Prev;
 					}
-					PL = P.Line;
-					NL = N.Line;
-					A += Ger(NL.x0, NL.y0, PL.x0, PL.y0, PL.x1, PL.y1);
-					return A;
+					return F;
 				}
 			}
+			#endregion
+			#region #property# Mixed 
+			public bool Mixed {
+				get {
+					var N = this.Line.Not;
+					var I = this.Next;
+					while (I != this) {
+						if (I.Line.Not != N) return true;
+						I = I.Next;
+					}
+					return false;
+				}
+			}
+			#endregion
 		}
 		#endregion
 		#region #method# Combine(A, B) 
@@ -1277,24 +1373,40 @@ namespace Wholemy {
 			var BC = B;
 			Figure acc = null, bcc = null;
 			Figure AB = null, BA = null;
+			if (AC.Line.Not) {
+				//AC = AC.Invert;
+			}
+			if (BC.Line.Not) {
+				//BC = BC.Invert;
+			}
 			var acCount = AC.Count;
 			var bcCount = BC.Count;
+			var acNot = AC.Line.Not;
+			var bcNot = BC.Line.Not;
 			for (var ac = 0; ac < acCount; ac++) {
 				for (var bc = 0; bc < bcCount; bc++) {
 					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
 					if (AC.Line.Neq(BC.Line) && Bezier.Intersect(AC.Line, ref AR, ref AX, ref AY, BC.Line, ref BR, ref BX, ref BY)) {
 						if (BR > 0.0 && BR < 1.0) {
 							BC.Line.Div(BR, BX, BY, out var bi0, out var bi1);
-							BC.Line = bi1; BC = new Figure(BC, bi0); bcCount++;
+							BC.Line = bi1; BC = new Figure(BC, bi0, bcNot);
+							bcCount++;
 						}
 						if (AR > 0.0 && AR < 1.0) {
 							AC.Line.Div(AR, AX, AY, out var ai0, out var ai1);
-							AC.Line = ai1; AC = new Figure(AC, ai0); acCount++;
+							AC.Line = ai1; AC = new Figure(AC, ai0, acNot);
+							acCount++;
 						}
 					}
-					BC = BC.Next;
+					if (bcNot) BC = BC.Prev; else BC = BC.Next;
 				}
-				AC = AC.Next;
+				if (acNot) AC = AC.Prev; else AC = AC.Next;
+			}
+			if (AC.Line.Not) {
+				//AC = AC.Invert;
+			}
+			if (BC.Line.Not) {
+				//BC = BC.Invert;
 			}
 			var ACC = AC;
 			var BCC = BC;
@@ -1302,11 +1414,15 @@ namespace Wholemy {
 			BC.SetType(2);
 			do {
 				do {
-					if (AC.Line.eq10(BC.Line)) { AC.ToAlt(BC, ref AB); }
-					if (BC.Line.eq10(AC.Line)) { BC.ToAlt(AC, ref BA); }
-					BC = BC.Next;
+					if (AC.Line.eq10(BC.Line)) {
+						AC.ToAlt(BC, ref AB);
+					}
+					if (BC.Line.eq10(AC.Line)) {
+						BC.ToAlt(AC, ref BA);
+					}
+					if (bcNot) BC = BC.Prev; else BC = BC.Next;
 				} while (BC != BCC);
-				AC = AC.Next;
+				if (acNot) AC = AC.Prev; else AC = AC.Next;
 			} while (AC != ACC);
 			acc = null;
 			bcc = null;
@@ -1317,10 +1433,12 @@ namespace Wholemy {
 					var aa = ab;
 					var ex = false;
 					do {
-						acc = new Bezier.Figure(acc, aa.Line, true);
+						var L = aa.Line;
+						if (L.Not) L = L.Return;
+						acc = new Bezier.Figure(acc, L, true);
 						acc.Type = aa.Type;
 						aa.Typed(I, ref ex);
-						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
+						if (aa.AltNext != null) { aa = aa.AltNext; } else { if(aa.Line.Not) aa = aa.Prev; else aa = aa.Next; }
 					} while (aa != ab);
 					if (ex) {
 						acc.AltPrev = bcc;
@@ -1521,6 +1639,20 @@ namespace Wholemy {
 		#endregion
 
 		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
+		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
+		/// <param name="A">Первый безьер)</param>
+		/// <param name="AR">Корень расположения в первом безьере)</param>
+		/// <param name="AX">Координата расположения пересечения X)</param>
+		/// <param name="AY">Координата расположения пересечения Y)</param>
+		/// <param name="B">Второй безьер)</param>
+		/// <param name="BR">Корень расположения во втором безьере)</param>
+		/// <param name="BX">Координата расположения пересечения X)</param>
+		/// <param name="BY">Координата расположения пересечения Y)</param>
+		/// <param name="Lmin">Минимальное растояние между точками)</param>
+		/// <param name="Dmin">Минимальная глубина)</param>
+		/// <param name="Dmax">Максимальная глубина)</param>
+		/// <param name="bound">Ограничение сравнения с краев шанса)</param>
+		/// <returns>Возвращает истину если пересечения найдены)</returns>
 		public static bool Intersect(Bezier A, ref double AR, ref double AX, ref double AY, Bezier B, ref double BR, ref double BX, ref double BY, double Lmin = 0.1, int Dmin = 5, int Dmax = 10, int bound = 8) {
 			bool O;
 			A = A.Pastle;
@@ -1582,9 +1714,9 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# Intersect(#ref#Aref, #ref#Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
-		/// <summary>Возвращает истину если инлайны пересекаются и пересечения)</summary>
-		/// <param name="Aref">Первый инлайн)</param>
-		/// <param name="Bref">Второй инлайн)</param>
+		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
+		/// <param name="Aref">Первый безьер)</param>
+		/// <param name="Bref">Второй безьер)</param>
 		/// <param name="Aend">Истина определяет поиск перечений с конца)</param>
 		/// <param name="Bnot">Истина определяет обратный поиск от Aend)</param>
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
@@ -1592,7 +1724,7 @@ namespace Wholemy {
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
-		/// <returns>Возвращает истину если инлайны пересекаются или ложь)</returns>
+		/// <returns>Возвращает истину если безьеры пересекаются или ложь)</returns>
 		public static bool Intersect(ref Bezier Aref, ref Bezier Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 8) {
 			bool O;
 			var A = Aref.Pastle;
@@ -1638,16 +1770,16 @@ namespace Wholemy {
 		}
 		#endregion
 		#region #method# IntersectTest(#ref#Aref, #ref#Bref, Aend, Bnot, Lmin, Dmin, Dmax, bound) 
-		/// <summary>Возвращает длину и инлайны даже если они не пересекаются)</summary>
-		/// <param name="Aref">Первый инлайн)</param>
-		/// <param name="Bref">Второй инлайн)</param>
+		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
+		/// <param name="Aref">Первый безьер)</param>
+		/// <param name="Bref">Второй безьер)</param>
 		/// <param name="Aend">Истина определяет поиск перечений с конца)</param>
 		/// <param name="Bnot">Истина определяет обратный поиск от Aend)</param>
 		/// <param name="Lmin">Минимальное растояние между пересечением)</param>
 		/// <param name="Dmin">Минимальная глубина сравнения)</param>
 		/// <param name="Dmax">Максимальная глубина сравнения)</param>
 		/// <param name="bound">Ограничитель разбора при заглублении, значение меньше 2 отключает ограничение)</param>
-		/// <returns>Растояние между пересечениями)</returns>
+		/// <returns>Растояние между пересечениями безьеров)</returns>
 		public static double IntersectTest(ref Bezier Aref, ref Bezier Bref, bool Aend = false, bool Bnot = false, double Lmin = 0.01, int Dmin = 7, int Dmax = 12, int bound = 4) {
 			bool O;
 			var A = Aref.Pastle;
@@ -1741,6 +1873,23 @@ namespace Wholemy {
 			}
 		}
 		#endregion
+		#region #invisible# #get# Incest 
+		#region #invisible# 
+#if TRACE
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+		#endregion
+		public virtual Bezier Incest {
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			get {
+				return new Bezier(x1, y1, x0, y0, Not: this.Not);
+			}
+		}
+		#endregion
 		#region #method# Neq(B) 
 		#region #through# 
 #if TRACE
@@ -1751,14 +1900,24 @@ namespace Wholemy {
 			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
 		}
 		#endregion
-		#region #method# Neo(B) 
+		#region #method# Seq(B) 
 		#region #through# 
 #if TRACE
 		[System.Diagnostics.DebuggerStepThrough]
 #endif
 		#endregion
-		public virtual bool Neo(Bezier B) {
-			return (this.x0 != B.x0 || this.y0 != B.y0) && (this.x1 != B.x1 || this.y1 != B.y1) && (this.x0 != B.x1 || this.y0 != B.y1) && (this.x1 != B.x0 || this.y1 != B.y0);
+		public virtual bool Seq(Bezier B) {
+			return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x1 == B.x1 && this.y1 == B.y1);
+		}
+		#endregion
+		#region #method# Meq(B) 
+		#region #through# 
+#if TRACE
+		[System.Diagnostics.DebuggerStepThrough]
+#endif
+		#endregion
+		public virtual bool Meq(Bezier B) {
+			return (this.x0 == B.x1 && this.y0 == B.y1) && (this.x1 == B.x0 && this.y1 == B.y0);
 		}
 		#endregion
 		#region #method# eq10(B) 
