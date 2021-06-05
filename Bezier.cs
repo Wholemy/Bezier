@@ -1204,8 +1204,8 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #property# AltBig 
-			public Figure AltBig {
+			#region #property# AboveArea 
+			public Figure AboveArea {
 				get {
 					var T = this;
 					var tt = this.AltPrev;
@@ -1256,13 +1256,6 @@ namespace Wholemy {
 				return (A.R >= B.L && B.R >= A.L && A.B >= B.T && B.B >= A.T);
 			}
 			#endregion
-			public bool Inside(Figure a) {
-				if (a == null) return false;
-				var A = this.Over;
-				var B = a.Over;
-				if (A == B) throw new System.InvalidOperationException();
-				return (A.R > B.L && B.R > A.L && A.B > B.T && B.B > A.T);
-			}
 			#region #method# ToAlt(B, Alt) 
 			public void ToAlt(Figure B, ref Figure Alt) {
 				if (this.AltNext != null || this.AltPrev != null || this.AltIndex > 0) throw new System.InvalidOperationException(); //return;
@@ -1342,12 +1335,25 @@ namespace Wholemy {
 			#region #get# Invert 
 			public Figure Invert {
 				get {
-					var F = new Figure(null, this.Line.Return);
-					var I = this.Prev;
-					while (I != this) {
-						F = new Figure(F, I.Line.Return);
+					Figure I = this;
+					Figure F = null;
+					do {
+						I = I.Next;
+						F = new Figure(F, I.Line.Invert);
+					} while (I != this);
+					return F;
+				}
+			}
+			#endregion
+			#region #property# Pastle 
+			public Figure Pastle {
+				get {
+					Figure I = this;
+					Figure F = null;
+					do {
 						I = I.Prev;
-					}
+						F = new Figure(F, I.Line.Pastle);
+					} while (I != this);
 					return F;
 				}
 			}
@@ -1367,18 +1373,85 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
+		#region #class# Path 
+		public class Path {
+			public Path After;
+			public Path Next;
+			public Path Prev;
+			public Figure Figure;
+			#region #new# (Figure, Next) 
+			public Path(Figure Figure, Path Next = null, bool NextIsAfter = false) {
+				this.Figure = Figure;
+				if (NextIsAfter) {
+					this.After = Next;
+					this.Prev = this;
+				} else {
+					if (Next != null) { this.Prev = Next.Prev; Next.Prev = this; } else { this.Prev = this; }
+				}
+				this.Next = Next;
+			}
+			#endregion
+			#region #method# Combine(Figure) 
+			internal Path Combine(Figure Figure) {
+				var AC = this.Figure.Pastle;
+				var BC = Figure.Pastle;
+				if (AC != null && BC != null) {
+					if (AC.Intersect(BC)) {
+						var C = Bezier.Combine(AC, BC);
+						if (C != null) {
+							Path R = this;
+							if (AC.Line.Not == BC.Line.Not) {
+								var G = C.AboveArea.Pastle;
+								R.Figure = G;
+								while (C != null) {
+									if (C != G && C.Neq(G))
+										R = new Path(C.Invert, R);
+									C = C.AltPrev;
+								}
+							} else {
+								if (AC.Line.Not) {
+									while (C != null) {
+										if (C.Seq(BC) == 1) {
+											if (R == this) {
+												R.Figure = C.Invert;
+											} else {
+												R = new Path(C.Invert, R);
+											}
+										}
+										C = C.AltPrev;
+									}
+								} else {
+									while (C != null) {
+										if (C.Seq(AC) == 1) {
+											if (R == this) {
+												R.Figure = C.Invert;
+											} else {
+												R = new Path(C.Invert, R);
+											}
+										}
+										C = C.AltPrev;
+									}
+								}
+							}
+							return R;
+						}
+					}
+				}
+				return new Path(Figure, this);
+			}
+			#endregion
+			internal Path Combine(Path Path) {
+
+				return this;
+			}
+		}
+		#endregion
 		#region #method# Combine(A, B) 
 		public static Figure Combine(Figure A, Figure B) {
 			var AC = A;
 			var BC = B;
 			Figure acc = null, bcc = null;
 			Figure AB = null, BA = null;
-			if (AC.Line.Not) {
-				//AC = AC.Invert;
-			}
-			if (BC.Line.Not) {
-				//BC = BC.Invert;
-			}
 			var acCount = AC.Count;
 			var bcCount = BC.Count;
 			var acNot = AC.Line.Not;
@@ -1401,12 +1474,6 @@ namespace Wholemy {
 					if (bcNot) BC = BC.Prev; else BC = BC.Next;
 				}
 				if (acNot) AC = AC.Prev; else AC = AC.Next;
-			}
-			if (AC.Line.Not) {
-				//AC = AC.Invert;
-			}
-			if (BC.Line.Not) {
-				//BC = BC.Invert;
 			}
 			var ACC = AC;
 			var BCC = BC;
@@ -1438,7 +1505,7 @@ namespace Wholemy {
 						acc = new Bezier.Figure(acc, L, true);
 						acc.Type = aa.Type;
 						aa.Typed(I, ref ex);
-						if (aa.AltNext != null) { aa = aa.AltNext; } else { if(aa.Line.Not) aa = aa.Prev; else aa = aa.Next; }
+						if (aa.AltNext != null) { aa = aa.AltNext; } else { if (aa.Line.Not) aa = aa.Prev; else aa = aa.Next; }
 					} while (aa != ab);
 					if (ex) {
 						acc.AltPrev = bcc;
