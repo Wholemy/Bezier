@@ -433,8 +433,8 @@ namespace Wholemy {
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
 				var y03 = (y13 - y02) * root + y02;
-				if (System.Math.Round(x03,1) != System.Math.Round(X,1) || System.Math.Round(y03,1) != System.Math.Round(Y,1))
-					throw new System.InvalidOperationException();
+				//if (System.Math.Round(x03,1) != System.Math.Round(X,1) || System.Math.Round(y03,1) != System.Math.Round(Y,1))
+				//	throw new System.InvalidOperationException();
 				var S = this.Size * 0.5;
 				var A = new Cubic(x00,y00,x01,y01,x02,y02,X,Y,this.Root - S,S,this,this.Not);
 				var B = new Cubic(X,Y,x13,y13,x23,y23,x33,y33,this.Root + S,S,this,this.Not);
@@ -952,9 +952,9 @@ namespace Wholemy {
 			var y11 = y1;
 			var x01 = (x11 - x00) * root + x00;
 			var y01 = (y11 - y00) * root + y00;
-			if (System.Math.Round(x01,1) != System.Math.Round(X,1)
-			|| System.Math.Round(y01,1) != System.Math.Round(Y,1))
-				throw new System.InvalidOperationException();
+			//if (System.Math.Round(x01,1) != System.Math.Round(X,1)
+			//|| System.Math.Round(y01,1) != System.Math.Round(Y,1))
+			//	throw new System.InvalidOperationException();
 			var S = this.Size * 0.5;
 			var A = new Bezier(x00,y00,X,Y,this.Root - S,S,this,this.Not);
 			var B = new Bezier(X,Y,x11,y11,this.Root + S,S,this,this.Not);
@@ -1157,9 +1157,13 @@ namespace Wholemy {
 			public Bezier Line;
 			public Figure Next;
 			public Figure Prev;
+			public Figure Next10;
+			public Figure Next01;
 			public Figure AltNext;
+			public Figure PreNext;
 			public Figure AltPrev;
 			public Figure AltOver;
+			public bool AltStop;
 			private int AltTyped;
 			public int AltIndex;
 			/// <summary>Тип фигуры устанавливаемый комбайном)</summary>
@@ -1207,22 +1211,31 @@ namespace Wholemy {
 			public Bezier[] Items {
 				get {
 					var C = 1;
-					var I = this.Next;
-					while (I != this) { C++; I = I.Next; }
+					var Root = this;
+					var Last = this;
+					var Item = this.Next;
+					while (Item != null) { Last = Item; Item = Item.Next; C++; if (Item == this) { break; } }
+					if (Item == null) {
+						Item = this.Prev;
+						while (Item != null) { Root = Item; Item = Item.Prev; C++; }
+					}
 					var A = new Bezier[C];
 					var i = 0;
-					A[i++] = this.Line;
 					if (this.Line.Not) {
-						I = this.Prev;
-						while (I != this) {
-							A[i++] = I.Line;
-							I = I.Prev;
+						Item = Last;
+						A[i++] = Item.Line;
+						Item = Item.Prev;
+						while (Item != null && Item != Root) {
+							A[i++] = Item.Line;
+							Item = Item.Prev;
 						}
 					} else {
-						I = this.Next;
-						while (I != this) {
-							A[i++] = I.Line;
-							I = I.Next;
+						Item = Root;
+						A[i++] = Item.Line;
+						Item = Item.Next;
+						while (Item != null && Item != Root) {
+							A[i++] = Item.Line;
+							Item = Item.Next;
 						}
 					}
 					return A;
@@ -1245,6 +1258,7 @@ namespace Wholemy {
 			#region #get# Count 
 			public int Count { get { return Over.Count; } }
 			#endregion
+			#region #property# Length 
 			public double Length {
 				get {
 					var L = this.Line.Length;
@@ -1256,6 +1270,34 @@ namespace Wholemy {
 					return L;
 				}
 			}
+			#endregion
+			#region #property# Root 
+			public Figure Root {
+				get {
+					var Root = this;
+					var T = this.Prev;
+					while (T != null && T != this) {
+						Root = T;
+						T = T.Prev;
+					}
+					if (T == this) return T;
+					return Root;
+				}
+			}
+			#endregion
+			#region #property# Last 
+			public Figure Last {
+				get {
+					var Last = this;
+					var T = this.Next;
+					while (T != null && T != this) {
+						Last = T;
+						T = T.Next;
+					}
+					return Last;
+				}
+			}
+			#endregion
 			#region #get# Area 
 			/// <summary>Возвращает площадь треугольников фигуры по формуле герона)</summary>
 			public double Area {
@@ -1293,14 +1335,10 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# ToAlt(B, Alt) 
-			public void ToAlt(Figure B,ref Figure Alt) {
-				if (this.AltNext != null || this.AltOver != null || this.AltIndex > 0/* || B.AltPrev !=null*/) throw new System.InvalidOperationException(); //return;
+			public void ToAltA(Figure B,ref Path Alt) {
+				if (this.AltNext != null) throw new System.InvalidOperationException(); //return;
 				this.AltNext = B;
-				if (Alt != null) {
-					this.AltOver = Alt;
-					this.AltIndex = Alt.AltIndex + 1;
-				}
-				Alt = this;
+				Alt = new Path(this,Alt);
 			}
 			#endregion
 			#region #method# SetType(T) 
@@ -1603,7 +1641,7 @@ namespace Wholemy {
 				}
 				AC = AC.Next;
 			}
-			return Count % 2 == 1 ^ acNot;
+			return Count % 2 == 0;
 		}
 		#endregion
 		#region #method# Combine(A, B) 
@@ -1642,43 +1680,40 @@ namespace Wholemy {
 			var BCC = BC;
 			AC.SetType(1);
 			BC.SetType(2);
+			Path rtA = null;
+			Path rtB = null;
+			Most most = null;
 			do {
 				do {
-					if (AC.Line.eq10(BC.Line)) {
-						AC.ToAlt(BC,ref AB);
+					if (Equ(AC.Next.Line,AC.Line,BC.Line,BC.Prev.Line)) {
+						if (AC.AltNext != null) throw new System.InvalidOperationException();
+						AC.AltNext = BC;
+						rtA = new Path(AC,rtA);
 					}
-					if (BC.Line.eq10(AC.Line)) {
-						BC.ToAlt(AC,ref BA);
+					if (Equ(BC.Next.Line,BC.Line,AC.Line,AC.Prev.Line)) {
+						if (BC.AltNext != null) throw new System.InvalidOperationException();
+						BC.AltNext = AC;
+						rtB = new Path(BC,rtB);
 					}
 					BC = BC.Next;
 				} while (BC != BCC);
 				AC = AC.Next;
 			} while (AC != ACC);
-			acc = null;
-			bcc = null;
-			if (AB != null) {
-				var I = 1;
-				var ab = AB;
-				var ba = BA;
-				while (ab != null) {
-					var aa = ab;
-					var bb = ab;
-					var ex = false;
-					do {
-						acc = new Bezier.Figure(acc,aa.Line,true);
-						acc.Type = aa.Type;
-						if(aa.Typed(I)) ex = true;
-						if (aa.AltNext != null) { aa = aa.AltNext; } else { aa = aa.Next; }
-					} while (aa != ab);
-					if (ex) path = new Path(acc,path);
-					acc = null;
-					bcc = null;
-					ccc = null;
-					I++;
-					ab = ab.AltOver;
-				}
+			var trA = rtA;
+			while (trA != null) {
+				var F = trA.Figure;
+				F.Next = F.AltNext;
+				F.AltNext.Prev = F;
+				trA = trA.Next;
 			}
-			return path;
+			var trB = rtB;
+			while (trB != null) {
+				var F = trB.Figure;
+				F.Next = F.AltNext;
+				F.AltNext.Prev = F;
+				trB = trB.Next;
+			}
+			return rtA;
 		}
 		#endregion
 		#region #method# Intersect(b, depth) 
@@ -2157,9 +2192,14 @@ namespace Wholemy {
 			return (this.x0 == B.x0 && this.y0 == B.y0) && (this.x1 == B.x1 && this.y1 == B.y1);
 		}
 		#endregion
-		#region #method# eq10(B) 
-		public bool eq10(Bezier B) {
-			return this.x1 == B.x0 && this.y1 == B.y0;
+		#region #method# Equ(B) 
+		public static bool Equ(Bezier A0,Bezier A1,Bezier B0,Bezier B1) {
+			if (A1.x1 == B0.x0 && A1.y1 == B0.y0) {
+				var A = new Bezier(A0.x1,A0.y1,A1.x0,A1.y0);
+				var B = new Bezier(B0.x1,B0.y1,B1.x0,B1.y0);
+				if(Intersect(ref A,ref B)) return true;
+			}
+			return false;
 		}
 		#endregion
 		#region #property# Line 
