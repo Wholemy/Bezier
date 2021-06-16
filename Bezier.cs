@@ -2,6 +2,10 @@ namespace Wholemy {
 	#region #class# Bezier 
 	public class Bezier {
 		public const int MaxDepth = 64;
+		public const int PresetExistsMax = 2;
+		public const int PresetDepthMin = 5;
+		public const int PresetDepthMax = 10;
+		public const double PresetLengthMin = 0.25;
 		#region #class# Quadratic 
 		public class Quadratic:Bezier {
 			public readonly double x2;
@@ -1658,7 +1662,7 @@ namespace Wholemy {
 			for (var ac = 0;ac < acCount;ac++) {
 				for (var bc = 0;bc < bcCount;bc++) {
 					double AR = 0.0, AX = 0.0, AY = 0.0, BR = 0.0, BX = 0.0, BY = 0.0;
-					if (AC.Line.Neq(BC.Line) && Bezier.Intersect(AC.Line,ref AR,ref AX,ref AY,BC.Line,ref BR,ref BX,ref BY)) {
+					if (AC.Line.Neq(BC.Line) && Bezier.PIntersect(AC.Line,ref AR,ref AX,ref AY,BC.Line,ref BR,ref BX,ref BY)) {
 						if (BR > 0.0 && BR < 1.0) {
 							BC.Line.Div(BR,BX,BY,out var bi0,out var bi1);
 							BC.Line = bi1; BC = new Figure(BC,bi0,bcNot);
@@ -1682,7 +1686,6 @@ namespace Wholemy {
 			BC.SetType(2);
 			Path rtA = null;
 			Path rtB = null;
-			Most most = null;
 			do {
 				do {
 					if (Equ(AC.Next.Line,AC.Line,BC.Line,BC.Prev.Line)) {
@@ -1899,7 +1902,124 @@ namespace Wholemy {
 			return A.Len(B);
 		}
 		#endregion
-
+		#region #method# PIntersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY) 
+		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
+		/// <param name="A">Первый безьер)</param>
+		/// <param name="AR">Корень расположения в первом безьере)</param>
+		/// <param name="AX">Координата расположения пересечения X)</param>
+		/// <param name="AY">Координата расположения пересечения Y)</param>
+		/// <param name="B">Второй безьер)</param>
+		/// <param name="BR">Корень расположения во втором безьере)</param>
+		/// <param name="BX">Координата расположения пересечения X)</param>
+		/// <param name="BY">Координата расположения пересечения Y)</param>
+		/// <returns>Возвращает истину если пересечения найдены)</returns>
+		public static bool PIntersect(Bezier A,ref double AR,ref double AX,ref double AY,Bezier B,ref double BR,ref double BX,ref double BY) {
+			bool O;
+			A = A.Pastle;
+			B = B.Pastle;
+			var depth = PresetDepthMin;
+			var Abak = A;
+			var Bbak = B;
+			Bezier PA = null, PB = null;
+			var PL = double.MaxValue;
+			if (A.Intersect(B)) {
+			Next:
+				IntersectFor(ref A,ref B,depth,PresetExistsMax);
+				IntersectEnd(ref A,ref B,PresetExistsMax);
+				var L0 = Correction0(A,B,out var A0,out var B0);
+				var L1 = Correction1(A,B,out var A1,out var B1);
+				var L2 = Correction2(A,B,out var A2,out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
+				} else {
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
+				}
+				var PAR = System.Math.Round(PA.Root,1);
+				var PBR = System.Math.Round(PB.Root,1);
+				Abak.Get(PAR,out var PAX,out var PAY);
+				Bbak.Get(PBR,out var PBX,out var PBY);
+				L0 = Len(PAX - PBX,PAY - PBY);
+				L1 = Len(PA.X - PBX,PA.Y - PBY);
+				L2 = Len(PAX - PB.X,PAY - PB.Y);
+				if (L0 <= PL && L0 <= L1 && L0 <= L2) {
+					PL = L0;
+					AR = PAR; AX = PAX; AY = PAY;
+					BR = PBR; BX = PBX; BY = PBY;
+				} else if (L1 <= PL && L1 <= L2) {
+					PL = L1;
+					AR = PA.Root; AX = PA.X; AY = PA.Y;
+					BR = PBR; BX = PBX; BY = PBY;
+				} else if (L2 <= PL) {
+					PL = L2;
+					AR = PAR; AX = PAX; AY = PAY;
+					BR = PB.Root; BX = PB.X; BY = PB.Y;
+				} else {
+					AR = PA.Root; AX = PA.X; AY = PA.Y;
+					BR = PB.Root; BX = PB.X; BY = PB.Y;
+				}
+				if (PL <= PresetLengthMin) {
+					if (AR == 0.0 || AR == 1.0) { BX = AX; BY = AY; } else { AX = BX; AY = BY; }
+					return true;
+				}
+				if (depth < PresetDepthMax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
+			}
+			return false;
+		}
+		#endregion
+		#region #method# PIntersect(#ref#Aref, #ref#Bref) 
+		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
+		/// <param name="Aref">Первый безьер)</param>
+		/// <param name="Bref">Второй безьер)</param>
+		/// <returns>Возвращает истину если безьеры пересекаются или ложь)</returns>
+		public static bool PIntersect(ref Bezier Aref,ref Bezier Bref) {
+			bool O;
+			var A = Aref.Pastle;
+			var B = Bref.Pastle;
+			var depth = PresetDepthMin;
+			var Abak = A;
+			var Bbak = B;
+			Bezier PA = null, PB = null;
+			var PL = double.MaxValue;
+			if (A.Intersect(B)) {
+			Next:
+				IntersectFor(ref A,ref B,depth,PresetExistsMax);
+				IntersectEnd(ref A,ref B,PresetExistsMax);
+				var L0 = Correction0(A,B,out var A0,out var B0);
+				var L1 = Correction1(A,B,out var A1,out var B1);
+				var L2 = Correction2(A,B,out var A2,out var B2);
+				if (L0 < L1 && L0 < L2) {
+					if (PL > L0) { PL = L0; PA = A0; PB = B0; }
+				} else if (L1 < L2) {
+					if (PL > L1) { PL = L0; PA = A1; PB = B1; }
+				} else {
+					if (PL > L2) { PL = L2; PA = A2; PB = B2; }
+				}
+				if (PL <= PresetLengthMin) {
+					var PAR = System.Math.Floor(PA.Root);
+					var PBR = System.Math.Floor(PB.Root);
+					Abak.Get(PAR,out var PAX,out var PAY);
+					Abak.Get(PAR,out var PBX,out var PBY);
+					Aref = PA;
+					Bref = PB;
+					return true;
+				}
+				if (depth < PresetDepthMax) {
+					depth++;
+					A = Abak;
+					B = Bbak;
+					goto Next;
+				}
+			}
+			return false;
+		}
+		#endregion
 		#region #method# Intersect(A, #ref#AR, #ref#AX, #ref#AY, B, #ref#BR, #ref#BX, #ref#BY, Lmin, Dmin, Dmax, bound) 
 		/// <summary>Возвращает истину если безьеры пересекаются и пересечения)</summary>
 		/// <param name="A">Первый безьер)</param>
@@ -2197,7 +2317,7 @@ namespace Wholemy {
 			if (A1.x1 == B0.x0 && A1.y1 == B0.y0) {
 				var A = new Bezier(A0.x1,A0.y1,A1.x0,A1.y0);
 				var B = new Bezier(B0.x1,B0.y1,B1.x0,B1.y0);
-				if(Intersect(ref A,ref B)) return true;
+				if(PIntersect(ref A,ref B)) return true;
 			}
 			return false;
 		}
