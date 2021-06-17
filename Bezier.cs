@@ -1303,29 +1303,43 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #get# Area 
-			/// <summary>Возвращает площадь треугольников фигуры по формуле герона)</summary>
+			//public double AreaP {
+			//	get {
+			//		Bezier PL, NL;
+			//		var A = 0.0;
+			//		var P = this;
+			//		var N = this.Next;
+			//		if (N != this) {
+			//		Next:
+			//			PL = P.Line;
+			//			NL = N.Line;
+			//			A += Geron(PL.x0,PL.y0,NL.x0,NL.y0,NL.x1,NL.y1);
+			//			P = N.Next;
+			//			if (P == this) return A;
+			//			if (P.Next != this) {
+			//				N = P.Next;
+			//				goto Next;
+			//			}
+			//		}
+			//		PL = P.Line;
+			//		NL = N.Line;
+			//		A += Geron(NL.x0,NL.y0,PL.x0,PL.y0,PL.x1,PL.y1);
+			//		return A;
+			//	}
+			//}
+			/// <summary>Возвращает площадь пути)</summary>
 			public double Area {
 				get {
-					Bezier PL, NL;
 					var A = 0.0;
 					var P = this;
-					var N = this.Next;
-					if (N != this) {
-					Next:
-						PL = P.Line;
-						NL = N.Line;
-						A += Geron(PL.x0,PL.y0,NL.x0,NL.y0,NL.x1,NL.y1);
-						P = N.Next;
-						if (P == this) return A;
-						if (P.Next != this) {
-							N = P.Next;
-							goto Next;
-						}
-					}
-					PL = P.Line;
-					NL = N.Line;
-					A += Geron(NL.x0,NL.y0,PL.x0,PL.y0,PL.x1,PL.y1);
-					return A;
+					do {
+						if (P == null) return 0.0;
+						var p = P.Line;
+						A += (p.x0 + p.X) * (p.y0 - p.Y);
+						A += (p.X + p.x1) * (p.Y - p.y1);
+						P = P.Next;
+					}while (P != this);
+					return System.Math.Abs(A / 2);
 				}
 			}
 			#endregion
@@ -2317,7 +2331,7 @@ namespace Wholemy {
 			if (A1.x1 == B0.x0 && A1.y1 == B0.y0) {
 				var A = new Bezier(A0.x1,A0.y1,A1.x0,A1.y0);
 				var B = new Bezier(B0.x1,B0.y1,B1.x0,B1.y0);
-				if(PIntersect(ref A,ref B)) return true;
+				if (PIntersect(ref A,ref B)) return true;
 			}
 			return false;
 		}
