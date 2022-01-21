@@ -1,6 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
 		public const int MaxDepth = 64;
+		public const int MaxCount = 10;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -8,34 +9,6 @@ namespace Wholemy {
 			public int Count;
 			public Line Base;
 			public Line Last;
-			#region #method# AddLast(Item) 
-			public void AddLast(Line Item) {
-				if(Count == 0) {
-					Base = Item;
-					Last = Item;
-				} else {
-					Item.Prev = Last;
-					Last.Next = Item;
-					Last = Item;
-				}
-				Item.Owner = this;
-				Count++;
-			}
-			#endregion
-			#region #method# AddBase(Item) 
-			public void AddBase(Line Item) {
-				if(Count == 0) {
-					Base = Item;
-					Last = Item;
-				} else {
-					Item.Next = Base;
-					Base.Prev = Item;
-					Base = Item;
-				}
-				Item.Owner = this;
-				Count++;
-			}
-			#endregion
 			#region #new# (Item) 
 			public Path(Line Item) {
 				Item.Owner = this;
@@ -682,13 +655,15 @@ namespace Wholemy {
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					while(A != null) { var N = A.Next; if(A.IN) { A.Rep(); } else { A.Cut(); } A = N; }
+					var AC = 0;
+					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { AC++; A.Rep(); } else { A.Cut(); } A = N; }
 					var C = 0;
-					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
+					var BC = 0;
+					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { BC++; C += B.Rep(AP); } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
-				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
+				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
 				if(A != null && B != null && A.Len(B) < Mlen) {
 					Aref = A;
 					Bref = B;
@@ -706,13 +681,15 @@ namespace Wholemy {
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					while(A != null) { var N = A.Next; if(A.IN) { A.Rep(); } else { A.Cut(); } A = N; }
+					var AC = 0;
+					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { AC++; A.Rep(); } else { A.Cut(); } A = N; }
 					var C = 0;
-					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
+					var BC = 0;
+					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { BC++; C += B.Rep(AP); } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
-				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
+				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
 				if(A != null && B != null && A.Len(B) < Mlen) {
 					Aref = A;
 					Bref = B;
