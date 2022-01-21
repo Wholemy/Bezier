@@ -1,7 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MaxDepth = 64;
-		public const int MaxCount = 10;
+		public const int MaxDepth = 54;
+		public const int MaxCount = 0;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -69,8 +69,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root + ss, S);
+					A = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
+					B = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
 				} else {
 					A = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -298,6 +298,12 @@ namespace Wholemy {
 		public class Quadratic: Line {
 			public readonly double QX;
 			public readonly double QY;
+			#region #method# Equ(Line) 
+			public override bool Equ(Line Line) {
+				var Q = (Quadratic)Line;
+				return (Q.MX == this.MX && Q.MY == this.MY && Q.QX == this.QX && Q.QY == this.QY && Q.EX == this.EX && Q.EY == this.EY);
+			}
+			#endregion
 			#region #method# Div(root, A, B) 
 			public override void Div(double root, out Line A, out Line B) {
 				var x00 = MX;
@@ -315,8 +321,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root + ss, S);
+					A = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
+					B = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
 				} else {
 					A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -418,6 +424,12 @@ namespace Wholemy {
 			public readonly double cmY;
 			public readonly double ceX;
 			public readonly double ceY;
+			#region #method# Equ(Line) 
+			public override bool Equ(Line Line) {
+				var Q = (Cubic)Line;
+				return (Q.MX == this.MX && Q.MY == this.MY && Q.cmX == this.cmX && Q.cmY == this.cmY && Q.ceX == this.ceX && Q.ceY == this.ceY && Q.EX == this.EX && Q.EY == this.EY);
+			}
+			#endregion
 			#region #method# Div(root, A, B) 
 			public override void Div(double root, out Line A, out Line B) {
 				var x00 = MX;
@@ -443,8 +455,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root + ss, S);
+					A = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
+					B = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
 				} else {
 					A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -646,48 +658,53 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
+		#region #method# IntersectL(Aref, Bref, Mlen) 
 		public static double IntersectL(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
-			var R = false;
+			var L = double.NaN;
 			if(A.Intersect(B)) {
 				A.IN = B.IN = true;
 				var AP = new Path(A);
 				var BP = new Path(B);
+				var AI = A.Inverted;
+				var BI = B.Inverted;
 				do {
 					var AC = 0;
-					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
+					while(A != null) { var N = AI?A.Prev:A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
-					A = AP.Base;
-					B = BP.Base;
+					while(B != null) { var N = BI?B.Prev:B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
+					A = AI?AP.Last:AP.Base;
+					B = BI?BP.Last:BP.Base;
 					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
-				if(A != null && B != null && A.Len(B) < Mlen) {
+				if(A != null && B != null && (L = A.Len(B)) < Mlen) {
 					Aref = A;
 					Bref = B;
-					return A.Len(B);
 				}
 			}
-			return double.NaN;
+			return L;
 		}
+		#endregion
+		#region #method# Intersect(Aref, Bref, Mlen) 
 		public static bool Intersect(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
-			var R = false;
 			if(A.Intersect(B)) {
 				A.IN = B.IN = true;
 				var AP = new Path(A);
 				var BP = new Path(B);
+				var AI = A.Inverted;
+				var BI = B.Inverted;
 				do {
 					var AC = 0;
-					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
+					while(A != null) { var N = AI?A.Prev:A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
-					A = AP.Base;
-					B = BP.Base;
+					while(B != null) { var N = BI?B.Prev:B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
+					A = AI?AP.Last:AP.Base;
+					B = BI?BP.Last:BP.Base;
 					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
 				if(A != null && B != null && A.Len(B) < Mlen) {
@@ -698,5 +715,6 @@ namespace Wholemy {
 			}
 			return false;
 		}
+		#endregion
 	}
 }
