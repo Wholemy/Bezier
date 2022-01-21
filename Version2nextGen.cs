@@ -67,7 +67,7 @@ namespace Wholemy {
 		#endregion
 		#region #class# Line 
 		public class Line {
-			public bool Exists;
+			public bool IN;
 			protected private Rect _Rect;
 			public readonly double MX;
 			public readonly double MY;
@@ -85,24 +85,8 @@ namespace Wholemy {
 				this.EY = EY;
 			}
 			#endregion
-			#region #method# Div(root) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public virtual Dot Div(double root) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = EX;
-				var y11 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				return new Dot(x01, y01);
-			}
-			#endregion
 			#region #method# Div(root, A, B) 
-			public virtual Dot Div(double root, out Line A, out Line B) {
+			public virtual void Div(double root, out Line A, out Line B) {
 				var x00 = MX;
 				var y00 = MY;
 				var x11 = EX;
@@ -118,26 +102,6 @@ namespace Wholemy {
 					A = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
-				return new Dot(x01, y01);
-			}
-			#endregion
-			#region #method# Div(root, X, Y, A, B) 
-			public virtual void Div(double root, double X, double Y, out Line A, out Line B) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = EX;
-				var y11 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var S = this.Size * root;
-				var ss = this.Size - S;
-				if(this.Inverted) {
-					A = new Line(X, Y, x11, y11, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Line(x00, y00, X, Y, this.Inverted, this.Depth + 1, this.Root + ss, S);
-				} else {
-					A = new Line(x00, y00, X, Y, this.Inverted, this.Depth + 1, this.Root, S);
-					B = new Line(X, Y, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
-				}
 			}
 			#endregion
 			#region #method# Intersect(I) 
@@ -147,12 +111,13 @@ namespace Wholemy {
 #endif
 			#endregion
 			public bool Intersect(Line I) {
-				return this.Rect.Intersect(I.Rect);
-			}
-			public bool IsInside(Line I) {
-				double X, Y;
-				if(this.Inverted) { X = this.EX; Y = this.EY; } else { X = this.MX; Y = this.MY; }
-				return I.Rect.Intersect(X, Y);
+				if(this.IN && I.IN) return false;
+				if(this.Rect.Intersect(I.Rect)) {
+					this.IN = true;
+					I.IN = true;
+					return true;
+				}
+				return false;
 			}
 			#endregion
 			#region #get# Rect 
@@ -279,16 +244,24 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #method# DivInHalf 
-			public Line DivInHalfA() {
-				Div(0.5, out var AA, out var AB);
-				Rep(AA, AB);
-				return AA;
+			#region #method# Rep(Path) 
+			public int Rep(Path Path) {
+				var Count = 0;
+				Div(0.5, out var BA, out var BB);
+				Rep(BA, BB);
+				var A = Path.Base;
+				while(A != null) {
+					if(A.Intersect(BA)) { Count++; }
+					if(A.Intersect(BB)) { Count++; }
+					A = A.Next;
+				}
+				return Count;
 			}
-			public Line DivInHalfB() {
+			#endregion
+			#region #method# Rep 
+			public void Rep() {
 				Div(0.5, out var AA, out var AB);
 				Rep(AA, AB);
-				return AB;
 			}
 			#endregion
 			#region #method# ToString 
@@ -297,19 +270,11 @@ namespace Wholemy {
 				return $"L Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
-			#region #method# LenM(M) 
-			public double LenM(Line M) {
+			#region #method# Len(Line) 
+			public double Len(Line Line) {
 				double X, Y;
 				if(this.Inverted) { X = this.EX; Y = this.EY; } else { X = this.MX; Y = this.MY; }
-				if(M.Inverted) { X -= M.EX; Y -= M.EY; } else { X -= M.MX; Y -= M.MY; }
-				return System.Math.Sqrt(X * X + Y * Y);
-			}
-			#endregion
-			#region #method# LenE(M) 
-			public double LenE(Line M) {
-				double X, Y;
-				if(this.Inverted) { X = this.MX; Y = this.MY; } else { X = this.EX; Y = this.EY; }
-				if(M.Inverted) { X -= M.EX; Y -= M.EY; } else { X -= M.MX; Y -= M.MY; }
+				if(Line.Inverted) { X -= Line.EX; Y -= Line.EY; } else { X -= Line.MX; Y -= Line.MY; }
 				return System.Math.Sqrt(X * X + Y * Y);
 			}
 			#endregion
@@ -319,30 +284,8 @@ namespace Wholemy {
 		public class Quadratic: Line {
 			public readonly double QX;
 			public readonly double QY;
-			#region #method# Div(root) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override Dot Div(double root) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = QX;
-				var y11 = QY;
-				var x22 = EX;
-				var y22 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x02 = (x12 - x01) * root + x01;
-				var y02 = (y12 - y01) * root + y01;
-				return new Dot(x02, y02);
-			}
-			#endregion
 			#region #method# Div(root, A, B) 
-			public override Dot Div(double root, out Line A, out Line B) {
+			public override void Div(double root, out Line A, out Line B) {
 				var x00 = MX;
 				var y00 = MY;
 				var x11 = QX;
@@ -363,32 +306,6 @@ namespace Wholemy {
 				} else {
 					A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
-				}
-				return new Dot(x02, y02);
-			}
-			#endregion
-			#region #method# Div(root, X, Y, A, B) 
-			public override void Div(double root, double X, double Y, out Line A, out Line B) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = QX;
-				var y11 = QY;
-				var x22 = EX;
-				var y22 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x02 = (x12 - x01) * root + x01;
-				var y02 = (y12 - y01) * root + y01;
-				var S = this.Size * root;
-				var ss = this.Size - S;
-				if(this.Inverted) {
-					A = new Quadratic(X, Y, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Quadratic(x00, y00, x01, y01, X, Y, this.Inverted, this.Depth + 1, this.Root + ss, S);
-				} else {
-					A = new Quadratic(x00, y00, x01, y01, X, Y, this.Inverted, this.Depth + 1, this.Root, S);
-					B = new Quadratic(X, Y, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
 			}
 			#endregion
@@ -487,38 +404,8 @@ namespace Wholemy {
 			public readonly double cmY;
 			public readonly double ceX;
 			public readonly double ceY;
-			#region #method# Div(root) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public override Dot Div(double root) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = cmX;
-				var y11 = cmY;
-				var x22 = ceX;
-				var y22 = ceY;
-				var x33 = EX;
-				var y33 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x23 = (x33 - x22) * root + x22;
-				var y23 = (y33 - y22) * root + y22;
-				var x02 = (x12 - x01) * root + x01;
-				var y02 = (y12 - y01) * root + y01;
-				var x13 = (x23 - x12) * root + x12;
-				var y13 = (y23 - y12) * root + y12;
-				var x03 = (x13 - x02) * root + x02;
-				var y03 = (y13 - y02) * root + y02;
-				return new Dot(x03, y03);
-			}
-			#endregion
 			#region #method# Div(root, A, B) 
-			public override Dot Div(double root, out Line A, out Line B) {
+			public override void Div(double root, out Line A, out Line B) {
 				var x00 = MX;
 				var y00 = MY;
 				var x11 = cmX;
@@ -547,40 +434,6 @@ namespace Wholemy {
 				} else {
 					A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
-				}
-				return new Dot(x03, y03);
-			}
-			#endregion
-			#region #method# Div(root, X, Y, A, B) 
-			public override void Div(double root, double X, double Y, out Line A, out Line B) {
-				var x00 = MX;
-				var y00 = MY;
-				var x11 = cmX;
-				var y11 = cmY;
-				var x22 = ceX;
-				var y22 = ceY;
-				var x33 = EX;
-				var y33 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x23 = (x33 - x22) * root + x22;
-				var y23 = (y33 - y22) * root + y22;
-				var x02 = (x12 - x01) * root + x01;
-				var y02 = (y12 - y01) * root + y01;
-				var x13 = (x23 - x12) * root + x12;
-				var y13 = (y23 - y12) * root + y12;
-				var x03 = (x13 - x02) * root + x02;
-				var y03 = (y13 - y02) * root + y02;
-				var S = this.Size * root;
-				var ss = this.Size - S;
-				if(this.Inverted) {
-					A = new Cubic(X, Y, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
-					B = new Cubic(x00, y00, x01, y01, x02, y02, X, Y, this.Inverted, this.Depth + 1, this.Root + ss, S);
-				} else {
-					A = new Cubic(x00, y00, x01, y01, x02, y02, X, Y, this.Inverted, this.Depth + 1, this.Root, S);
-					B = new Cubic(X, Y, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
 			}
 			#endregion
@@ -670,29 +523,6 @@ namespace Wholemy {
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
 				return $"C Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
-			}
-			#endregion
-		}
-		#endregion
-		#region #struct# Dot 
-		public struct Dot {
-			public readonly double X;
-			public readonly double Y;
-			#region #new# (X, Y) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot(double X, double Y) {
-				this.X = X;
-				this.Y = Y;
-			}
-			#endregion
-			#region #method# ToString 
-			public override string ToString() {
-				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"X:{X.ToString(I)} Y:{Y.ToString(I)}";
 			}
 			#endregion
 		}
@@ -802,53 +632,53 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
-		public static double Intersect(ref Line Aref, ref Line Bref) {
+		public static double IntersectL(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
+			var R = false;
 			if(A.Intersect(B)) {
-				A.Exists = true;
-				B.Exists = true;
+				A.IN = B.IN = true;
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					while(A != null) {
-						var AN = A.Next;
-						if(A.Exists) {
-							A.Div(0.5, out var AA, out var AB);
-							A.Rep(AA, AB);
-						} else {
-							A.Cut();
-						}
-						A = AN;
-					}
-					var Count = 0;
-					while(B != null) {
-						var BN = B.Next;
-						if(B.Exists) {
-							B.Div(0.5, out var BA, out var BB);
-							B.Rep(BA, BB);
-							A = AP.Base;
-							while(A != null) {
-								if(A.Intersect(BA)) { Count++; A.Exists = true; BA.Exists = true; }
-								if(A.Intersect(BB)) { Count++; A.Exists = true; BB.Exists = true; }
-								A = A.Next;
-							}
-						} else {
-							B.Cut();
-						}
-						B = BN;
-					}
+					while(A != null) { var N = A.Next; if(A.IN) { A.Rep(); } else { A.Cut(); } A = N; }
+					var C = 0;
+					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
-					if(Count == 0) break;
+					if((R = (A.Len(B) <= Mlen)) || C == 0) break;
 				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
-				if(A != null && B != null) {
+				if(R && A != null && B != null) {
 					Aref = A;
 					Bref = B;
-					return A.LenM(B);
+					return A.Len(B);
 				}
 			}
 			return double.NaN;
+		}
+		public static bool Intersect(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
+			var A = Aref.Pastle;
+			var B = Bref.Pastle;
+			var R = false;
+			if(A.Intersect(B)) {
+				A.IN = B.IN = true;
+				var AP = new Path(A);
+				var BP = new Path(B);
+				do {
+					while(A != null) { var N = A.Next; if(A.IN) { A.Rep(); } else { A.Cut(); } A = N; }
+					var C = 0;
+					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
+					A = AP.Base;
+					B = BP.Base;
+					if((R = (A.Len(B) <= Mlen)) || C == 0) break;
+				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
+				if(R && A != null && B != null) {
+					Aref = A;
+					Bref = B;
+					return R;
+				}
+			}
+			return false;
 		}
 	}
 }
