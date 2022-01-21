@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MaxDepth = 56;
+		public const int MaxDepth = 64;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -201,30 +201,70 @@ namespace Wholemy {
 			public readonly int Depth;
 			public readonly double Root;
 			public readonly double Size;
+			#region #method# Equ(Line) 
+			public virtual bool Equ(Line Line) {
+				return (Line.MX == this.MX && Line.MY == this.MY && Line.EX == this.EX && Line.EY == this.EY);
+			}
+			#endregion
 			#region #method# Rep(A, B) 
-			public void Rep(Line A, Line B) {
+			public bool Rep(Line A, Line B) {
 				if(Owner != null) {
-					A.Next = B;
-					A.Prev = Prev;
-					B.Prev = A;
-					B.Next = Next;
-					A.Owner = B.Owner = Owner;
-					if(Prev != null) { Prev.Next = A; } else { Owner.Base = A; }
-					if(Next != null) { Next.Prev = B; } else { Owner.Last = B; }
-					Prev = null;
-					Next = null;
-					Owner.Count++;
-					Owner = null;
+					if(!A.Equ(B)) {
+						if(Prev == null || !Prev.Equ(A)) {
+							A.Next = B;
+							B.Prev = A;
+						} else {
+							A = B;
+						}
+					} else {
+						B = A;
+					}
+					if(Prev == null || (!Prev.Equ(A) && !Prev.Equ(B))) {
+						A.Owner = B.Owner = Owner;
+						A.Prev = Prev;
+						B.Next = Next;
+						if(Prev != null) { Prev.Next = A; } else { Owner.Base = A; }
+						if(Next != null) { Next.Prev = B; } else { Owner.Last = B; }
+						Prev = null;
+						Next = null;
+						if(A != B) Owner.Count++;
+						Owner = null;
+						return true;
+					} else {
+						if(Prev != null) { Prev.Next = Next; } else { Owner.Base = Next; }
+						if(Next != null) { Next.Prev = Prev; } else { Owner.Last = Prev; }
+						Prev = null;
+						Next = null;
+						Owner.Count--;
+						Owner = null;
+					}
 				} else {
-					A.Next = B;
-					A.Prev = Prev;
-					B.Prev = A;
-					B.Next = Next;
-					if(Prev != null) { Prev.Next = A; }
-					if(Next != null) { Next.Prev = B; }
-					Prev = null;
-					Next = null;
+					if(!A.Equ(B)) {
+						if(Prev == null || !Prev.Equ(A)) {
+							A.Next = B;
+							B.Prev = A;
+						} else {
+							A = B;
+						}
+					} else {
+						B = A;
+					}
+					if(Prev == null || (!Prev.Equ(A) && !Prev.Equ(B))) {
+						A.Prev = Prev;
+						B.Next = Next;
+						if(Prev != null) { Prev.Next = A; }
+						if(Next != null) { Next.Prev = B; }
+						Prev = null;
+						Next = null;
+						return true;
+					} else {
+						if(Prev != null) { Prev.Next = Next; }
+						if(Next != null) { Next.Prev = Prev; }
+						Prev = null;
+						Next = null;
+					}
 				}
+				return false;
 			}
 			#endregion
 			#region #method# Cut 
@@ -248,12 +288,13 @@ namespace Wholemy {
 			public int Rep(Path Path) {
 				var Count = 0;
 				Div(0.5, out var BA, out var BB);
-				Rep(BA, BB);
-				var A = Path.Base;
-				while(A != null) {
-					if(A.Intersect(BA)) { Count++; }
-					if(A.Intersect(BB)) { Count++; }
-					A = A.Next;
+				if(Rep(BA, BB)) {
+					var A = Path.Base;
+					while(A != null) {
+						if(A.Intersect(BA)) { Count++; }
+						if(BA.Root != BB.Root && A.Intersect(BB)) { Count++; }
+						A = A.Next;
+					}
 				}
 				return Count;
 			}
