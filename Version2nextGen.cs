@@ -258,8 +258,7 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Rep(Path) 
-			public int Rep(Path Path) {
-				var Count = 0;
+			public bool Rep(Path Path, ref int Count) {
 				Div(0.5, out var BA, out var BB);
 				if(Rep(BA, BB)) {
 					var A = Path.Base;
@@ -268,14 +267,15 @@ namespace Wholemy {
 						if(BA.Root != BB.Root && A.Intersect(BB)) { Count++; }
 						A = A.Next;
 					}
+					return true;
 				}
-				return Count;
+				return false;
 			}
 			#endregion
 			#region #method# Rep 
-			public void Rep() {
+			public bool Rep() {
 				Div(0.5, out var AA, out var AB);
-				Rep(AA, AB);
+				return Rep(AA, AB);
 			}
 			#endregion
 			#region #method# ToString 
@@ -656,10 +656,10 @@ namespace Wholemy {
 				var BP = new Path(B);
 				do {
 					var AC = 0;
-					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { AC++; A.Rep(); } else { A.Cut(); } A = N; }
+					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { BC++; C += B.Rep(AP); } else { B.Cut(); } B = N; }
+					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
@@ -682,10 +682,10 @@ namespace Wholemy {
 				var BP = new Path(B);
 				do {
 					var AC = 0;
-					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { AC++; A.Rep(); } else { A.Cut(); } A = N; }
+					while(A != null) { var N = A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { BC++; C += B.Rep(AP); } else { B.Cut(); } B = N; }
+					while(B != null) { var N = B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
