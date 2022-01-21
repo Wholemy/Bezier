@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MaxDepth = 32;
+		public const int MaxDepth = 56;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -646,9 +646,9 @@ namespace Wholemy {
 					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
-					if((R = (A.Len(B) <= Mlen)) || C == 0) break;
+					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
-				if(R && A != null && B != null) {
+				if(A != null && B != null && A.Len(B) < Mlen) {
 					Aref = A;
 					Bref = B;
 					return A.Len(B);
@@ -670,12 +670,12 @@ namespace Wholemy {
 					while(B != null) { var N = B.Next; if(B.IN) { C += B.Rep(AP); } else { B.Cut(); } B = N; }
 					A = AP.Base;
 					B = BP.Base;
-					if((R = (A.Len(B) <= Mlen)) || C == 0) break;
+					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth < MaxDepth && B.Depth < MaxDepth));
-				if(R && A != null && B != null) {
+				if(A != null && B != null && A.Len(B) < Mlen) {
 					Aref = A;
 					Bref = B;
-					return R;
+					return true;
 				}
 			}
 			return false;
