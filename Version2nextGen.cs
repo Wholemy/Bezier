@@ -1,7 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
+		public const int MaxBound = 3;
 		public const int MaxDepth = 54;
-		public const int MaxCount = 0;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -35,13 +35,15 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public int Test;
 		}
 		#endregion
 		#region #class# Line 
 		public class Line {
-			public bool IN;
+			public int C;
+			public Line Intersected;
 			protected private Rect _Rect;
+			public readonly double X;
+			public readonly double Y;
 			public readonly double MX;
 			public readonly double MY;
 			public readonly double EX;
@@ -56,6 +58,13 @@ namespace Wholemy {
 				this.MY = MY;
 				this.EX = EX;
 				this.EY = EY;
+				if(Inverted) {
+					this.X = EX;
+					this.Y = EY;
+				} else {
+					this.X = MX;
+					this.Y = MY;
+				}
 			}
 			#endregion
 			#region #method# Div(root, A, B) 
@@ -69,8 +78,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
-					B = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
+					A = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root, ss);
+					B = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root + ss, S);
 				} else {
 					A = new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -83,14 +92,24 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public bool Intersect(Line I) {
-				if(this.IN && I.IN) return false;
+			public bool InIntersect(Line I) {
 				if(this.Rect.Intersect(I.Rect)) {
-					this.IN = true;
-					I.IN = true;
+					this.C++;
+					I.C++;
 					return true;
 				}
 				return false;
+			}
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public bool Intersect(Line I) {
+				return this.Rect.Intersect(I.Rect);
+			}
+			public bool Intersect(double X, double Y) {
+				return this.Rect.Intersect(X, Y);
 			}
 			#endregion
 			#region #get# Rect 
@@ -170,8 +189,14 @@ namespace Wholemy {
 			public Path Owner;
 			public Line Prev;
 			public Line Next;
+			public double InRoot {
+				get {
+					if(Inverted) return 1.0 - Root;
+					return Root;
+				}
+			}
 			public readonly bool Inverted;
-			public readonly int Depth;
+			public int Depth;
 			public readonly double Root;
 			public readonly double Size;
 			#region #method# Equ(Line) 
@@ -180,64 +205,29 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Rep(A, B) 
-			public bool Rep(Line A, Line B) {
+			public void Red(Line A, Line B) {
 				if(Owner != null) {
-					if(!A.Equ(B)) {
-						if(Prev == null || !Prev.Equ(A)) {
-							A.Next = B;
-							B.Prev = A;
-						} else {
-							A = B;
-						}
-					} else {
-						B = A;
-					}
-					if(Prev == null || (!Prev.Equ(A) && !Prev.Equ(B))) {
-						A.Owner = B.Owner = Owner;
-						A.Prev = Prev;
-						B.Next = Next;
-						if(Prev != null) { Prev.Next = A; } else { Owner.Base = A; }
-						if(Next != null) { Next.Prev = B; } else { Owner.Last = B; }
-						Prev = null;
-						Next = null;
-						if(A != B) Owner.Count++;
-						Owner = null;
-						return true;
-					} else {
-						if(Prev != null) { Prev.Next = Next; } else { Owner.Base = Next; }
-						if(Next != null) { Next.Prev = Prev; } else { Owner.Last = Prev; }
-						Prev = null;
-						Next = null;
-						Owner.Count--;
-						Owner = null;
-					}
+					A.Next = B;
+					B.Prev = A;
+					A.Owner = B.Owner = Owner;
+					A.Prev = Prev;
+					B.Next = Next;
+					if(Prev != null) { Prev.Next = A; } else { Owner.Base = A; }
+					if(Next != null) { Next.Prev = B; } else { Owner.Last = B; }
+					Prev = null;
+					Next = null;
+					Owner.Count++;
+					Owner = null;
 				} else {
-					if(!A.Equ(B)) {
-						if(Prev == null || !Prev.Equ(A)) {
-							A.Next = B;
-							B.Prev = A;
-						} else {
-							A = B;
-						}
-					} else {
-						B = A;
-					}
-					if(Prev == null || (!Prev.Equ(A) && !Prev.Equ(B))) {
-						A.Prev = Prev;
-						B.Next = Next;
-						if(Prev != null) { Prev.Next = A; }
-						if(Next != null) { Next.Prev = B; }
-						Prev = null;
-						Next = null;
-						return true;
-					} else {
-						if(Prev != null) { Prev.Next = Next; }
-						if(Next != null) { Next.Prev = Prev; }
-						Prev = null;
-						Next = null;
-					}
+					A.Next = B;
+					B.Prev = A;
+					A.Prev = Prev;
+					B.Next = Next;
+					if(Prev != null) { Prev.Next = A; }
+					if(Next != null) { Next.Prev = B; }
+					Prev = null;
+					Next = null;
 				}
-				return false;
 			}
 			#endregion
 			#region #method# Cut 
@@ -257,25 +247,23 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			#region #method# Rep(Path) 
-			public bool Rep(Path Path, ref int Count) {
+			#region #method# Red(Path, Count) 
+			public void Red(Path Path, ref int Count) {
 				Div(0.5, out var BA, out var BB);
-				if(Rep(BA, BB)) {
-					var A = Path.Base;
-					while(A != null) {
-						if(A.Intersect(BA)) { Count++; }
-						if(BA.Root != BB.Root && A.Intersect(BB)) { Count++; }
-						A = A.Next;
-					}
-					return true;
+				Red(BA, BB);
+				var A = Path.Base;
+				while(A != null) {
+					bool F = false;
+					if(A.InIntersect(BA)) { F = true; Count++; }
+					if(A.InIntersect(BB)) { F = true; Count++; }
+					A = A.Next;
 				}
-				return false;
 			}
 			#endregion
-			#region #method# Rep 
-			public bool Rep() {
-				Div(0.5, out var AA, out var AB);
-				return Rep(AA, AB);
+			#region #method# Red 
+			public void Red() {
+				Div(0.5, out var A, out var B);
+				Red(A, B);
 			}
 			#endregion
 			#region #method# ToString 
@@ -286,9 +274,8 @@ namespace Wholemy {
 			#endregion
 			#region #method# Len(Line) 
 			public double Len(Line Line) {
-				double X, Y;
-				if(this.Inverted) { X = this.EX; Y = this.EY; } else { X = this.MX; Y = this.MY; }
-				if(Line.Inverted) { X -= Line.EX; Y -= Line.EY; } else { X -= Line.MX; Y -= Line.MY; }
+				var X = this.X - Line.X;
+				var Y = this.Y - Line.Y;
 				return System.Math.Sqrt(X * X + Y * Y);
 			}
 			#endregion
@@ -321,8 +308,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
-					B = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
+					A = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root, ss);
+					B = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root + ss, S);
 				} else {
 					A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -455,8 +442,8 @@ namespace Wholemy {
 				var S = this.Size * root;
 				var ss = this.Size - S;
 				if(this.Inverted) {
-					A = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
-					B = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
+					A = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
+					B = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root + ss, S);
 				} else {
 					A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
@@ -662,29 +649,38 @@ namespace Wholemy {
 		public static double IntersectL(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
-			var L = double.NaN;
 			if(A.Intersect(B)) {
-				A.IN = B.IN = true;
+				A.C++;
+				B.C++;
 				var AP = new Path(A);
 				var BP = new Path(B);
-				var AI = A.Inverted;
-				var BI = B.Inverted;
 				do {
 					var AC = 0;
-					while(A != null) { var N = AI?A.Prev:A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
+					while(A != null && AC < MaxBound) { var N = A.Next; if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } A = N; }
+					if(A != null) {
+						A = A.Prev;
+						AC = 0;
+						var AL = AP.Last;
+						while(AL != A) { var N = AL.Prev; if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
+					}
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = BI?B.Prev:B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
-					A = AI?AP.Last:AP.Base;
-					B = BI?BP.Last:BP.Base;
+					while(B != null && BC < MaxBound) { var N = B.Next; if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
+					if(B != null) {
+						B = B.Prev;
+						BC = 0;
+						var BL = BP.Last;
+						while(BL != B) { var N = BL.Prev; if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
+					}
+					A = AP.Base;
+					B = BP.Base;
 					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
-				if(A != null && B != null && (L = A.Len(B)) < Mlen) {
-					Aref = A;
-					Bref = B;
-				}
+				Aref = A;
+				Bref = B;
+				return A.Len(B);
 			}
-			return L;
+			return double.NaN;
 		}
 		#endregion
 		#region #method# Intersect(Aref, Bref, Mlen) 
@@ -692,19 +688,30 @@ namespace Wholemy {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
 			if(A.Intersect(B)) {
-				A.IN = B.IN = true;
+				A.C++;
+				B.C++;
 				var AP = new Path(A);
 				var BP = new Path(B);
-				var AI = A.Inverted;
-				var BI = B.Inverted;
 				do {
 					var AC = 0;
-					while(A != null) { var N = AI?A.Prev:A.Next; if(A.IN && AC <= MaxCount) { if(A.Rep()) AC++; } else { A.Cut(); } A = N; }
+					while(A != null && AC < MaxBound) { var N = A.Next; if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } A = N; }
+					if(A != null) {
+						A = A.Prev;
+						AC = 0;
+						var AL = AP.Last;
+						while(AL != A) { var N = AL.Prev; if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
+					}
 					var C = 0;
 					var BC = 0;
-					while(B != null) { var N = BI?B.Prev:B.Next; if(B.IN && BC <= MaxCount) { if(B.Rep(AP,ref C)) BC++; } else { B.Cut(); } B = N; }
-					A = AI?AP.Last:AP.Base;
-					B = BI?BP.Last:BP.Base;
+					while(B != null && BC < MaxBound) { var N = B.Next; if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
+					if(B != null) {
+						B = B.Prev;
+						BC = 0;
+						var BL = BP.Last;
+						while(BL != B) { var N = BL.Prev; if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
+					}
+					A = AP.Base;
+					B = BP.Base;
 					if(C == 0) break;
 				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
 				if(A != null && B != null && A.Len(B) < Mlen) {
