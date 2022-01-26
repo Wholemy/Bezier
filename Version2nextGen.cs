@@ -9,12 +9,13 @@ namespace Wholemy {
 			public int Count0;
 			public int Count1;
 			public int Count;
+			public Line Root;
 			public Line Base;
 			public Line Last;
 			#region #new# (Item) 
 			public Path(Line Item) {
 				Item.Owner = this;
-				Base = Last = Item;
+				Root = Base = Last = Item;
 				Count++;
 			}
 			#endregion
@@ -37,6 +38,44 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			public void Regen() {
+				Line A, B;
+				var I = Base;
+				while(I != null) {
+					var Next = I.Next;
+					if(I.C == 0) {
+						var Prev = I.Prev;
+						if(Next == null) {
+							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
+								Root.Div(Prev.Root, out A, out B);
+								Prev.Rep(B);
+								I.Cut();
+								I = B;
+							}
+							I.Depth = -1;
+						} else if(Next.C > 0) {
+							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
+								Root.Div(Prev.Root, out A, out B);
+								B.Div(Next.Root - Prev.Root, out A, out B);
+								Prev.Rep(A);
+								I.Cut();
+								I = A;
+							}
+							I.Depth = -1;
+						} else {
+							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
+								Root.Div(Prev.Root, out A, out B);
+								B.Div(Next.Root - Prev.Root, out A, out B);
+								Prev.Rep(A);
+								I.Cut();
+								I = A;
+							}
+							I.Depth = -1;
+						}
+					}
+					I = Next;
+				}
+			}
 		}
 		#endregion
 		#region #class# Line 
@@ -204,7 +243,7 @@ namespace Wholemy {
 			public Line Prev;
 			public Line Next;
 			public readonly bool Inverted;
-			public readonly int Depth;
+			public int Depth;
 			public readonly double Root;
 			public readonly double Size;
 			#region #method# Equ(Line) 
@@ -285,7 +324,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"L Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"L Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
 			#region #method# Len(Line) 
@@ -416,7 +455,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"Q Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} QX:{QX.ToString(I)} QY:{QY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"Q Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} QX:{QX.ToString(I)} QY:{QY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
 		}
@@ -553,7 +592,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"C Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"C Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
 		}
@@ -712,22 +751,24 @@ namespace Wholemy {
 				var BP = new Path(B);
 				do {
 					var AC = 0;
-					while(A != null && AC < MaxBound) { var N = A.Next; if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } A = N; }
+					while(A != null && AC < MaxBound) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } } A = N; }
 					if(A != null) {
 						A = A.Prev;
 						AC = 0;
 						var AL = AP.Last;
-						while(AL != A) { var N = AL.Prev; if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
+						while(AL != A) { var N = AL.Prev; if(AL.Depth >= 0) { if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } } AL = N; }
 					}
 					var C = 0;
 					var BC = 0;
-					while(B != null && BC < MaxBound) { var N = B.Next; if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
+					while(B != null && BC < MaxBound) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } } B = N; }
 					if(B != null) {
 						B = B.Prev;
 						BC = 0;
 						var BL = BP.Last;
-						while(BL != B) { var N = BL.Prev; if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
+						while(BL != B) { var N = BL.Prev; if(BL.Depth >= 0) { if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } } BL = N; }
 					}
+					AP.Regen();
+					BP.Regen();
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
