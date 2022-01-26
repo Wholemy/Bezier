@@ -16,6 +16,7 @@ namespace Wholemy {
 			public Path(Line Item) {
 				Item.Owner = this;
 				Root = Base = Last = Item;
+				if(Item.C > 0) { if((Item.Depth & 1) != 0) Count1++; else Count0++; }
 				Count++;
 			}
 			#endregion
@@ -38,12 +39,17 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			public void Regen(Line S, Line E, int C) {
+
+			}
 			public void Regen() {
-				Line A, B;
+				Line A, B, S = null, E = null;
+				int C = 0;
 				var I = Base;
 				while(I != null) {
 					var Next = I.Next;
 					if(I.C == 0) {
+						if(C > 0) { Regen(S, E, C); C = 0; }
 						var Prev = I.Prev;
 						if(Next == null) {
 							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
@@ -72,6 +78,9 @@ namespace Wholemy {
 							}
 							I.Depth = -1;
 						}
+					} else {
+						if(C == 0) { S = E = I; } else { E = I; }
+						C++;
 					}
 					I = Next;
 				}
@@ -309,8 +318,10 @@ namespace Wholemy {
 				Rep(BA, BB);
 				var A = Path.Base;
 				while(A != null) {
-					if(A.InIntersect(BA)) { Count++; }
-					if(A.InIntersect(BB)) { Count++; }
+					if(A.Depth >= 0) {
+						if(A.InIntersect(BA)) { Count++; }
+						if(A.InIntersect(BB)) { Count++; }
+					}
 					A = A.Next;
 				}
 			}
@@ -706,6 +717,7 @@ namespace Wholemy {
 		public static double IntersectL(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
+			var D = 0;
 			if(A.Intersect(B)) {
 				A.C++;
 				B.C++;
@@ -731,11 +743,16 @@ namespace Wholemy {
 					}
 					A = AP.Base;
 					B = BP.Base;
+					D++;
 					if(C == 0) break;
-				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
-				Aref = A;
-				Bref = B;
-				return A.Len(B);
+				} while(A != null && B != null && D < MaxDepth);
+				if(A != null && A.C == 0) A = A.Next;
+				if(B != null && B.C == 0) B = B.Next;
+				if(A != null && B != null) {
+					Aref = A;
+					Bref = B;
+					return A.Len(B);
+				}
 			}
 			return double.NaN;
 		}
@@ -744,6 +761,7 @@ namespace Wholemy {
 		public static double Intersect2L(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
+			var D = 0;
 			if(A.Intersect(B)) {
 				A.C++;
 				B.C++;
@@ -771,11 +789,16 @@ namespace Wholemy {
 					BP.Regen();
 					A = AP.Base;
 					B = BP.Base;
+					D++;
 					if(C == 0) break;
-				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
-				Aref = A;
-				Bref = B;
-				return A.Len(B);
+				} while(A != null && B != null && D < MaxDepth);
+				if(A != null && A.C == 0) A = A.Next;
+				if(B != null && B.C == 0) B = B.Next;
+				if(A != null && B != null) {
+					Aref = A;
+					Bref = B;
+					return A.Len(B);
+				}
 			}
 			return double.NaN;
 		}
@@ -784,6 +807,7 @@ namespace Wholemy {
 		public static bool Intersect(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
+			var D = 0;
 			if(A.Intersect(B)) {
 				A.C++;
 				B.C++;
@@ -809,9 +833,12 @@ namespace Wholemy {
 					}
 					A = AP.Base;
 					B = BP.Base;
+					D++;
 					if(C == 0) break;
-				} while(A != null && B != null && (A.Depth <= MaxDepth && B.Depth <= MaxDepth));
-				if(A != null && B != null && A.Len(B) < Mlen) {
+				} while(A != null && B != null && D < MaxDepth);
+				if(A != null && A.C == 0) A = A.Next;
+				if(B != null && B.C == 0) B = B.Next;
+				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
 					return true;
