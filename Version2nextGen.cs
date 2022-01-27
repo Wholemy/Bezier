@@ -59,15 +59,6 @@ namespace Wholemy {
 								I = B;
 							}
 							I.Depth = -1;
-						} else if(Next.C > 0) {
-							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
-								Root.Div(Prev.Root, out A, out B);
-								B.Div(Next.Root - Prev.Root, out A, out B);
-								Prev.Rep(A);
-								I.Cut();
-								I = A;
-							}
-							I.Depth = -1;
 						} else {
 							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
 								Root.Div(Prev.Root, out A, out B);
