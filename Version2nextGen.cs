@@ -40,7 +40,21 @@ namespace Wholemy {
 			}
 			#endregion
 			public void Regen(Line S, Line E, int C) {
-
+				var M = MaxBound * 2;
+				if(C > M) {
+					var cc = 0;
+					while(cc < MaxBound) { S = S.Next; cc++; }
+					cc = 0;
+					while(cc < MaxBound) { E = E.Prev; cc++; }
+					C -= M;
+					var R = S.Root;
+					while(C > 1) { S.Next.Cut(); C--; }
+					Root.Div(R, out var A, out var B);
+					B.Div(S.Next.Root - R, out A, out B);
+					S.Rep(A);
+					A.Depth = -1;
+					A.C++;
+				}
 			}
 			public void Regen() {
 				Line A, B, S = null, E = null;
@@ -759,23 +773,9 @@ namespace Wholemy {
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					var AC = 0;
-					while(A != null && AC < MaxBound) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } } A = N; }
-					if(A != null) {
-						A = A.Prev;
-						AC = 0;
-						var AL = AP.Last;
-						while(AL != A) { var N = AL.Prev; if(AL.Depth >= 0) { if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } } AL = N; }
-					}
+					while(A != null) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { A.Red(); } } A = N; }
 					var C = 0;
-					var BC = 0;
-					while(B != null && BC < MaxBound) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } } B = N; }
-					if(B != null) {
-						B = B.Prev;
-						BC = 0;
-						var BL = BP.Last;
-						while(BL != B) { var N = BL.Prev; if(BL.Depth >= 0) { if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } } BL = N; }
-					}
+					while(B != null) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { B.Red(AP, ref C); } } B = N; }
 					AP.Regen();
 					BP.Regen();
 					A = AP.Base;
