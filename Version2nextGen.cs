@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 4;
+		public const int MinMaxS = 32;
 		public const int MaxDepth = 54;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
@@ -83,6 +83,7 @@ namespace Wholemy {
 									B.In = true;
 								}
 								S.Depth = Depth;
+								S.Gin = false;
 								S.In = true;
 								R = true;
 							} else {
@@ -116,6 +117,7 @@ namespace Wholemy {
 									A.In = true;
 								}
 								E.Depth = Depth;
+								E.Gin = false;
 								E.In = true;
 								R = true;
 							} else {
@@ -153,13 +155,16 @@ namespace Wholemy {
 				while(I != null) {
 					var Next = I.Next;
 					if(!I.Gin) {
-						if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
+						if(C > 0) {
+							if(Regen(A, B, C)) R = true; C = 0;
+						}
 						var Prev = I.Prev;
 						if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
 							I.Cut();
 							I = Root.DivB(Prev.Root);
 							if(Next != null) I = I.DivA((Next.Root - Prev.Root) / I.Size);
 							Prev.Rep(I);
+							R = true;
 						}
 						I.Depth = -1;
 						I.Gin = false;
@@ -171,7 +176,7 @@ namespace Wholemy {
 					I = Next;
 				}
 				if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
-				return false;
+				return R;
 			}
 		}
 		#endregion
@@ -989,16 +994,15 @@ namespace Wholemy {
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					//while(A != null) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { A.Red(); } } A = N; }
-					//var C = 0;
-					//while(B != null) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { B.Red(AP, ref C); } } B = N; }
 					AP.Dep();
 					BP.Dep();
 					ReInter:
 					var C = AP.Inter(BP);
-					var AR = AP.Regen();
-					var BR = BP.Regen();
-					if(AR || BR) goto ReInter;
+					if(C > 0) {
+						var AR = AP.Regen();
+						var BR = BP.Regen();
+						if(AR || BR) goto ReInter;
+					}
 					A = AP.Base;
 					B = BP.Base;
 					if(C == 0) break;
