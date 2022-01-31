@@ -64,60 +64,74 @@ namespace Wholemy {
 			public bool Regen(Line S, Line E, int C) {
 				var R = false;
 				var SC = 0;
-				while(C > 0 && SC < MinMaxS) {
-					if(S.Depth < 0) {
-						if(S.Size > Size) {
-							S.Div(Size / S.Size, out var A, out var B);
-							S.Rep(A, B);
-							if(S == E) E = A;
-							S = A;
-							B.Depth = -1;
-							B.Gin = true;
-							B.In = true;
-							A.Depth = Depth;
-							A.In = true;
-							R = true;
+				var EC = 0;
+				while(C > 0 && (SC < MinMaxS || EC < MinMaxS)) {
+					if(SC < MinMaxS) {
+						if(S.Depth < 0) {
+							if(S.Size > Size) {
+								S.Div(Size / S.Size, out var A, out var B);
+								S.Rep(A, B);
+								if(S == E) E = A;
+								S = A;
+								if(B.Size > Size) {
+									B.Depth = -1;
+									B.Gin = true;
+									B.In = true;
+								} else {
+									B.Depth = Depth;
+									B.Gin = false;
+									B.In = true;
+								}
+								S.Depth = Depth;
+								S.In = true;
+								R = true;
+							} else {
+								S.Depth = Depth;
+								S.Gin = false;
+								S.In = true;
+								C--;
+							}
 						} else {
-							S.Depth = Depth;
 							S.Gin = false;
 							S.In = true;
 							C--;
 						}
-					} else {
-						S.Gin = false;
-						S.In = true;
-						C--;
+						S = S.Next;
+						SC++;
 					}
-					S = S.Next;
-					SC++;
-				}
-				var EC = 0;
-				while(C > 0 && E != S && EC < MinMaxS) {
-					if(E.Depth < 0) {
-						if(E.Size > Size) {
-							E.Div(1.0 - (Size / E.Size), out var A, out var B);
-							E.Rep(A, B);
-							if(E == S) S = B;
-							E = B;
-							A.Depth = -1;
-							A.Gin = true;
-							A.In = true;
-							B.Depth = Depth;
-							B.In = true;
-							R = true;
+					if(EC < MinMaxS) {
+						if(E.Depth < 0) {
+							if(E.Size > Size) {
+								E.Div(1.0 - (Size / E.Size), out var A, out var B);
+								E.Rep(A, B);
+								if(E == S) S = B;
+								E = B;
+								if(A.Size > Size) {
+									A.Depth = -1;
+									A.Gin = true;
+									A.In = true;
+								} else {
+									A.Depth = Depth;
+									A.Gin = false;
+									A.In = true;
+								}
+								E.Depth = Depth;
+								E.In = true;
+								R = true;
+							} else {
+								E.Depth = Depth;
+								E.Gin = false;
+								E.In = true;
+								C--;
+							}
 						} else {
-							E.Depth = Depth;
 							E.Gin = false;
 							E.In = true;
 							C--;
 						}
-					} else {
-						E.Gin = false;
-						E.In = true;
-						C--;
+						E = E.Prev;
+						EC++;
 					}
-					E = E.Prev;
-					EC++;
 				}
 				if(C > 0) {
 					var SRoot = S.Root;
@@ -141,21 +155,14 @@ namespace Wholemy {
 					if(!I.Gin) {
 						if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
 						var Prev = I.Prev;
-						if(Next == null) {
-							if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
-								I.Cut();
-								I = Root.DivB(Prev.Root);
-								Prev.Rep(I);
-							}
-						} else {
-							if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
-								I.Cut();
-								I = Root.DivB(Prev.Root);
-								I = I.DivA((Next.Root - Prev.Root) / I.Size);
-								Prev.Rep(I);
-							}
+						if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
+							I.Cut();
+							I = Root.DivB(Prev.Root);
+							if(Next != null) I = I.DivA((Next.Root - Prev.Root) / I.Size);
+							Prev.Rep(I);
 						}
 						I.Depth = -1;
+						I.Gin = false;
 						I.In = false;
 					} else {
 						if(C == 0) { A = B = I; } else { B = I; }
@@ -163,7 +170,7 @@ namespace Wholemy {
 					}
 					I = Next;
 				}
-				if(C > 0) { if(Regen(A, B, C)) R = true; }
+				if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
 				return false;
 			}
 		}
