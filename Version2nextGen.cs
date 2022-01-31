@@ -1,23 +1,24 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MaxBound = 10;
+		public const int MinMaxS = 4;
 		public const int MaxDepth = 54;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
 		public class Path {
-			public int Count0;
-			public int Count1;
 			public int Count;
 			public Line Root;
 			public Line Base;
 			public Line Last;
+			public int Depth;
+			public double Size;
 			#region #new# (Item) 
 			public Path(Line Item) {
 				Item.Owner = this;
 				Root = Base = Last = Item;
-				if(Item.C > 0) { if((Item.Depth & 1) != 0) Count1++; else Count0++; }
 				Count++;
+				Depth = Item.Depth;
+				Size = Item.Size;
 			}
 			#endregion
 			#region #property# Items 
@@ -39,73 +40,138 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public void Regen(Line S, Line E, int C) {
-				var M = MaxBound * 2;
-				if(C > M) {
-					var cc = 0;
-					while(cc < MaxBound) { S = S.Next; cc++; }
-					cc = 0;
-					while(cc < MaxBound) { E = E.Prev; cc++; }
-					C -= M;
-					var R = S.Root;
-					while(C > 1) { S.Next.Cut(); C--; }
-					Root.Div(R, out var A, out var B);
-					B.Div(S.Next.Root - R, out A, out B);
-					S.Rep(A);
-					A.Depth = -1;
-					A.C++;
+			public int Inter(Path Path) {
+				var C = 0;
+				var B = this.Base;
+				while(B != null) {
+					if(B.Depth >= 0) {
+						var A = Path.Base;
+						while(A != null) {
+							if(A.Depth >= 0 && A.Intersect(B)) { A.Gin = true; B.Gin = true; C++; }
+							A = A.Next;
+						}
+					}
+					B = B.Next;
 				}
+				return C;
 			}
-			public void Regen() {
-				Line A, B, S = null, E = null;
-				int C = 0;
+			public void Dep() {
 				var I = Base;
-				while(I != null) {
-					var Next = I.Next;
-					if(I.C == 0) {
-						if(C > 0) { Regen(S, E, C); C = 0; }
-						var Prev = I.Prev;
-						if(Next == null) {
-							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
-								Root.Div(Prev.Root, out A, out B);
-								Prev.Rep(B);
-								I.Cut();
-								I = B;
-							}
-							I.Depth = -1;
+				while(I != null) { var N = I.Next; if(I.Depth >= 0) { if(I.In) { I.Red(); } } I = N; }
+				Depth++;
+				Size *= 0.5;
+			}
+			public bool Regen(Line S, Line E, int C) {
+				var R = false;
+				var SC = 0;
+				while(C > 0 && SC < MinMaxS) {
+					if(S.Depth < 0) {
+						if(S.Size > Size) {
+							S.Div(Size / S.Size, out var A, out var B);
+							S.Rep(A, B);
+							if(S == E) E = A;
+							S = A;
+							B.Depth = -1;
+							B.Gin = true;
+							B.In = true;
+							A.Depth = Depth;
+							A.In = true;
+							R = true;
 						} else {
-							if(Prev != null && Prev.Depth < 0 && Prev.C == 0) {
-								Root.Div(Prev.Root, out A, out B);
-								B.Div(Next.Root - Prev.Root, out A, out B);
-								Prev.Rep(A);
-								I.Cut();
-								I = A;
-							}
-							I.Depth = -1;
+							S.Depth = Depth;
+							S.Gin = false;
+							S.In = true;
+							C--;
 						}
 					} else {
-						if(C == 0) { S = E = I; } else { E = I; }
+						S.Gin = false;
+						S.In = true;
+						C--;
+					}
+					S = S.Next;
+					SC++;
+				}
+				var EC = 0;
+				while(C > 0 && E != S && EC < MinMaxS) {
+					if(E.Depth < 0) {
+						if(E.Size > Size) {
+							E.Div(1.0 - (Size / E.Size), out var A, out var B);
+							E.Rep(A, B);
+							if(E == S) S = B;
+							E = B;
+							A.Depth = -1;
+							A.Gin = true;
+							A.In = true;
+							B.Depth = Depth;
+							B.In = true;
+							R = true;
+						} else {
+							E.Depth = Depth;
+							E.Gin = false;
+							E.In = true;
+							C--;
+						}
+					} else {
+						E.Gin = false;
+						E.In = true;
+						C--;
+					}
+					E = E.Prev;
+					EC++;
+				}
+				if(C > 0) {
+					var SRoot = S.Root;
+					while(C > 1) { S.Next.Cut(); C--; }
+					var A = Root.DivB(SRoot);
+					if(S.Next != null) A = A.DivA((S.Next.Root - SRoot) / A.Size);
+					S.Rep(A);
+					A.Depth = -1;
+					A.Gin = true;
+					A.In = true;
+				}
+				return R;
+			}
+			public bool Regen() {
+				Line A = null, B = null;
+				int C = 0;
+				var I = Base;
+				var R = false;
+				while(I != null) {
+					var Next = I.Next;
+					if(!I.Gin) {
+						if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
+						var Prev = I.Prev;
+						if(Next == null) {
+							if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
+								I.Cut();
+								I = Root.DivB(Prev.Root);
+								Prev.Rep(I);
+							}
+						} else {
+							if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
+								I.Cut();
+								I = Root.DivB(Prev.Root);
+								I = I.DivA((Next.Root - Prev.Root) / I.Size);
+								Prev.Rep(I);
+							}
+						}
+						I.Depth = -1;
+						I.In = false;
+					} else {
+						if(C == 0) { A = B = I; } else { B = I; }
 						C++;
 					}
 					I = Next;
 				}
+				if(C > 0) { if(Regen(A, B, C)) R = true; }
+				return false;
 			}
 		}
 		#endregion
 		#region #class# Line 
 		public class Line {
-			public int C;
-			public int Count {
-				get { return this.C; }
-				set {
-					if(value > 0) {
-						if(this.C == 0) { if((this.Depth & 1) != 0) this.Owner.Count1++; else this.Owner.Count0++; }
-						C = value;
-					} else {
-						throw new System.InvalidOperationException();
-					}
-				}
-			}
+			public bool In;
+			public bool Gin;
 			public Line Intersected;
 			protected private Rect _Rect;
 			public readonly double X;
@@ -153,6 +219,42 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			#region #method# DivA(root) 
+			public virtual Line DivA(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = EX;
+				var y11 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root, ss);
+				} else {
+					return new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root, S);
+				}
+			}
+			#endregion
+			#region #method# DivB(root) 
+			public virtual Line DivB(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = EX;
+				var y11 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Line(x00, y00, x01, y01, this.Inverted, this.Depth + 1, this.Root + ss, S);
+				} else {
+					return new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
+				}
+			}
+			#endregion
 			#region #method# Intersect(I) 
 			#region #through# 
 #if TRACE
@@ -161,8 +263,8 @@ namespace Wholemy {
 			#endregion
 			public bool InIntersect(Line I) {
 				if(this.Rect.Intersect(I.Rect)) {
-					this.Count++;
-					I.Count++;
+					this.In = true;
+					I.In = true;
 					return true;
 				}
 				return false;
@@ -275,7 +377,6 @@ namespace Wholemy {
 					if(Next != null) { Next.Prev = A; } else { Owner.Last = A; }
 					Prev = null;
 					Next = null;
-					if((this.Depth & 1) != 0) this.Owner.Count1--; else this.Owner.Count0--;
 					Owner = null;
 				} else {
 					throw new System.InvalidOperationException();
@@ -294,7 +395,6 @@ namespace Wholemy {
 					if(Next != null) { Next.Prev = B; } else { Owner.Last = B; }
 					Prev = null;
 					Next = null;
-					if((this.Depth & 1) != 0) this.Owner.Count1--; else this.Owner.Count0--;
 					Owner.Count++;
 					Owner = null;
 				} else {
@@ -310,7 +410,6 @@ namespace Wholemy {
 					Prev = null;
 					Next = null;
 					Owner.Count--;
-					if((this.Depth & 1) != 0) this.Owner.Count1--; else this.Owner.Count0--;
 					Owner = null;
 				} else {
 					throw new System.InvalidOperationException();
@@ -324,8 +423,8 @@ namespace Wholemy {
 				var A = Path.Base;
 				while(A != null) {
 					if(A.Depth >= 0) {
-						if(A.InIntersect(BA)) { Count++; }
-						if(A.InIntersect(BB)) { Count++; }
+						if(BA.Depth >= 0 && A.InIntersect(BA)) { Count++; }
+						if(BB.Depth >= 0 && A.InIntersect(BB)) { Count++; }
 					}
 					A = A.Next;
 				}
@@ -385,6 +484,54 @@ namespace Wholemy {
 				} else {
 					A = new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
+				}
+			}
+			#endregion
+			#region #method# DivA(root) 
+			public override Line DivA(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = QX;
+				var y11 = QY;
+				var x22 = EX;
+				var y22 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root, ss);
+				} else {
+					return new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root, S);
+				}
+			}
+			#endregion
+			#region #method# DivB(root) 
+			public override Line DivB(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = QX;
+				var y11 = QY;
+				var x22 = EX;
+				var y22 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Quadratic(x00, y00, x01, y01, x02, y02, this.Inverted, this.Depth + 1, this.Root + ss, S);
+				} else {
+					return new Quadratic(x02, y02, x12, y12, x22, y22, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
 			}
 			#endregion
@@ -520,6 +667,70 @@ namespace Wholemy {
 				} else {
 					A = new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
 					B = new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
+				}
+			}
+			#endregion
+			#region #method# DivA(root) 
+			public override Line DivA(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = cmX;
+				var y11 = cmY;
+				var x22 = ceX;
+				var y22 = ceY;
+				var x33 = EX;
+				var y33 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x23 = (x33 - x22) * root + x22;
+				var y23 = (y33 - y22) * root + y22;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var x13 = (x23 - x12) * root + x12;
+				var y13 = (y23 - y12) * root + y12;
+				var x03 = (x13 - x02) * root + x02;
+				var y03 = (y13 - y02) * root + y02;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
+				} else {
+					return new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
+				}
+			}
+			#endregion
+			#region #method# DivB(root) 
+			public override Line DivB(double root) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = cmX;
+				var y11 = cmY;
+				var x22 = ceX;
+				var y22 = ceY;
+				var x33 = EX;
+				var y33 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x23 = (x33 - x22) * root + x22;
+				var y23 = (y33 - y22) * root + y22;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var x13 = (x23 - x12) * root + x12;
+				var y13 = (y23 - y12) * root + y12;
+				var x03 = (x13 - x02) * root + x02;
+				var y03 = (y13 - y02) * root + y02;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					return new Cubic(x00, y00, x01, y01, x02, y02, x03, y03, this.Inverted, this.Depth + 1, this.Root + ss, S);
+				} else {
+					return new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
 			}
 			#endregion
@@ -724,35 +935,34 @@ namespace Wholemy {
 			var B = Bref.Pastle;
 			var D = 0;
 			if(A.Intersect(B)) {
-				A.C++;
-				B.C++;
+				A.In = B.In = true;
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
 					var AC = 0;
-					while(A != null && AC < MaxBound) { var N = A.Next; if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } A = N; }
+					while(A != null && AC < MinMaxS) { var N = A.Next; if(A.In) { AC++; A.Red(); } else { A.Cut(); } A = N; }
 					if(A != null) {
 						A = A.Prev;
 						AC = 0;
 						var AL = AP.Last;
-						while(AL != A) { var N = AL.Prev; if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
+						while(AL != A) { var N = AL.Prev; if(AL.In && AC < MinMaxS) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
 					}
 					var C = 0;
 					var BC = 0;
-					while(B != null && BC < MaxBound) { var N = B.Next; if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
+					while(B != null && BC < MinMaxS) { var N = B.Next; if(B.In) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
 					if(B != null) {
 						B = B.Prev;
 						BC = 0;
 						var BL = BP.Last;
-						while(BL != B) { var N = BL.Prev; if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
+						while(BL != B) { var N = BL.Prev; if(BL.In && BC < MinMaxS) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
 					}
 					A = AP.Base;
 					B = BP.Base;
 					D++;
 					if(C == 0) break;
 				} while(A != null && B != null && D < MaxDepth);
-				if(A != null && A.C == 0) A = A.Next;
-				if(B != null && B.C == 0) B = B.Next;
+				if(A != null && !A.In) A = A.Next;
+				if(B != null && !B.In) B = B.Next;
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
@@ -768,23 +978,27 @@ namespace Wholemy {
 			var B = Bref.Pastle;
 			var D = 0;
 			if(A.Intersect(B)) {
-				A.C++;
-				B.C++;
+				A.In = B.In = true;
 				var AP = new Path(A);
 				var BP = new Path(B);
 				do {
-					while(A != null) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { A.Red(); } } A = N; }
-					var C = 0;
-					while(B != null) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { B.Red(AP, ref C); } } B = N; }
-					AP.Regen();
-					BP.Regen();
+					//while(A != null) { var N = A.Next; if(A.Depth >= 0) { if(A.C > 0) { A.Red(); } } A = N; }
+					//var C = 0;
+					//while(B != null) { var N = B.Next; if(B.Depth >= 0) { if(B.C > 0) { B.Red(AP, ref C); } } B = N; }
+					AP.Dep();
+					BP.Dep();
+					ReInter:
+					var C = AP.Inter(BP);
+					var AR = AP.Regen();
+					var BR = BP.Regen();
+					if(AR || BR) goto ReInter;
 					A = AP.Base;
 					B = BP.Base;
-					D++;
 					if(C == 0) break;
+					D++;
 				} while(A != null && B != null && D < MaxDepth);
-				if(A != null && A.C == 0) A = A.Next;
-				if(B != null && B.C == 0) B = B.Next;
+				if(A != null && !A.In) A = A.Next;
+				if(B != null && !B.In) B = B.Next;
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
@@ -796,45 +1010,7 @@ namespace Wholemy {
 		#endregion
 		#region #method# Intersect(Aref, Bref, Mlen) 
 		public static bool Intersect(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
-			var A = Aref.Pastle;
-			var B = Bref.Pastle;
-			var D = 0;
-			if(A.Intersect(B)) {
-				A.C++;
-				B.C++;
-				var AP = new Path(A);
-				var BP = new Path(B);
-				do {
-					var AC = 0;
-					while(A != null && AC < MaxBound) { var N = A.Next; if(A.C > 0) { AC++; A.Red(); } else { A.Cut(); } A = N; }
-					if(A != null) {
-						A = A.Prev;
-						AC = 0;
-						var AL = AP.Last;
-						while(AL != A) { var N = AL.Prev; if(AL.C > 0 && AC < MaxBound) { AC++; AL.Red(); } else { AL.Cut(); } AL = N; }
-					}
-					var C = 0;
-					var BC = 0;
-					while(B != null && BC < MaxBound) { var N = B.Next; if(B.C > 0) { BC++; B.Red(AP, ref C); } else { B.Cut(); } B = N; }
-					if(B != null) {
-						B = B.Prev;
-						BC = 0;
-						var BL = BP.Last;
-						while(BL != B) { var N = BL.Prev; if(BL.C > 0 && BC < MaxBound) { BC++; BL.Red(AP, ref C); } else { BL.Cut(); } BL = N; }
-					}
-					A = AP.Base;
-					B = BP.Base;
-					D++;
-					if(C == 0) break;
-				} while(A != null && B != null && D < MaxDepth);
-				if(A != null && A.C == 0) A = A.Next;
-				if(B != null && B.C == 0) B = B.Next;
-				if(A != null && B != null) {
-					Aref = A;
-					Bref = B;
-					return true;
-				}
-			}
+
 			return false;
 		}
 		#endregion
