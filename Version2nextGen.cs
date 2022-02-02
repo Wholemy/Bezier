@@ -1,7 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 32;
-		public const int MaxDepth = 54;
+		public const int MinMaxS = 64;
+		public const int MaxDepth = 64;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -10,15 +10,11 @@ namespace Wholemy {
 			public Line Root;
 			public Line Base;
 			public Line Last;
-			public int Depth;
-			public double Size;
 			#region #new# (Item) 
 			public Path(Line Item) {
 				Item.Owner = this;
 				Root = Base = Last = Item;
 				Count++;
-				Depth = Item.Depth;
-				Size = Item.Size;
 			}
 			#endregion
 			#region #property# Items 
@@ -40,112 +36,55 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public int Inter(Path Path) {
-				var C = 0;
-				var B = this.Base;
-				while(B != null) {
-					if(B.Depth >= 0) {
-						var A = Path.Base;
-						while(A != null) {
-							if(A.Depth >= 0 && A.Intersect(B)) { A.Gin = true; B.Gin = true; C++; }
-							A = A.Next;
+			public void Inter(Path P) {
+				var I = this.Base;
+				while(I != null) {
+					if(I.Depth >= 0) {
+						var ii = P.Base;
+						while(ii != null) {
+							if(ii.Depth >= 0) {
+								var LT = ii.LenTo(I);
+								if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; }
+								if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; }
+							}
+							ii = ii.Next;
 						}
 					}
-					B = B.Next;
+					I = I.Next;
 				}
-				return C;
+				this.Reset();
+				P.Reset();
+			}
+			public Line Get() {
+				var I = this.Base;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						var ll = I.Len;
+						if(ll < L) { L = ll; M = I; }
+						I = I.Next;
+					}
+					return M;
+				}
+				return null;
+			}
+			private void Reset() {
+				var I = this.Base;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						var ll = I.Len;
+						if(ll < L) { L = ll; M = I; }
+						I = I.Next;
+					}
+					M.Reset();
+				}
 			}
 			public void Dep() {
 				var I = Base;
-				while(I != null) { var N = I.Next; if(I.Depth >= 0) { if(I.In) { I.Red(); } } I = N; }
-				Depth++;
-				Size *= 0.5;
-			}
-			public bool Regen(Line S, Line E, int C) {
-				var R = false;
-				var SC = 0;
-				var EC = 0;
-				while(C > 0 && (SC < MinMaxS || EC < MinMaxS)) {
-					if(SC < MinMaxS) {
-						if(S.Depth < 0) {
-							if(S.Size > Size) {
-								S.Div(Size / S.Size, out var A, out var B);
-								S.Rep(A, B);
-								if(S == E) E = A;
-								S = A;
-								if(B.Size > Size) {
-									B.Depth = -1;
-									B.Gin = true;
-									B.In = true;
-								} else {
-									B.Depth = Depth;
-									B.Gin = false;
-									B.In = true;
-								}
-								S.Depth = Depth;
-								S.Gin = false;
-								S.In = true;
-								R = true;
-							} else {
-								S.Depth = Depth;
-								S.Gin = false;
-								S.In = true;
-								C--;
-							}
-						} else {
-							S.Gin = false;
-							S.In = true;
-							C--;
-						}
-						S = S.Next;
-						SC++;
-					}
-					if(EC < MinMaxS) {
-						if(E.Depth < 0) {
-							if(E.Size > Size) {
-								E.Div(1.0 - (Size / E.Size), out var A, out var B);
-								E.Rep(A, B);
-								if(E == S) S = B;
-								E = B;
-								if(A.Size > Size) {
-									A.Depth = -1;
-									A.Gin = true;
-									A.In = true;
-								} else {
-									A.Depth = Depth;
-									A.Gin = false;
-									A.In = true;
-								}
-								E.Depth = Depth;
-								E.Gin = false;
-								E.In = true;
-								R = true;
-							} else {
-								E.Depth = Depth;
-								E.Gin = false;
-								E.In = true;
-								C--;
-							}
-						} else {
-							E.Gin = false;
-							E.In = true;
-							C--;
-						}
-						E = E.Prev;
-						EC++;
-					}
-				}
-				if(C > 0) {
-					var SRoot = S.Root;
-					while(C > 1) { S.Next.Cut(); C--; }
-					var A = Root.DivB(SRoot);
-					if(S.Next != null) A = A.DivA((S.Next.Root - SRoot) / A.Size);
-					S.Rep(A);
-					A.Depth = -1;
-					A.Gin = true;
-					A.In = true;
-				}
-				return R;
+				while(I != null) { var N = I.Next; I.Red(); I = N; }
 			}
 			public bool Regen() {
 				Line A = null, B = null;
@@ -154,37 +93,44 @@ namespace Wholemy {
 				var R = false;
 				while(I != null) {
 					var Next = I.Next;
-					if(!I.Gin) {
-						if(C > 0) {
-							if(Regen(A, B, C)) R = true; C = 0;
-						}
-						var Prev = I.Prev;
-						if(Prev != null && Prev.Depth < 0 && !Prev.Gin) {
-							I.Cut();
-							I = Root.DivB(Prev.Root);
-							if(Next != null) I = I.DivA((Next.Root - Prev.Root) / I.Size);
-							Prev.Rep(I);
-							R = true;
-						}
-						I.Depth = -1;
-						I.Gin = false;
-						I.In = false;
-					} else {
-						if(C == 0) { A = B = I; } else { B = I; }
-						C++;
-					}
+					if(!I.In) { I.Cut(); }
 					I = Next;
 				}
-				if(C > 0) { if(Regen(A, B, C)) R = true; C = 0; }
 				return R;
 			}
 		}
 		#endregion
 		#region #class# Line 
 		public class Line {
+			public void Reset() {
+				var C = 0;
+				this.In = true;
+				var R = this.Prev;
+				while(R != null && R.Depth >= 0) {
+					if(C < MinMaxS) {
+						R.In = true;
+						C++;
+					} else {
+						R.In = false;
+					}
+					R = R.Prev;
+				}
+				C = 0;
+				R = this.Next;
+				while(R != null && R.Depth >= 0) {
+					if(C < MinMaxS) {
+						R.In = true;
+						C++;
+					} else {
+						R.In = false;
+					}
+					R = R.Next;
+				}
+			}
 			public bool In;
+			public bool Eq;
 			public bool Gin;
-			public Line Intersected;
+			public double Len = double.NaN;
 			protected private Rect _Rect;
 			public readonly double X;
 			public readonly double Y;
@@ -451,11 +397,11 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"L Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"L {(In ? "In" : "No")} Len:{Len.ToString(I)} Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
-			#region #method# Len(Line) 
-			public double Len(Line Line) {
+			#region #method# LenTo(Line) 
+			public double LenTo(Line Line) {
 				var X = this.X - Line.X;
 				var Y = this.Y - Line.Y;
 				return System.Math.Sqrt(X * X + Y * Y);
@@ -630,7 +576,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"Q Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} QX:{QX.ToString(I)} QY:{QY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"Q {(In ? "In" : "No")} Len:{Len.ToString(I)} Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} QX:{QX.ToString(I)} QY:{QY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
 		}
@@ -831,7 +777,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"C Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+				return $"C {(In ? "In" : "No")} Len:{Len.ToString(I)} Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
 		}
@@ -978,7 +924,7 @@ namespace Wholemy {
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
-					return A.Len(B);
+					return A.LenTo(B);
 				}
 			}
 			return double.NaN;
@@ -989,6 +935,7 @@ namespace Wholemy {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
 			var D = 0;
+			var M = Mlen;
 			if(A.Intersect(B)) {
 				A.In = B.In = true;
 				var AP = new Path(A);
@@ -996,24 +943,17 @@ namespace Wholemy {
 				do {
 					AP.Dep();
 					BP.Dep();
-					ReInter:
-					var C = AP.Inter(BP);
-					if(C > 0) {
-						var AR = AP.Regen();
-						var BR = BP.Regen();
-						if(AR || BR) goto ReInter;
-					}
-					A = AP.Base;
-					B = BP.Base;
-					if(C == 0) break;
+					AP.Inter(BP);
+					AP.Regen();
+					BP.Regen();
 					D++;
 				} while(A != null && B != null && D < MaxDepth);
-				if(A != null && !A.In) A = A.Next;
-				if(B != null && !B.In) B = B.Next;
+				A = AP.Get();
+				B = BP.Get();
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
-					return A.Len(B);
+					return A.LenTo(B);
 				}
 			}
 			return double.NaN;
