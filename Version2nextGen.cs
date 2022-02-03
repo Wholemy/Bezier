@@ -1,7 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 64;
-		public const int MaxDepth = 64;
+		public const int MinMaxS = 192;
+		public const int MaxDepth = 32;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -98,6 +98,637 @@ namespace Wholemy {
 				}
 				return R;
 			}
+		}
+		#endregion
+		#region #class# Hot 
+		public abstract class Hot {
+			public Lot Lot;
+			public Dot Dot;
+			public Hot(Dot Dot) {
+				#region #debug# 
+#if DEBUG
+				if(Dot == null || Dot.Hot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Dot = Dot;
+				Dot.Hot = this;
+			}
+		}
+		#endregion
+		#region #class# Min 
+		public class Min: Hot {
+			public Min Prev;
+			public Min Next;
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Min Cut() {
+				if(Lot == null) throw new System.InvalidOperationException();
+				if(Prev != null) { Prev.Next = Next; } else { Lot.MinBase = Next; }
+				if(Next != null) { Next.Prev = Prev; } else { Lot.MinLast = Prev; }
+				Prev = null;
+				Next = null;
+				Lot.MinCache = null;
+				Lot.MinCount--;
+				Lot = null;
+				return this;
+			}
+			#endregion
+			#region #method# LastTo(Lot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Min LastTo(Lot Lot) {
+				#region #debug# 
+#if DEBUG
+				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Lot;
+				if(Lot.Count > 0) {
+					this.Prev = Lot.MinLast;
+					Lot.MinLast.Next = this;
+					Lot.MinLast = this;
+				} else {
+					Lot.MinBase = Lot.MinLast = this;
+				}
+				Lot.MinCache = null;
+				Lot.MinCount++;
+				return this;
+			}
+			#endregion
+			public Min(Dot Dot) : base(Dot) {
+			}
+		}
+		#endregion
+		#region #class# Max 
+		public class Max: Hot {
+			public Max Prev;
+			public Max Next;
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Max Cut() {
+				if(Lot == null) throw new System.InvalidOperationException();
+				if(Prev != null) { Prev.Next = Next; } else { Lot.MaxBase = Next; }
+				if(Next != null) { Next.Prev = Prev; } else { Lot.MaxLast = Prev; }
+				Prev = null;
+				Next = null;
+				Lot.MaxCache = null;
+				Lot.MaxCount--;
+				Lot = null;
+				return this;
+			}
+			#endregion
+			#region #method# LastTo(Lot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Max LastTo(Lot Lot) {
+				#region #debug# 
+#if DEBUG
+				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Lot;
+				if(Lot.Count > 0) {
+					this.Prev = Lot.MaxLast;
+					Lot.MaxLast.Next = this;
+					Lot.MaxLast = this;
+				} else {
+					Lot.MaxBase = Lot.MaxLast = this;
+				}
+				Lot.MaxCache = null;
+				Lot.MaxCount++;
+				return this;
+			}
+			#endregion
+			public Max(Dot Dot) : base(Dot) {
+			}
+		}
+		#endregion
+		#region #class# Lot 
+		public class Lot {
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public int Count;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot Base;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot Last;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public int MinCount;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Min MinBase;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Min MinLast;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public int MaxCount;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Max MaxBase;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Max MaxLast;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot[] Cache;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Min[] MinCache;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Max[] MaxCache;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public readonly Line Line;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public double Size;
+			#region #new# (Line) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Lot(Line Line) {
+				this.Line = Line;
+				Line.Dot(0.0).LastTo(this);
+				Line.Dot(0.5).LastTo(this);
+				Line.Dot(1.0).LastTo(this);
+				Size = 0.5;
+				//var S = 1.0 / 256;
+				//var R = 0.0;
+				//while(R < 1.0) { Line.Dot(R).LastTo(this); R += S; }
+				//Size = S;
+			}
+			#endregion
+			#region #property# Items 
+			public Dot[] Items {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(Cache != null) return Cache;
+					var I = Count;
+					var A = new Dot[I];
+					var S = Last;
+					while(--I >= 0) {
+						A[I] = S;
+						S = S.Prev;
+					}
+					Cache = A;
+					return A;
+				}
+			}
+			#endregion
+			#region #property# Mins 
+			public Min[] Mins {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(MinCache != null) return MinCache;
+					var I = MinCount;
+					var A = new Min[I];
+					var S = MinLast;
+					while(--I >= 0) {
+						A[I] = S;
+						S = S.Prev;
+					}
+					MinCache = A;
+					return A;
+				}
+			}
+			#endregion
+			#region #property# Maxs 
+			public Max[] Maxs {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(MaxCache != null) return MaxCache;
+					var I = MaxCount;
+					var A = new Max[I];
+					var S = MaxLast;
+					while(--I >= 0) {
+						A[I] = S;
+						S = S.Prev;
+					}
+					MaxCache = A;
+					return A;
+				}
+			}
+			#endregion
+			#region #method# ToString 
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"List Count:{Count.ToString(I)} Mins:{MinCount.ToString(I)} Maxs:{MaxCount.ToString(I)}";
+			}
+			#endregion
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public void Cut() {
+				int C = 0;
+				var I = Base;
+				while(I != null) {
+					var Next = I.Next;
+					if(!I.Int) { I.Cut(); }
+					I = Next;
+				}
+			}
+			#endregion
+			public static void Len(Lot A, Lot B) {
+				var I = A.Base;
+				while(I != null) {
+					var ii = B.Base;
+					while(ii != null) {
+						var LT = ii.LenTo(I);
+						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Let = ii; }
+						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Let = I; }
+						ii = ii.Next;
+					}
+					I = I.Next;
+				}
+			}
+			public void MinMaxFirst(double Mlen) {
+				var I = this.Base;
+				if(I != null) {
+					var MinLen = I.Len;
+					var MinDot = I;
+					var MaxLen = MinLen;
+					var MaxDot = I;
+					I = I.Next;
+					while(I != null) {
+						var Len = I.Len;
+						if(Len < MinLen) { MinLen = Len; MinDot = I; }
+						if(Len > MaxLen) { MaxLen = Len; MaxDot = I; }
+						I = I.Next;
+					}
+					if(MinLen != MaxLen && MinDot.LenTo(MaxDot) > Mlen) {
+						new Min(MinDot).LastTo(this);
+						new Max(MaxDot).LastTo(this);
+					}
+				}
+			}
+			#region #method# Enter(P) 
+			public void Enter(Lot P) {
+				Len(this, P);
+				this.Reset();
+				P.Reset();
+			}
+			#endregion
+			#region #method# Reset 
+			private void Reset() {
+				var I = this.Base;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						var ll = I.Len;
+						if(ll < L) { L = ll; M = I; }
+						I = I.Next;
+					}
+					M.Reset();
+				}
+			}
+			#endregion
+			#region #method# Dep 
+			public void Dep() {
+				Size *= 0.5;
+				var I = Base;
+				if(I != null && I.Root >= Size) {
+					Line.Dot(I.Root - Size).PrevTo(I);
+				}
+				while(I != null) {
+					var N = I.Next;
+					if(N != null) {
+						var R = (N.Root - I.Root) / 2;
+						//if(I.Root + Size < N.Root) {
+						I = Line.Dot(I.Root + R).NextTo(I);
+						//}
+					} else {
+						if(I.Root + Size <= 1.0) {
+							Line.Dot(I.Root + Size).NextTo(I);
+						}
+					}
+					I = N;
+				}
+			}
+			#endregion
+			#region #method# Get 
+			public Line Get() {
+				var I = this.Base;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						var ll = I.Len;
+						if(ll < L) { L = ll; M = I; }
+						I = I.Next;
+					}
+					return Line.DivB(M.Root).DivA(0.0);
+				}
+				return null;
+			}
+			#endregion
+		}
+		#endregion
+		#region #class# Dot 
+		public class Dot {
+			public Lot Lot;
+			public Dot Prev;
+			public Dot Next;
+			public Dot Let;
+			public Hot Hot;
+			public double Len = double.NaN;
+			public bool Int = true;
+			public readonly double Root;
+			public readonly double X;
+			public readonly double Y;
+			#region #new# (X, Y, Root) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot(double Root, double X, double Y) { this.Root = Root; this.X = X; this.Y = Y; }
+			#endregion
+			#region #method# ToString 
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"Dot {(Int ? "Int" : "Out")} Len:{Len.ToString(I)} Root:{Root.ToString(I)} X:{X.ToString(I)} Y:{Y.ToString(I)}";
+			}
+			#endregion
+			#region #method# LenTo(Dot) 
+			public double LenTo(Dot Dot) {
+				var X = this.X - Dot.X;
+				var Y = this.Y - Dot.Y;
+				return System.Math.Sqrt(X * X + Y * Y);
+			}
+			#endregion
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot Cut() {
+				if(Lot == null) throw new System.InvalidOperationException();
+				if(Prev != null) { Prev.Next = Next; } else { Lot.Base = Next; }
+				if(Next != null) { Next.Prev = Prev; } else { Lot.Last = Prev; }
+				Prev = null;
+				Next = null;
+				Lot.Cache = null;
+				Lot.Count--;
+				Lot = null;
+				return this;
+			}
+			#endregion
+			#region #method# LastTo(Lot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot LastTo(Lot Lot) {
+				#region #debug# 
+#if DEBUG
+				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Lot;
+				if(Lot.Count > 0) {
+					this.Prev = Lot.Last;
+					Lot.Last.Next = this;
+					Lot.Last = this;
+				} else {
+					Lot.Base = Lot.Last = this;
+				}
+				Lot.Cache = null;
+				Lot.Count++;
+				return this;
+			}
+			#endregion
+			#region #method# BaseTo(Lot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot BaseTo(Lot Lot) {
+				#region #debug# 
+#if DEBUG
+				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Lot;
+				if(Lot.Count > 0) {
+					this.Next = Lot.Base;
+					Lot.Base.Prev = this;
+					Lot.Base = this;
+				} else {
+					Lot.Base = Lot.Last = this;
+				}
+				Lot.Cache = null;
+				Lot.Count++;
+				return this;
+			}
+			#endregion
+			#region #method# PrevTo(Dot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot PrevTo(Dot Dot) {
+				#region #debug# 
+#if DEBUG
+				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Dot.Lot;
+				this.Next = Dot;
+				var Prev = Dot.Prev;
+				Dot.Prev = this;
+				if(Prev != null) {
+					this.Prev = Prev;
+					Prev.Next = this;
+				} else {
+					this.Lot.Base = this;
+				}
+				this.Lot.Cache = null;
+				this.Lot.Count++;
+				return this;
+			}
+			#endregion
+			#region #method# NextTo(Dot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot NextTo(Dot Dot) {
+				#region #debug# 
+#if DEBUG
+				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Dot.Lot;
+				this.Prev = Dot;
+				var Next = Dot.Next;
+				Dot.Next = this;
+				if(Next != null) {
+					this.Next = Next;
+					Next.Prev = this;
+				} else {
+					this.Lot.Last = this;
+				}
+				this.Lot.Cache = null;
+				this.Lot.Count++;
+				return this;
+			}
+			#endregion
+			#region #method# Replace(Dot) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Dot Replace(Dot Dot) {
+				#region #debug# 
+#if DEBUG
+				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Lot = Dot.Lot;
+				this.Prev = Dot.Prev;
+				this.Next = Dot.Next;
+				if(this.Prev != null) { this.Prev.Next = this; } else { this.Lot.Base = this; }
+				if(this.Next != null) { this.Next.Prev = this; } else { this.Lot.Last = this; }
+				Dot.Prev = null;
+				Dot.Next = null;
+				Dot.Lot = null;
+				this.Lot.Cache = null;
+				return this;
+			}
+			#endregion
+			#region #method# Reset 
+			public void Reset() {
+				var Lot = this.Lot;
+				var C = MinMaxS;
+				this.Int = true;
+				var R = this.Prev;
+				while(R != null) {
+					if(C > 0) {
+						R.Int = true;
+						C--;
+					} else {
+						R.Int = false;
+					}
+					R = R.Prev;
+				}
+				if(Lot.Base.Root > 0.0 && C > 0) {
+					var S = Lot.Size;//Lot.Base.Root / C;
+					while(C > 0) {
+						if(Lot.Base.Root > 0.0) {
+							S = Lot.Base.Root - S; if(S < 0.0) S = 0.0;
+							Lot.Line.Dot(S).BaseTo(Lot);
+						}
+						C--;
+					}
+				}
+				C = MinMaxS;
+				R = this.Next;
+				while(R != null) {
+					if(C > 0) {
+						R.Int = true;
+						C--;
+					} else {
+						R.Int = false;
+					}
+					R = R.Next;
+				}
+				if(Lot.Last.Root < 1.0 && C > 0) {
+					var S = Lot.Size;//Lot.Last.Root / C;
+					while(C > 0) {
+						if(Lot.Last.Root < 1.0) {
+							S = Lot.Base.Root + S; if(S > 1.0) S = 1.0;
+							Lot.Line.Dot(Lot.Base.Root + S).LastTo(Lot);
+						}
+						C--;
+					}
+				}
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Line 
@@ -211,6 +842,18 @@ namespace Wholemy {
 				} else {
 					return new Line(x01, y01, x11, y11, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
+			}
+			#endregion
+			#region #method# Dot(root) 
+			public virtual Dot Dot(double root) {
+				var R = this.Inverted ? 1.0 - root : root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = EX;
+				var y11 = EY;
+				var x01 = (x11 - x00) * R + x00;
+				var y01 = (y11 - y00) * R + y00;
+				return new Dot(root, x01, y01);
 			}
 			#endregion
 			#region #method# Intersect(I) 
@@ -493,6 +1136,24 @@ namespace Wholemy {
 				}
 			}
 			#endregion
+			#region #method# Dot(root) 
+			public override Dot Dot(double root) {
+				var R = this.Inverted ? 1.0 - root : root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = QX;
+				var y11 = QY;
+				var x22 = EX;
+				var y22 = EY;
+				var x01 = (x11 - x00) * R + x00;
+				var y01 = (y11 - y00) * R + y00;
+				var x12 = (x22 - x11) * R + x11;
+				var y12 = (y22 - y11) * R + y11;
+				var x02 = (x12 - x01) * R + x01;
+				var y02 = (y12 - y01) * R + y01;
+				return new Dot(root, x02, y02);
+			}
+			#endregion
 			#region #new# (MX, MY, QX, QY, EX, EY, Inverted, Depth, Root, Size) 
 			public Quadratic(double MX, double MY, double QX, double QY, double EX, double EY, bool Inverted = false, int Depth = 0, double Root = InitRoot, double Size = InitSize) : base(MX, MY, EX, EY, Inverted, Depth, Root, Size) {
 				this.QX = QX;
@@ -690,6 +1351,32 @@ namespace Wholemy {
 				} else {
 					return new Cubic(x03, y03, x13, y13, x23, y23, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
 				}
+			}
+			#endregion
+			#region #method# Dot(root) 
+			public override Dot Dot(double root) {
+				var R = this.Inverted ? 1.0 - root : root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = cmX;
+				var y11 = cmY;
+				var x22 = ceX;
+				var y22 = ceY;
+				var x33 = EX;
+				var y33 = EY;
+				var x01 = (x11 - x00) * R + x00;
+				var y01 = (y11 - y00) * R + y00;
+				var x12 = (x22 - x11) * R + x11;
+				var y12 = (y22 - y11) * R + y11;
+				var x23 = (x33 - x22) * R + x22;
+				var y23 = (y33 - y22) * R + y22;
+				var x02 = (x12 - x01) * R + x01;
+				var y02 = (y12 - y01) * R + y01;
+				var x13 = (x23 - x12) * R + x12;
+				var y13 = (y23 - y12) * R + y12;
+				var x03 = (x13 - x02) * R + x02;
+				var y03 = (y13 - y02) * R + y02;
+				return new Dot(root, x03, y03);
 			}
 			#endregion
 			#region #new# (MX, MY, cmX, cmY, ceX, ceY, EX, EY, Inverted, Depth, Root, Size) 
@@ -937,17 +1624,19 @@ namespace Wholemy {
 			var D = 0;
 			var M = Mlen;
 			if(A.Intersect(B)) {
-				A.In = B.In = true;
-				var AP = new Path(A);
-				var BP = new Path(B);
+				var AP = new Lot(A);
+				var BP = new Lot(B);
+				Lot.Len(AP, BP);
+				AP.MinMaxFirst(Mlen);
+				BP.MinMaxFirst(Mlen);
 				do {
 					AP.Dep();
 					BP.Dep();
-					AP.Inter(BP);
-					AP.Regen();
-					BP.Regen();
+					AP.Enter(BP);
+					AP.Cut();
+					BP.Cut();
 					D++;
-				} while(A != null && B != null && D < MaxDepth);
+				} while(D < MaxDepth);
 				A = AP.Get();
 				B = BP.Get();
 				if(A != null && B != null) {
