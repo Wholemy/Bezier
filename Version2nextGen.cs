@@ -302,14 +302,7 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public void MinMaxFirst(double Mlen, int Mmax) {
-				double MinLen = double.NaN, MaxLen = double.NaN;
-				Dot MinDot = null, MaxDot = null;
-				var Hot = this.HotBase;
-				while(Hot != null) {
-					Hot.Dot.Hot = null;
-					Hot = Hot.Next;
-				}
+			public void MinMax(double Mlen, int Mmax) {
 				this.HotBase = null;
 				this.HotLast = null;
 				this.HotCount = 0;
@@ -318,21 +311,19 @@ namespace Wholemy {
 				Hot E = null;
 				var P = this.DotBase;
 				if(P != null) {
+					P.Hot = null;
 					var I = P.Next;
 					while(I != null) {
+						I.Hot = null;
 						var Len = I.Len;
 						if(P != null) {
 							if(H == null) {
 								if(E != null) {
 									if(P.Len < Len) {
-										H = new Hot(P, Dir.Min, E.NextCount, 1);
-										E = null;
+										H = new Hot(P, Dir.Min, E.NextCount, 1); E = null;
 									} else if(P.Len > Len) {
-										H = new Hot(P, Dir.Max, E.NextCount, 1);
-										E = null;
-									} else {
-										E.NextCount++; ;
-									}
+										H = new Hot(P, Dir.Max, E.NextCount, 1); E = null;
+									} else { E.NextCount++; }
 								} else {
 									if(P.Len < Len) {
 										H = new Hot(P, Dir.Min, 0, 1);
@@ -345,31 +336,17 @@ namespace Wholemy {
 							} else {
 								if(E != null) {
 									if(P.Len < Len) {
-										switch(H.Dir) {
-										case Dir.Min: new Hot(P, Dir.Equ, E.NextCount, 1); break;
-										case Dir.Max: H = new Hot(P, Dir.Min, E.NextCount, 1); break;
-										}
-										E = null;
+										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); } E = null;
 									} else if(P.Len > Len) {
-										switch(H.Dir) {
-										case Dir.Min: H = new Hot(P, Dir.Max, E.NextCount, 1); break;
-										case Dir.Max: new Hot(P, Dir.Equ, E.NextCount, 1); break;
-										}
-										E = null;
+										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); } E = null;
 									} else {
 										E.NextCount++;
 									}
 								} else {
 									if(P.Len < Len) {
-										switch(H.Dir) {
-										case Dir.Min: H.NextCount++; break;
-										case Dir.Max: H = new Hot(P, Dir.Min, H.NextCount, 1); break;
-										}
+										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCount, 1); } else { H.NextCount++; }
 									} else if(P.Len > Len) {
-										switch(H.Dir) {
-										case Dir.Max: H.NextCount++; break;
-										case Dir.Min: H = new Hot(P, Dir.Max, H.NextCount, 1); break;
-										}
+										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCount, 1); } else { H.NextCount++; }
 									} else {
 										E = new Hot(P, Dir.Equ, H.NextCount, 1);
 									}
@@ -380,15 +357,9 @@ namespace Wholemy {
 					}
 					if(H != null) {
 						if(E != null) {
-							switch(H.Dir) {
-							case Dir.Min: new Hot(P, Dir.Max, E.NextCount, 0); break;
-							case Dir.Max: new Hot(P, Dir.Min, E.NextCount, 0); break;
-							}
+							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, E.NextCount, 0); } else { new Hot(P, Dir.Min, E.NextCount, 0); }
 						} else {
-							switch(H.Dir) {
-							case Dir.Min: new Hot(P, Dir.Max, H.NextCount, 0); break;
-							case Dir.Max: new Hot(P, Dir.Min, H.NextCount, 0); break;
-							}
+							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCount, 0); } else { new Hot(P, Dir.Min, H.NextCount, 0); }
 						}
 					} else {
 						if(E != null) {
@@ -1609,14 +1580,14 @@ namespace Wholemy {
 				var AP = new Lot(A);
 				var BP = new Lot(B);
 				Lot.Len(AP, BP);
-				AP.MinMaxFirst(Mlen, Mint);
-				BP.MinMaxFirst(Mlen, Mint);
+				AP.MinMax(Mlen, Mint);
+				BP.MinMax(Mlen, Mint);
 				do {
 					AP.Dep();
 					BP.Dep();
 					Lot.Len(AP, BP);
-					AP.MinMaxFirst(Mlen, Mint);
-					BP.MinMaxFirst(Mlen, Mint);
+					AP.MinMax(Mlen, Mint);
+					BP.MinMax(Mlen, Mint);
 					AP.Enter(BP);
 					AP.Cut();
 					BP.Cut();
