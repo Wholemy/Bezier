@@ -302,7 +302,41 @@ namespace Wholemy {
 				}
 			}
 			#endregion
-			public void MinMax(double Mlen, int Mmax) {
+			public void MinMaxOnly(double Mlen, int Mmax) {
+				this.HotBase = null;
+				this.HotLast = null;
+				this.HotCount = 0;
+				this.DotCache = null;
+				Hot H = null;
+				var P = this.DotBase;
+				if(P != null) {
+					P.Hot = null;
+					var C = 0;
+					var I = P.Next;
+					while(I != null) {
+						I.Hot = null;
+						var Len = I.Len;
+						if(P != null) {
+							if(H == null) {
+								if(P.Len < Len) {
+									H = new Hot(P, Dir.Min, C, 1); C = 0;
+								} else if(P.Len > Len) {
+									H = new Hot(P, Dir.Max, C, 1); C = 0;
+								} else { C++; }
+							} else {
+								if(P.Len < Len) {
+									if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCount, 1); } else { H.NextCount++; }
+								} else if(P.Len > Len) {
+									if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCount, 1); } else { H.NextCount++; }
+								} else { H.NextCount++; }
+							}
+						}
+						P = I; I = I.Next;
+					}
+				}
+				if(H != null && H.Dot.Len != P.Len) { if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCount, 0); } else { new Hot(P, Dir.Min, H.NextCount, 0); } }
+			}
+			public void MinMaxFull(double Mlen, int Mmax) {
 				this.HotBase = null;
 				this.HotLast = null;
 				this.HotCount = 0;
@@ -336,9 +370,11 @@ namespace Wholemy {
 							} else {
 								if(E != null) {
 									if(P.Len < Len) {
-										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); } E = null;
+										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); }
+										E = null;
 									} else if(P.Len > Len) {
-										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); } E = null;
+										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); }
+										E = null;
 									} else {
 										E.NextCount++;
 									}
@@ -1580,14 +1616,14 @@ namespace Wholemy {
 				var AP = new Lot(A);
 				var BP = new Lot(B);
 				Lot.Len(AP, BP);
-				AP.MinMax(Mlen, Mint);
-				BP.MinMax(Mlen, Mint);
+				AP.MinMaxOnly(Mlen, Mint);
+				BP.MinMaxOnly(Mlen, Mint);
 				do {
 					AP.Dep();
 					BP.Dep();
 					Lot.Len(AP, BP);
-					AP.MinMax(Mlen, Mint);
-					BP.MinMax(Mlen, Mint);
+					AP.MinMaxOnly(Mlen, Mint);
+					BP.MinMaxOnly(Mlen, Mint);
 					AP.Enter(BP);
 					AP.Cut();
 					BP.Cut();
