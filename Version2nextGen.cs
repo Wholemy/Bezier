@@ -300,17 +300,6 @@ namespace Wholemy {
 					}
 					I = I.Next;
 				}
-				I = B.DotBase;
-				while(I != null) {
-					var ii = A.DotBase;
-					while(ii != null) {
-						var LT = ii.LenTo(I);
-						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Let = ii; }
-						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Let = I; }
-						ii = ii.Next;
-					}
-					I = I.Next;
-				}
 			}
 			#endregion
 			public void MinMaxFirst(double Mlen, int Mmax) {
@@ -382,7 +371,7 @@ namespace Wholemy {
 										case Dir.Min: H = new Hot(P, Dir.Max, H.NextCount, 1); break;
 										}
 									} else {
-										E = new Hot(P, Dir.Equ, H.NextCount, 1); break;
+										E = new Hot(P, Dir.Equ, H.NextCount, 1);
 									}
 								}
 							}
@@ -557,7 +546,7 @@ namespace Wholemy {
 				this.Lot = Lot;
 				if(Lot.DotCount > 0) {
 					this.Prev = Lot.DotLast;
-					Lot.DotLast.Next = this;
+					this.Prev.Next = this;
 					Lot.DotLast = this;
 				} else {
 					Lot.DotBase = Lot.DotLast = this;
@@ -582,7 +571,7 @@ namespace Wholemy {
 				this.Lot = Lot;
 				if(Lot.DotCount > 0) {
 					this.Next = Lot.DotBase;
-					Lot.DotBase.Prev = this;
+					this.Next.Prev = this;
 					Lot.DotBase = this;
 				} else {
 					Lot.DotBase = Lot.DotLast = this;
