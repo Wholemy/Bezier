@@ -1,7 +1,7 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 192;
-		public const int MaxDepth = 32;
+		public const int MinMaxS = 4;
+		public const int MaxDepth = 64;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
 		#region #class# Path 
@@ -102,14 +102,16 @@ namespace Wholemy {
 		#endregion
 		#region #class# Hot 
 		public sealed class Hot {
-			public readonly Lot Lot;
-			public readonly Dot Dot;
+			public Lot Lot;
+			public Dot Dot;
 			public readonly Dir Dir;
-			public readonly Hot Prev;
-			public readonly int PrevCount;
-			public int NextCount;
+			public readonly bool Max;
+			public Hot Prev;
+			public double PrevLen = double.NaN;
+			public double NextLen = double.NaN;
+			public int PrevCnt;
+			public int NextCnt;
 			public Hot Next;
-			#region #new# (Dot, Max) 
 			public Hot(Dot Dot, Dir Dir, int PrevCount, int NextCount) {
 				#region #debug# 
 #if DEBUG
@@ -118,21 +120,90 @@ namespace Wholemy {
 				#endregion
 				this.Dot = Dot;
 				Dot.Hot = this;
-				this.PrevCount = PrevCount;
-				this.NextCount = NextCount;
+				this.PrevCnt = PrevCount;
+				this.NextCnt = NextCount;
 				this.Dir = Dir;
+				if(Dir == Dir.Max) this.Max = true;
 				var Lot = this.Lot = Dot.Lot; var Last = Lot.HotLast;
-				if(Last != null) { Last.Next = this; this.Prev = Last; } else { Lot.HotBase = this; }
+				if(Last != null) {
+					Last.Next = this;
+					this.Prev = Last;
+					Last.NextLen = this.PrevLen = Dot.LenTo(Last.Dot);
+				} else { Lot.HotBase = this; }
+				Lot.HotLast = this; Lot.HotCache = null; Lot.HotCount++;
+			}
+			#region #new# (Dot, Max) 
+			public Hot(Dot Dot, bool Max, int PrevCount, int NextCount) {
+				#region #debug# 
+#if DEBUG
+				if(Dot == null || Dot.Hot != null || Dot.Lot == null) throw new System.InvalidOperationException();
+#endif
+				#endregion
+				this.Dot = Dot;
+				Dot.Hot = this;
+				this.PrevCnt = PrevCount;
+				this.NextCnt = NextCount;
+				this.Max = Max;
+				if(Max) this.Dir = Dir.Max;
+				var Lot = this.Lot = Dot.Lot; var Last = Lot.HotLast;
+				if(Last != null) {
+					Last.Next = this;
+					this.Prev = Last;
+					Last.NextLen = this.PrevLen = Dot.LenTo(Last.Dot);
+				} else { Lot.HotBase = this; }
 				Lot.HotLast = this; Lot.HotCache = null; Lot.HotCount++;
 			}
 			#endregion
+			#region #method# ToString 
 			public override string ToString() {
-				return $"{this.PrevCount.ToString()} {Dir.ToString()} {this.NextCount.ToString()} {Dot.ToString()}";
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"{this.PrevCnt.ToString()} {this.PrevLen.ToString(I)} {Dir.ToString()} {this.NextLen.ToString(I)} {this.NextCnt.ToString()} {Dot.ToString()}";
+			}
+			#endregion
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Hot Cut() {
+				if(Lot == null) throw new System.InvalidOperationException();
+				if(Prev != null) {
+					Prev.Next = Next;
+					if(Next == null) { Prev.NextCnt += PrevCnt + NextCnt; Prev.NextLen = double.NaN; } else { Prev.NextCnt += NextCnt; }
+				} else { Lot.HotBase = Next; }
+				if(Next != null) {
+					Next.Prev = Prev;
+					if(Prev == null) { Next.PrevCnt += NextCnt + PrevCnt; Next.PrevLen = double.NaN; } else { Next.PrevCnt += PrevCnt; }
+				} else { Lot.HotLast = Prev; }
+				if(Prev != null && Next != null) Prev.NextLen = Next.PrevLen = Prev.Dot.LenTo(Next.Dot);
+				Prev = null;
+				PrevCnt = 0;
+				PrevLen = double.NaN;
+				Next = null;
+				NextCnt = 0;
+				NextLen = double.NaN;
+				Lot.HotCache = null;
+				Lot.HotCount--;
+				Lot = null;
+				Dot.Hot = null;
+				Dot = null;
+				return this;
+			}
+			#endregion
+			public double Len {
+				get {
+					double Len = 0.0;
+					if(!double.IsNaN(this.PrevLen)) { Len += this.PrevLen; }
+					if(!double.IsNaN(this.NextLen)) { Len += this.NextLen; }
+					return Len;
+				}
 			}
 		}
 		#endregion
 		#region #class# Lot 
 		public class Lot {
+			public double MinLen = double.NaN;
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -300,6 +371,30 @@ namespace Wholemy {
 					}
 					I = I.Next;
 				}
+				var MinLen = double.NaN;
+				I = A.DotBase;
+				Dot P = null;
+				while(I != null) {
+					if(P != null) {
+						var L = P.LenTo(I);
+						if(double.IsNaN(MinLen) || MinLen > L) MinLen = L;
+					}
+					P = I;
+					I = I.Next;
+				}
+				A.MinLen = MinLen;
+				MinLen = double.NaN;
+				I = B.DotBase;
+				P = null;
+				while(I != null) {
+					if(P != null) {
+						var L = P.LenTo(I);
+						if(double.IsNaN(MinLen) || MinLen > L) MinLen = L;
+					}
+					P = I;
+					I = I.Next;
+				}
+				B.MinLen = MinLen;
 			}
 			#endregion
 			public void MinMaxOnly(double Mlen, int Mmax) {
@@ -319,23 +414,78 @@ namespace Wholemy {
 						if(P != null) {
 							if(H == null) {
 								if(P.Len < Len) {
-									H = new Hot(P, Dir.Min, C, 1); C = 0;
+									H = new Hot(P, false, C, 1); C = 0;
 								} else if(P.Len > Len) {
-									H = new Hot(P, Dir.Max, C, 1); C = 0;
+									H = new Hot(P, true, C, 1); C = 0;
 								} else { C++; }
 							} else {
 								if(P.Len < Len) {
-									if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCount, 1); } else { H.NextCount++; }
+									if(H.Max) { H = new Hot(P, false, H.NextCnt, 1); } else { H.NextCnt++; }
 								} else if(P.Len > Len) {
-									if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCount, 1); } else { H.NextCount++; }
-								} else { H.NextCount++; }
+									if(!H.Max) { H = new Hot(P, true, H.NextCnt, 1); } else { H.NextCnt++; }
+								} else { H.NextCnt++; }
 							}
 						}
 						P = I; I = I.Next;
 					}
 				}
-				if(H != null && H.Dot.Len != P.Len) { if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCount, 0); } else { new Hot(P, Dir.Min, H.NextCount, 0); } }
+				if(H != null && H.Dot.Len != P.Len) { if(!H.Max) { new Hot(P, true, H.NextCnt, 0); } else { new Hot(P, false, H.NextCnt, 0); } }
+				Hot Min0, Max0, Min1, Max1;
+				H = this.HotBase;
+				while(H != null) {
+					if(H.Max) {
+						var Hlen = H.Dot.Len;
+						Min0 = H.Next;
+						if(Min0 != null) {
+							Max0 = Min0.Next;
+							if(Max0 != null) {
+								Min1 = Max0.Next;
+								while(Min1 != null) {
+									Max1 = Min1.Next;
+									if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
+										if(Min1.Dot.Len < Min0.Dot.Len) {
+											var Min = Max0.Next;
+											var Max = Min.Next;
+											Min0.Cut();
+											Max0.Cut();
+											Min0 = Min;
+											Max0 = Max;
+											Min1 = Max.Next;
+										} else {
+											Min1 = Max1.Next;
+										}
+									} else { break; }
+								}
+							}
+						}
+						Min0 = H.Prev;
+						if(Min0 != null) {
+							Max0 = Min0.Prev;
+							if(Max0 != null) {
+								Min1 = Max0.Prev;
+								while(Min1 != null) {
+									Max1 = Min1.Prev;
+									if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
+										if(Min1.Dot.Len < Min0.Dot.Len) {
+											var Min = Max0.Prev;
+											var Max = Min.Prev;
+											Min0.Cut();
+											Max0.Cut();
+											Min0 = Min;
+											Max0 = Max;
+											Min1 = Max.Prev;
+										} else {
+											Min1 = Max1.Prev;
+										}
+									} else { break; }
+								}
+							}
+						}
+					}
+					H = H.Next;
+				}
 			}
+			#region #method# MinMaxFull(Mlen, Mmax) 
 			public void MinMaxFull(double Mlen, int Mmax) {
 				this.HotBase = null;
 				this.HotLast = null;
@@ -354,10 +504,10 @@ namespace Wholemy {
 							if(H == null) {
 								if(E != null) {
 									if(P.Len < Len) {
-										H = new Hot(P, Dir.Min, E.NextCount, 1); E = null;
+										H = new Hot(P, Dir.Min, E.NextCnt, 1); E = null;
 									} else if(P.Len > Len) {
-										H = new Hot(P, Dir.Max, E.NextCount, 1); E = null;
-									} else { E.NextCount++; }
+										H = new Hot(P, Dir.Max, E.NextCnt, 1); E = null;
+									} else { E.NextCnt++; }
 								} else {
 									if(P.Len < Len) {
 										H = new Hot(P, Dir.Min, 0, 1);
@@ -370,21 +520,21 @@ namespace Wholemy {
 							} else {
 								if(E != null) {
 									if(P.Len < Len) {
-										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); }
+										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCnt, 1); } else { new Hot(P, Dir.Equ, E.NextCnt, 1); }
 										E = null;
 									} else if(P.Len > Len) {
-										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCount, 1); } else { new Hot(P, Dir.Equ, E.NextCount, 1); }
+										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCnt, 1); } else { new Hot(P, Dir.Equ, E.NextCnt, 1); }
 										E = null;
 									} else {
-										E.NextCount++;
+										E.NextCnt++;
 									}
 								} else {
 									if(P.Len < Len) {
-										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCount, 1); } else { H.NextCount++; }
+										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCnt, 1); } else { H.NextCnt++; }
 									} else if(P.Len > Len) {
-										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCount, 1); } else { H.NextCount++; }
+										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCnt, 1); } else { H.NextCnt++; }
 									} else {
-										E = new Hot(P, Dir.Equ, H.NextCount, 1);
+										E = new Hot(P, Dir.Equ, H.NextCnt, 1);
 									}
 								}
 							}
@@ -393,17 +543,18 @@ namespace Wholemy {
 					}
 					if(H != null) {
 						if(E != null) {
-							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, E.NextCount, 0); } else { new Hot(P, Dir.Min, E.NextCount, 0); }
+							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, E.NextCnt, 0); } else { new Hot(P, Dir.Min, E.NextCnt, 0); }
 						} else {
-							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCount, 0); } else { new Hot(P, Dir.Min, H.NextCount, 0); }
+							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCnt, 0); } else { new Hot(P, Dir.Min, H.NextCnt, 0); }
 						}
 					} else {
 						if(E != null) {
-							new Hot(P, Dir.Equ, E.NextCount, 0);
+							new Hot(P, Dir.Equ, E.NextCnt, 0);
 						}
 					}
 				}
 			}
+			#endregion
 			#region #method# Enter(P) 
 			public void Enter(Lot P) {
 				this.Reset();
@@ -412,16 +563,36 @@ namespace Wholemy {
 			#endregion
 			#region #method# Reset 
 			private void Reset() {
-				var I = this.DotBase;
-				if(I != null) {
-					var L = I.Len;
-					var M = I;
-					while(I != null) {
-						var ll = I.Len;
-						if(ll < L) { L = ll; M = I; }
-						I = I.Next;
+				var H = this.HotBase;
+				if(H != null) {
+					H.Dot.ResetStart();
+					Next:
+					H.Dot.Int = true;
+					var N = H.Next;
+					if(N != null) {
+						if(H.NextCnt < MinMaxS * 2) {
+							H.Dot.SetTrueNextCount(H.NextCnt); H = N;
+							goto Next;
+						} else {
+							H.Dot.SetTrueNextCount(MinMaxS);
+							N.Dot.ResetStart(-(H.NextCnt - MinMaxS * 2)); H = N;
+							goto Next;
+						}
+					} else {
+						H.Dot.ResetEnd();
 					}
-					M.Reset();
+				} else {
+					var I = this.DotBase;
+					if(I != null) {
+						var L = I.Len;
+						var M = I;
+						while(I != null) {
+							var ll = I.Len;
+							if(ll < L) { L = ll; M = I; }
+							I = I.Next;
+						}
+						M.Reset();
+					}
 				}
 			}
 			#endregion
@@ -466,11 +637,13 @@ namespace Wholemy {
 			#endregion
 		}
 		#endregion
+		#region #enum# Dir 
 		public enum Dir {
 			Min = 0,
 			Equ = 1,
 			Max = 2
 		}
+		#endregion
 		#region #class# Dot 
 		public class Dot {
 			public Lot Lot;
@@ -667,6 +840,110 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Reset 
+			public void SetTrueNextCount(int C) {
+				var R = this.Next;
+				while(R != null && C > 0) {
+					R.Int = true;
+					C--;
+					R = R.Next;
+				}
+			}
+			public void ResetStart(int B) {
+				var Lot = this.Lot;
+				var C = MinMaxS;
+				var R = this.Prev;
+				while(R != null && B < C) {
+					if(C > 0) {
+						R.Int = true;
+					} else {
+						R.Int = false;
+					}
+					C--;
+					R = R.Prev;
+				}
+				//if(Lot.DotBase.Root > 0.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Base.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotBase.Root > 0.0) {
+				//			S = Lot.DotBase.Root - S; if(S < 0.0) S = 0.0;
+				//			Lot.Line.Dot(S).BaseTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
+			}
+			public void ResetStart() {
+				var Lot = this.Lot;
+				var C = MinMaxS;
+				var R = this.Prev;
+				while(R != null) {
+					if(C > 0) {
+						R.Int = true;
+					} else {
+						R.Int = false;
+					}
+					C--;
+					R = R.Prev;
+				}
+				//if(Lot.DotBase.Root > 0.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Base.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotBase.Root > 0.0) {
+				//			S = Lot.DotBase.Root - S; if(S < 0.0) S = 0.0;
+				//			Lot.Line.Dot(S).BaseTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
+			}
+			public void ResetEnd(int B) {
+				var Lot = this.Lot;
+				var C = MinMaxS;
+				var R = this.Next;
+				while(R != null && B < C) {
+					if(C > 0) {
+						R.Int = true;
+					} else {
+						R.Int = false;
+					}
+					C--;
+					R = R.Next;
+				}
+				//if(Lot.DotLast.Root < 1.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Last.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotLast.Root < 1.0) {
+				//			S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
+				//			Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
+			}
+			public void ResetEnd() {
+				var Lot = this.Lot;
+				var C = MinMaxS;
+				var R = this.Next;
+				while(R != null) {
+					if(C > 0) {
+						R.Int = true;
+					} else {
+						R.Int = false;
+					}
+					C--;
+					R = R.Next;
+				}
+				//if(Lot.DotLast.Root < 1.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Last.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotLast.Root < 1.0) {
+				//			S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
+				//			Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
+			}
 			public void Reset() {
 				var Lot = this.Lot;
 				var C = MinMaxS;
@@ -681,16 +958,16 @@ namespace Wholemy {
 					}
 					R = R.Prev;
 				}
-				if(Lot.DotBase.Root > 0.0 && C > 0) {
-					var S = Lot.Size;//Lot.Base.Root / C;
-					while(C > 0) {
-						if(Lot.DotBase.Root > 0.0) {
-							S = Lot.DotBase.Root - S; if(S < 0.0) S = 0.0;
-							Lot.Line.Dot(S).BaseTo(Lot);
-						}
-						C--;
-					}
-				}
+				//if(Lot.DotBase.Root > 0.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Base.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotBase.Root > 0.0) {
+				//			S = Lot.DotBase.Root - S; if(S < 0.0) S = 0.0;
+				//			Lot.Line.Dot(S).BaseTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
 				C = MinMaxS;
 				R = this.Next;
 				while(R != null) {
@@ -702,16 +979,16 @@ namespace Wholemy {
 					}
 					R = R.Next;
 				}
-				if(Lot.DotLast.Root < 1.0 && C > 0) {
-					var S = Lot.Size;//Lot.Last.Root / C;
-					while(C > 0) {
-						if(Lot.DotLast.Root < 1.0) {
-							S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
-							Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
-						}
-						C--;
-					}
-				}
+				//if(Lot.DotLast.Root < 1.0 && C > 0) {
+				//	var S = Lot.Size;//Lot.Last.Root / C;
+				//	while(C > 0) {
+				//		if(Lot.DotLast.Root < 1.0) {
+				//			S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
+				//			Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
+				//		}
+				//		C--;
+				//	}
+				//}
 			}
 			#endregion
 		}
