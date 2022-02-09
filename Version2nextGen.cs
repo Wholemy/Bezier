@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 16;
+		public const int MinMaxS = 4;
 		public const int MaxDepth = 64;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
@@ -509,7 +509,7 @@ namespace Wholemy {
 								Max0 = Min0.Next;
 								if(Max0 != null && Max0.Dot.Len <= Hlen && Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
 									Min1 = Max0.Next;
-									if(Min1 != null && Min1.Dot.Len < Mlen) {
+									if(Min1 != null && (Min1.Dot.Len < Mlen || Min1.Dot.Len > Min0.Dot.Len)) {
 										Min0.Cut();
 										Max0.Cut();
 										Ag = Hg = true;
@@ -521,7 +521,7 @@ namespace Wholemy {
 								Max0 = Min0.Prev;
 								if(Max0 != null && Max0.Dot.Len <= Hlen && Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
 									Min1 = Max0.Prev;
-									if(Min1 != null && Min1.Dot.Len < Mlen) {
+									if(Min1 != null && (Min1.Dot.Len < Mlen || Min1.Dot.Len > Min0.Dot.Len)) {
 										Min0.Cut();
 										Max0.Cut();
 										Ag = Hg = true;
@@ -668,17 +668,15 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Get 
-			public Line Get() {
+			public Line Get(double Mlen) {
 				var I = this.DotBase;
 				if(I != null) {
 					var L = I.Len;
 					var M = I;
 					while(I != null) {
-						var ll = I.Len;
-						if(ll < L) { L = ll; M = I; }
+						if(I.Len < Mlen) { return Line.DivB(I.Root).DivA(0.0); }
 						I = I.Next;
 					}
-					return Line.DivB(M.Root).DivA(0.0);
 				}
 				return null;
 			}
@@ -1954,8 +1952,8 @@ namespace Wholemy {
 					BP.Cut();
 					D++;
 				} while(D < MaxDepth);
-				A = AP.Get();
-				B = BP.Get();
+				A = AP.Get(Mlen);
+				B = BP.Get(Mlen);
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
