@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 4;
+		public const int MinMaxS = 16;
 		public const int MaxDepth = 64;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
@@ -431,58 +431,106 @@ namespace Wholemy {
 				}
 				if(H != null && H.Dot.Len != P.Len) { if(!H.Max) { new Hot(P, true, H.NextCnt, 0); } else { new Hot(P, false, H.NextCnt, 0); } }
 				Hot Min0, Max0, Min1, Max1;
-				H = this.HotBase;
-				while(H != null) {
-					if(H.Max) {
-						var Hlen = H.Dot.Len;
-						Min0 = H.Next;
-						if(Min0 != null) {
-							Max0 = Min0.Next;
-							if(Max0 != null) {
-								Min1 = Max0.Next;
-								while(Min1 != null) {
-									Max1 = Min1.Next;
-									if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
-										if(Min1.Dot.Len < Min0.Dot.Len) {
-											var Min = Max0.Next;
-											var Max = Min.Next;
-											Min0.Cut();
-											Max0.Cut();
-											Min0 = Min;
-											Max0 = Max;
-											Min1 = Max.Next;
-										} else {
-											Min1 = Max1.Next;
-										}
-									} else { break; }
+				double Min0l, Max0l, Min1l, Max1l;
+				var Ag = true;
+				while(Ag) {
+					Ag = false;
+					H = this.HotBase;
+					while(H != null) {
+						var Hg = false;
+						if(H.Max) {
+							var Hlen = H.Dot.Len;
+							Min0 = H.Next;
+							if(Min0 != null) {
+								Max0 = Min0.Next;
+								if(Max0 != null) {
+									Min1 = Max0.Next;
+									while(Min1 != null) {
+										Max1 = Min1.Next;
+										if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
+											if(Min1.Dot.Len < Min0.Dot.Len) {
+												var Min = Max0.Next;
+												var Max = Min.Next;
+												if(Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
+													Min0.Cut();
+													Max0.Cut();
+													Ag = Hg = true;
+												}
+												Min0 = Min;
+												Max0 = Max;
+												Min1 = Max.Next;
+											} else {
+												Min1 = Max1.Next;
+											}
+										} else { break; }
+									}
+								}
+							}
+							Min0 = H.Prev;
+							if(Min0 != null) {
+								Max0 = Min0.Prev;
+								if(Max0 != null) {
+									Min1 = Max0.Prev;
+									while(Min1 != null) {
+										Max1 = Min1.Prev;
+										if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
+											if(Min1.Dot.Len < Min0.Dot.Len) {
+												var Min = Max0.Prev;
+												var Max = Min.Prev;
+												if(Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
+													Min0.Cut();
+													Max0.Cut();
+													Ag = Hg = true;
+												}
+												Min0 = Min;
+												Max0 = Max;
+												Min1 = Max.Prev;
+											} else {
+												Min1 = Max1.Prev;
+											}
+										} else { break; }
+									}
 								}
 							}
 						}
-						Min0 = H.Prev;
-						if(Min0 != null) {
-							Max0 = Min0.Prev;
-							if(Max0 != null) {
-								Min1 = Max0.Prev;
-								while(Min1 != null) {
-									Max1 = Min1.Prev;
-									if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
-										if(Min1.Dot.Len < Min0.Dot.Len) {
-											var Min = Max0.Prev;
-											var Max = Min.Prev;
-											Min0.Cut();
-											Max0.Cut();
-											Min0 = Min;
-											Max0 = Max;
-											Min1 = Max.Prev;
-										} else {
-											Min1 = Max1.Prev;
-										}
-									} else { break; }
-								}
-							}
-						}
+						if(!Hg) H = H.Next;
 					}
-					H = H.Next;
+				}
+				Ag = true;
+				while(Ag) {
+					Ag = false;
+					H = this.HotBase;
+					while(H != null) {
+						var Hg = false;
+						if(H.Max) {
+							var Hlen = H.Dot.Len;
+							Min0 = H.Next;
+							if(Min0 != null && Min0.Dot.Len <= Hlen) {
+								Max0 = Min0.Next;
+								if(Max0 != null && Max0.Dot.Len <= Hlen && Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
+									Min1 = Max0.Next;
+									if(Min1 != null && Min1.Dot.Len < Mlen) {
+										Min0.Cut();
+										Max0.Cut();
+										Ag = Hg = true;
+									}
+								}
+							}
+							Min0 = H.Prev;
+							if(Min0 != null && Min0.Dot.Len <= Hlen) {
+								Max0 = Min0.Prev;
+								if(Max0 != null && Max0.Dot.Len <= Hlen && Min0.Dot.Len > (Max0.Dot.Len * 0.5)) {
+									Min1 = Max0.Prev;
+									if(Min1 != null && Min1.Dot.Len < Mlen) {
+										Min0.Cut();
+										Max0.Cut();
+										Ag = Hg = true;
+									}
+								}
+							}
+						}
+						if(!Hg) H = H.Next;
+					}
 				}
 			}
 			#region #method# MinMaxFull(Mlen, Mmax) 
@@ -600,9 +648,9 @@ namespace Wholemy {
 			public void Dep() {
 				Size *= 0.5;
 				var I = DotBase;
-				if(I != null && I.Root >= Size) {
-					Line.Dot(I.Root - Size).PrevTo(I);
-				}
+				//if(I != null && I.Root >= Size) {
+				//	Line.Dot(I.Root - Size).PrevTo(I);
+				//}
 				while(I != null) {
 					var N = I.Next;
 					if(N != null) {
@@ -611,9 +659,9 @@ namespace Wholemy {
 						I = Line.Dot(I.Root + R).NextTo(I);
 						//}
 					} else {
-						if(I.Root + Size <= 1.0) {
-							Line.Dot(I.Root + Size).NextTo(I);
-						}
+						//if(I.Root + Size <= 1.0) {
+						//	Line.Dot(I.Root + Size).NextTo(I);
+						//}
 					}
 					I = N;
 				}
