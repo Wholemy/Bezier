@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 4;
+		public const int MinMaxS = 16;
 		public const int MaxDepth = 54;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
@@ -107,7 +107,6 @@ namespace Wholemy {
 			public readonly Dir Dir;
 			public readonly bool Max;
 			public Hot Prev;
-			public double PrevLen = double.NaN;
 			public double NextLen = double.NaN;
 			public int PrevCnt;
 			public int NextCnt;
@@ -128,7 +127,7 @@ namespace Wholemy {
 				if(Last != null) {
 					Last.Next = this;
 					this.Prev = Last;
-					Last.NextLen = this.PrevLen = Dot.LenTo(Last.Dot);
+					Last.NextLen = Dot.LenTo(Last.Dot);
 				} else { Lot.HotBase = this; }
 				Lot.HotLast = this; Lot.HotCache = null; Lot.HotCount++;
 			}
@@ -149,7 +148,7 @@ namespace Wholemy {
 				if(Last != null) {
 					Last.Next = this;
 					this.Prev = Last;
-					Last.NextLen = this.PrevLen = Dot.LenTo(Last.Dot);
+					Last.NextLen = Dot.LenTo(Last.Dot);
 				} else { Lot.HotBase = this; }
 				Lot.HotLast = this; Lot.HotCount++; Lot.HotCache = null;
 			}
@@ -157,7 +156,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"{this.PrevCnt.ToString()} {(Max ? "Max" : "Min")} {this.NextCnt.ToString()} {Dot.ToString()}";
+				return $"{this.PrevCnt.ToString()} {(Max ? "Max" : "Min")} {this.NextLen.ToString("G17", I)} {this.NextCnt.ToString()} {Dot.ToString()}";
 			}
 			#endregion
 			#region #method# Cut 
@@ -174,12 +173,11 @@ namespace Wholemy {
 				} else { Lot.HotBase = Next; }
 				if(Next != null) {
 					Next.Prev = Prev;
-					if(Prev == null) { Next.PrevCnt += NextCnt + PrevCnt; Next.PrevLen = double.NaN; } else { Next.PrevCnt += PrevCnt; }
+					if(Prev == null) { Next.PrevCnt += NextCnt + PrevCnt; } else { Next.PrevCnt += PrevCnt; }
 				} else { Lot.HotLast = Prev; }
-				if(Prev != null && Next != null) Prev.NextLen = Next.PrevLen = Prev.Dot.LenTo(Next.Dot);
+				if(Prev != null && Next != null) Prev.NextLen = Prev.Dot.LenTo(Next.Dot);
 				Prev = null;
 				PrevCnt = 0;
-				PrevLen = double.NaN;
 				Next = null;
 				NextCnt = 0;
 				NextLen = double.NaN;
@@ -191,19 +189,12 @@ namespace Wholemy {
 				return this;
 			}
 			#endregion
-			public double Len {
-				get {
-					double Len = 0.0;
-					if(!double.IsNaN(this.PrevLen)) { Len += this.PrevLen; }
-					if(!double.IsNaN(this.NextLen)) { Len += this.NextLen; }
-					return Len;
-				}
-			}
 		}
 		#endregion
 		#region #class# Lot 
 		public class Lot {
 			public double MinLen = double.NaN;
+			public double MaxLen = double.NaN;
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -356,6 +347,8 @@ namespace Wholemy {
 			#endregion
 			#region #method# Len(A, B) 
 			public static void Len(Lot A, Lot B) {
+				var MinLen = double.NaN;
+				var MaxLen = double.NaN;
 				var I = A.DotBase;
 				while(I != null) {
 					var ii = B.DotBase;
@@ -363,38 +356,18 @@ namespace Wholemy {
 						var LT = ii.LenTo(I);
 						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Let = ii; }
 						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Let = I; }
+						if(double.IsNaN(MinLen) || MinLen > LT) MinLen = LT;
+						if(double.IsNaN(MaxLen) || MaxLen < LT) MaxLen = LT;
 						ii = ii.Next;
 					}
 					I = I.Next;
 				}
-				var MinLen = double.NaN;
-				I = A.DotBase;
-				Dot P = null;
-				while(I != null) {
-					if(P != null) {
-						var L = P.LenTo(I);
-						if(double.IsNaN(MinLen) || MinLen > L) MinLen = L;
-					}
-					P = I;
-					I = I.Next;
-				}
-				A.MinLen = MinLen;
-				MinLen = double.NaN;
-				I = B.DotBase;
-				P = null;
-				while(I != null) {
-					if(P != null) {
-						var L = P.LenTo(I);
-						if(double.IsNaN(MinLen) || MinLen > L) MinLen = L;
-					}
-					P = I;
-					I = I.Next;
-				}
-				B.MinLen = MinLen;
+				A.MinLen = B.MinLen = MinLen;
+				A.MaxLen = B.MaxLen = MaxLen;
 			}
 			#endregion
 			#region #method# MinMaxOnly(Mlen, Mmax) 
-			public void MinMaxOnly(double Mlen, int Mmax) {
+			public bool MinMaxOnly(double Mlen, int Mmax) {
 				this.HotBase = null;
 				this.HotLast = null;
 				this.HotCount = 0;
@@ -427,15 +400,48 @@ namespace Wholemy {
 					}
 				}
 				if(H != null && H.Dot.Len != P.Len) { if(!H.Max) { new Hot(P, true, H.NextCnt, 0); } else { new Hot(P, false, H.NextCnt, 0); } }
-
 				MinMaxOnlyEndFirst(Mlen, Mmax);
+				if(this.HotCount > 50) {
+					return false;
+				}
+				return true;
+				//MinMaxOnlyNext(Mlen, Mmax);
+			}
+			public void HotClear() {
+				this.HotBase = null;
+				this.HotLast = null;
+				this.HotCount = 0;
+				this.DotCache = null;
 			}
 			#endregion
+			private void MinMaxOnlyNext(double Mlen, int Mmax) {
+				var Min = this.MinLen;
+				var Max = this.MaxLen;
+				Hot F = null;
+				while(this.HotCount > Mmax) {
+					var H = this.HotBase;
+					while(H != null) {
+						var N = H.Next;
+						if(N != null && (F == null || (H.NextLen < F.NextLen)) && H.Dot.Len > Max) {
+							//if((H.Max&&H.Dot.Len>Mlen)) {
+							F = H;
+							//}
+						}
+						H = N;
+					}
+					if(F != null) {
+						F.Next.Cut();
+						F.Cut();
+						F = null;
+					} else {
+						Max -= Mlen;
+					}
+				}
+			}
 			#region #method# MinMaxOnlyEndFirst(Mlen, Mmax) 
 			private void MinMaxOnlyEndFirst(double Mlen, int Mmax) {
 				Hot Min0, Max0, Min1, Max1;
 				double Min0l, Max0l, Min1l, Max1l;
-
 				var Ag = true;
 				while(Ag) {
 					Ag = false;
@@ -640,7 +646,7 @@ namespace Wholemy {
 				while(I != null) {
 					var N = I.Next;
 					if(N != null) {
-						var R = (N.Root - I.Root) / 2;
+						var R = (N.Root - I.Root) * 0.5;
 						if(I.Root + R < N.Root) {
 							I = Line.Dot(I.Root + R).NextTo(I);
 						}
@@ -1905,12 +1911,16 @@ namespace Wholemy {
 				//Lot.Len(AP, BP);
 				//AP.MinMaxOnly(Mlen, Mint);
 				//BP.MinMaxOnly(Mlen, Mint);
+				bool r = true;
 				do {
 					AP.Dep();
 					BP.Dep();
 					Lot.Len(AP, BP);
-					AP.MinMaxOnly(Mlen, Mint);
-					BP.MinMaxOnly(Mlen, Mint);
+					if(r) {
+						if(!AP.MinMaxOnly(Mlen, Mint)) r = false;
+						if(!BP.MinMaxOnly(Mlen, Mint)) r = false;
+						if(!r) { AP.HotClear(); BP.HotClear(); }
+					}
 					AP.Enter(BP);
 					AP.Cut();
 					BP.Cut();
