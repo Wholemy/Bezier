@@ -1,6 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
-		public const int MinMaxS = 16;
+		public const int MinMaxS = 128;
 		public const int MaxDepth = 54;
 		public const double InitRoot = 0.0;
 		public const double InitSize = 1.0;
@@ -100,613 +100,13 @@ namespace Wholemy {
 			}
 		}
 		#endregion
-		#region #class# Hot 
-		public sealed class Hot {
-			public Lot Lot;
-			public Dot Dot;
-			public readonly Dir Dir;
-			public readonly bool Max;
-			public Hot Prev;
-			public double NextLen = double.NaN;
-			public int PrevCnt;
-			public int NextCnt;
-			public Hot Next;
-			public Hot(Dot Dot, Dir Dir, int PrevCount, int NextCount) {
-				#region #debug# 
-#if DEBUG
-				if(Dot == null || Dot.Hot != null || Dot.Lot == null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Dot = Dot;
-				Dot.Hot = this;
-				this.PrevCnt = PrevCount;
-				this.NextCnt = NextCount;
-				this.Dir = Dir;
-				if(Dir == Dir.Max) this.Max = true;
-				var Lot = this.Lot = Dot.Lot; var Last = Lot.HotLast;
-				if(Last != null) {
-					Last.Next = this;
-					this.Prev = Last;
-					Last.NextLen = Dot.LenTo(Last.Dot);
-				} else { Lot.HotBase = this; }
-				Lot.HotLast = this; Lot.HotCache = null; Lot.HotCount++;
-			}
-			#region #new# (Dot, Max) 
-			public Hot(Dot Dot, bool Max, int PrevCount, int NextCount) {
-				#region #debug# 
-#if DEBUG
-				if(Dot == null || Dot.Hot != null || Dot.Lot == null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Dot = Dot;
-				Dot.Hot = this;
-				this.PrevCnt = PrevCount;
-				this.NextCnt = NextCount;
-				this.Max = Max;
-				if(Max) this.Dir = Dir.Max;
-				var Lot = this.Lot = Dot.Lot; var Last = Lot.HotLast;
-				if(Last != null) {
-					Last.Next = this;
-					this.Prev = Last;
-					Last.NextLen = Dot.LenTo(Last.Dot);
-				} else { Lot.HotBase = this; }
-				Lot.HotLast = this; Lot.HotCount++; Lot.HotCache = null;
-			}
-			#endregion
-			#region #method# ToString 
-			public override string ToString() {
-				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"{this.PrevCnt.ToString()} {(Max ? "Max" : "Min")} {this.NextLen.ToString("G17", I)} {this.NextCnt.ToString()} {Dot.ToString()}";
-			}
-			#endregion
-			#region #method# Cut 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Hot Cut() {
-				if(Lot == null) throw new System.InvalidOperationException();
-				if(Prev != null) {
-					Prev.Next = Next;
-					if(Next == null) { Prev.NextCnt += PrevCnt + NextCnt; Prev.NextLen = double.NaN; } else { Prev.NextCnt += NextCnt; }
-				} else { Lot.HotBase = Next; }
-				if(Next != null) {
-					Next.Prev = Prev;
-					if(Prev == null) { Next.PrevCnt += NextCnt + PrevCnt; } else { Next.PrevCnt += PrevCnt; }
-				} else { Lot.HotLast = Prev; }
-				if(Prev != null && Next != null) Prev.NextLen = Prev.Dot.LenTo(Next.Dot);
-				Prev = null;
-				PrevCnt = 0;
-				Next = null;
-				NextCnt = 0;
-				NextLen = double.NaN;
-				Dot.Hot = null;
-				Dot = null;
-				Lot.HotCount--;
-				Lot.HotCache = null;
-				Lot = null;
-				return this;
-			}
-			#endregion
-		}
-		#endregion
-		#region #class# Lot 
-		public class Lot {
-			public double MinLen = double.NaN;
-			public double MaxLen = double.NaN;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public int DotCount;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Dot DotBase;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Dot DotLast;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public int HotCount;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public int MinCount;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public int MaxCount;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Hot HotBase;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Hot HotLast;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Dot[] DotCache;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public Hot[] HotCache;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public readonly Line Line;
-			#region #invisible# 
-#if TRACE
-			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
-#endif
-			#endregion
-			public double Size;
-			#region #new# (Line) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Lot(Line Line) {
-				this.Line = Line;
-				Line.Dot(0.0).LastTo(this);
-				Line.Dot(0.5).LastTo(this);
-				Line.Dot(1.0).LastTo(this);
-				Size = 0.5;
-			}
-			#endregion
-			#region #property# Dots 
-			public Dot[] Dots {
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				get {
-					if(DotCache != null) return DotCache;
-					var I = DotCount;
-					var A = new Dot[I];
-					var S = DotLast;
-					while(--I >= 0) {
-						A[I] = S;
-						S = S.Prev;
-					}
-					DotCache = A;
-					return A;
-				}
-			}
-			#endregion
-			#region #property# Hots 
-			public Hot[] Hots {
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				get {
-					if(HotCache != null) return HotCache;
-					var I = HotCount;
-					var A = new Hot[I];
-					var S = HotLast;
-					while(--I >= 0) {
-						A[I] = S;
-						S = S.Prev;
-					}
-					HotCache = A;
-					return A;
-				}
-			}
-			#endregion
-			#region #method# ToString 
-			public override string ToString() {
-				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"List Count:{DotCount.ToString(I)} Hots:{HotCount.ToString(I)} Mins:{MinCount.ToString(I)} Maxs:{MaxCount.ToString(I)}";
-			}
-			#endregion
-			#region #method# Cut 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public void Cut() {
-				int C = 0;
-				var I = DotBase;
-				while(I != null) {
-					var Next = I.Next;
-					if(!I.Int) { I.Cut(); }
-					I = Next;
-				}
-			}
-			#endregion
-			#region #method# Len(A, B) 
-			public static void Len(Lot A, Lot B) {
-				var MinLen = double.NaN;
-				var MaxLen = double.NaN;
-				var I = A.DotBase;
-				while(I != null) {
-					var ii = B.DotBase;
-					while(ii != null) {
-						var LT = ii.LenTo(I);
-						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Let = ii; }
-						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Let = I; }
-						if(double.IsNaN(MinLen) || MinLen > LT) MinLen = LT;
-						if(double.IsNaN(MaxLen) || MaxLen < LT) MaxLen = LT;
-						ii = ii.Next;
-					}
-					I = I.Next;
-				}
-				A.MinLen = B.MinLen = MinLen;
-				A.MaxLen = B.MaxLen = MaxLen;
-			}
-			#endregion
-			#region #method# MinMaxOnly(Mlen, Mmax) 
-			public bool MinMaxOnly(double Mlen, int Mmax) {
-				this.HotBase = null;
-				this.HotLast = null;
-				this.HotCount = 0;
-				this.DotCache = null;
-				Hot H = null;
-				var P = this.DotBase;
-				if(P != null) {
-					P.Hot = null;
-					var C = 0;
-					var I = P.Next;
-					while(I != null) {
-						I.Hot = null;
-						var Len = I.Len;
-						if(P != null) {
-							if(H == null) {
-								if(P.Len < Len) {
-									H = new Hot(P, false, C, 1); C = 0;
-								} else if(P.Len > Len) {
-									H = new Hot(P, true, C, 1); C = 0;
-								} else { C++; }
-							} else {
-								if(P.Len < Len) {
-									if(H.Max) { H = new Hot(P, false, H.NextCnt, 1); } else { H.NextCnt++; }
-								} else if(P.Len > Len) {
-									if(!H.Max) { H = new Hot(P, true, H.NextCnt, 1); } else { H.NextCnt++; }
-								} else { H.NextCnt++; }
-							}
-						}
-						P = I; I = I.Next;
-					}
-				}
-				if(H != null && H.Dot.Len != P.Len) { if(!H.Max) { new Hot(P, true, H.NextCnt, 0); } else { new Hot(P, false, H.NextCnt, 0); } }
-				MinMaxOnlyEndFirst(Mlen, Mmax);
-				if(this.HotCount > 50) {
-					return false;
-				}
-				return true;
-				//MinMaxOnlyNext(Mlen, Mmax);
-			}
-			public void HotClear() {
-				this.HotBase = null;
-				this.HotLast = null;
-				this.HotCount = 0;
-				this.DotCache = null;
-			}
-			#endregion
-			private void MinMaxOnlyNext(double Mlen, int Mmax) {
-				var Min = this.MinLen;
-				var Max = this.MaxLen;
-				Hot F = null;
-				while(this.HotCount > Mmax) {
-					var H = this.HotBase;
-					while(H != null) {
-						var N = H.Next;
-						if(N != null && (F == null || (H.NextLen < F.NextLen)) && H.Dot.Len > Max) {
-							//if((H.Max&&H.Dot.Len>Mlen)) {
-							F = H;
-							//}
-						}
-						H = N;
-					}
-					if(F != null) {
-						F.Next.Cut();
-						F.Cut();
-						F = null;
-					} else {
-						Max -= Mlen;
-					}
-				}
-			}
-			#region #method# MinMaxOnlyEndFirst(Mlen, Mmax) 
-			private void MinMaxOnlyEndFirst(double Mlen, int Mmax) {
-				Hot Min0, Max0, Min1, Max1;
-				double Min0l, Max0l, Min1l, Max1l;
-				var Ag = true;
-				while(Ag) {
-					Ag = false;
-					var H = this.HotBase;
-					while(H != null) {
-						var Hg = false;
-						if(H.Max) {
-							var Hlen = H.Dot.Len;
-							Min0 = H.Next;
-							if(Min0 != null) {
-								Max0 = Min0.Next;
-								if(Max0 != null) {
-									Min1 = Max0.Next;
-									if(Min1 != null
-									&& (((Min0.Dot.Len > (Max0.Dot.Len * 0.25)) && (Min1.Dot.Len < Mlen || Min1.Dot.Len >= Min0.Dot.Len))
-									|| (Max0.Dot.Root == Min0.Dot.Root && Max0.Dot.Root == Min1.Dot.Root))) {
-										Min0.Cut();
-										Max0.Cut();
-										Ag = Hg = true;
-									} else {
-										while(Min1 != null) {
-											Max1 = Min1.Next;
-											if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
-												if(Min1.Dot.Len < Min0.Dot.Len) {
-													var Min = Max0.Next;
-													var Max = Min.Next;
-													if(Min0.Dot.Len > (Max0.Dot.Len * 0.25)) {
-														Min0.Cut();
-														Max0.Cut();
-														Ag = Hg = true;
-													}
-													Min0 = Min;
-													Max0 = Max;
-													Min1 = Max.Next;
-												} else {
-													Min1 = Max1.Next;
-												}
-											} else { break; }
-										}
-									}
-								}
-							}
-							Min0 = H.Prev;
-							if(Min0 != null) {
-								Max0 = Min0.Prev;
-								if(Max0 != null) {
-									Min1 = Max0.Prev;
-									if(Min1 != null
-									&& (((Min0.Dot.Len > (Max0.Dot.Len * 0.25)) && (Min1.Dot.Len < Mlen || Min1.Dot.Len >= Min0.Dot.Len))
-									|| (Max0.Dot.Root == Min0.Dot.Root && Max0.Dot.Root == Min1.Dot.Root))) {
-										Min0.Cut();
-										Max0.Cut();
-										Ag = Hg = true;
-									} else {
-										while(Min1 != null) {
-											Max1 = Min1.Prev;
-											if(Max1 != null && Max1.Dot.Len < Min0.Dot.Len) {
-												if(Min1.Dot.Len < Min0.Dot.Len) {
-													var Min = Max0.Prev;
-													var Max = Min.Prev;
-													if(Min0.Dot.Len > (Max0.Dot.Len * 0.25)) {
-														Min0.Cut();
-														Max0.Cut();
-														Ag = Hg = true;
-													}
-													Min0 = Min;
-													Max0 = Max;
-													Min1 = Max.Prev;
-												} else {
-													Min1 = Max1.Prev;
-												}
-											} else { break; }
-										}
-									}
-								}
-							}
-						}
-						if(!Hg) H = H.Next;
-					}
-				}
-
-			}
-			#endregion
-			#region #method# MinMaxFull(Mlen, Mmax) 
-			public void MinMaxFull(double Mlen, int Mmax) {
-				this.HotBase = null;
-				this.HotLast = null;
-				this.HotCount = 0;
-				this.DotCache = null;
-				Hot H = null;
-				Hot E = null;
-				var P = this.DotBase;
-				if(P != null) {
-					P.Hot = null;
-					var I = P.Next;
-					while(I != null) {
-						I.Hot = null;
-						var Len = I.Len;
-						if(P != null) {
-							if(H == null) {
-								if(E != null) {
-									if(P.Len < Len) {
-										H = new Hot(P, Dir.Min, E.NextCnt, 1); E = null;
-									} else if(P.Len > Len) {
-										H = new Hot(P, Dir.Max, E.NextCnt, 1); E = null;
-									} else { E.NextCnt++; }
-								} else {
-									if(P.Len < Len) {
-										H = new Hot(P, Dir.Min, 0, 1);
-									} else if(P.Len > Len) {
-										H = new Hot(P, Dir.Max, 0, 1);
-									} else {
-										E = new Hot(P, Dir.Equ, 0, 1);
-									}
-								}
-							} else {
-								if(E != null) {
-									if(P.Len < Len) {
-										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, E.NextCnt, 1); } else { new Hot(P, Dir.Equ, E.NextCnt, 1); }
-										E = null;
-									} else if(P.Len > Len) {
-										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, E.NextCnt, 1); } else { new Hot(P, Dir.Equ, E.NextCnt, 1); }
-										E = null;
-									} else {
-										E.NextCnt++;
-									}
-								} else {
-									if(P.Len < Len) {
-										if(H.Dir == Dir.Max) { H = new Hot(P, Dir.Min, H.NextCnt, 1); } else { H.NextCnt++; }
-									} else if(P.Len > Len) {
-										if(H.Dir == Dir.Min) { H = new Hot(P, Dir.Max, H.NextCnt, 1); } else { H.NextCnt++; }
-									} else {
-										E = new Hot(P, Dir.Equ, H.NextCnt, 1);
-									}
-								}
-							}
-						}
-						P = I; I = I.Next;
-					}
-					if(H != null) {
-						if(E != null) {
-							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, E.NextCnt, 0); } else { new Hot(P, Dir.Min, E.NextCnt, 0); }
-						} else {
-							if(H.Dir == Dir.Min) { new Hot(P, Dir.Max, H.NextCnt, 0); } else { new Hot(P, Dir.Min, H.NextCnt, 0); }
-						}
-					} else {
-						if(E != null) {
-							new Hot(P, Dir.Equ, E.NextCnt, 0);
-						}
-					}
-				}
-			}
-			#endregion
-			#region #method# Enter(P) 
-			public void Enter(Lot P) {
-				this.Reset();
-				P.Reset();
-			}
-			#endregion
-			#region #method# Reset 
-			private void Reset() {
-				var H = this.HotBase;
-				if(H != null) {
-					H.Dot.ResetStart();
-					Next:
-					H.Dot.Int = true;
-					var N = H.Next;
-					if(N != null) {
-						if(H.NextCnt < MinMaxS * 2) {
-							H.Dot.SetTrueNextCount(H.NextCnt); H = N;
-							goto Next;
-						} else {
-							H.Dot.SetTrueNextCount(MinMaxS);
-							N.Dot.ResetStart(-(H.NextCnt - MinMaxS * 2)); H = N;
-							goto Next;
-						}
-					} else {
-						H.Dot.ResetEnd();
-					}
-				} else {
-					var I = this.DotBase;
-					if(I != null) {
-						var L = I.Len;
-						var M = I;
-						while(I != null) {
-							var ll = I.Len;
-							if(ll < L) { L = ll; M = I; }
-							I = I.Next;
-						}
-						M.Reset();
-					}
-				}
-			}
-			#endregion
-			#region #method# Dep 
-			public void Dep() {
-				Size *= 0.5;
-				var I = DotBase;
-				if(I != null && I.Root >= Size) {
-					Line.Dot(I.Root - Size).PrevTo(I);
-				}
-				while(I != null) {
-					var N = I.Next;
-					if(N != null) {
-						var R = (N.Root - I.Root) * 0.5;
-						if(I.Root + R < N.Root) {
-							I = Line.Dot(I.Root + R).NextTo(I);
-						}
-					} else {
-						if(I.Root + Size <= 1.0) {
-							Line.Dot(I.Root + Size).NextTo(I);
-						}
-					}
-					I = N;
-				}
-			}
-			#endregion
-			#region #method# Get 
-			public Line Get(double Mlen) {
-				var I = this.DotBase;
-				if(I != null) {
-					var L = I.Len;
-					var M = I;
-					while(I != null) {
-						if(I.Len < Mlen) { return Line.DivB(I.Root).DivA(0.0); }
-						I = I.Next;
-					}
-				}
-				return null;
-			}
-			#endregion
-		}
-		#endregion
-		#region #enum# Dir 
-		public enum Dir {
-			Min = 0,
-			Equ = 1,
-			Max = 2
-		}
-		#endregion
 		#region #class# Dot 
 		public class Dot {
-			public Lot Lot;
 			public Dot Prev;
 			public Dot Next;
-			#region #property# Let 
-			private System.WeakReference<Dot> let;
-			public Dot Let {
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				get { if(this.let != null) { if(this.let.TryGetTarget(out var let)) { return let; } else { this.let = null; } } return null; }
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				set { if(value != null) { this.let = new System.WeakReference<Dot>(value, false); } else { this.let = null; } }
-			}
-			#endregion
-			public Hot Hot;
+			/// <summary>Длина до другой точки наиболее короткая)</summary>
 			public double Len = double.NaN;
-			public bool Int = true;
+			public Dot Led;
 			public readonly double Root;
 			public readonly double X;
 			public readonly double Y;
@@ -721,7 +121,7 @@ namespace Wholemy {
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"Dot {(Int ? "Int" : "Out")} Len:{Len.ToString("G17", I)} Root:{Root.ToString("G17", I)} X:{X.ToString("G17", I)} Y:{Y.ToString("G17", I)}";
+				return $"Dot Len:{Len.ToString("G17", I)} Root:{Root.ToString("G17", I)} X:{X.ToString("G17", I)} Y:{Y.ToString("G17", I)}";
 			}
 			#endregion
 			#region #method# LenTo(Dot) 
@@ -729,282 +129,6 @@ namespace Wholemy {
 				var X = this.X - Dot.X;
 				var Y = this.Y - Dot.Y;
 				return System.Math.Sqrt(X * X + Y * Y);
-			}
-			#endregion
-			#region #method# Cut 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot Cut() {
-				if(Lot == null) throw new System.InvalidOperationException();
-				if(Prev != null) { Prev.Next = Next; } else { Lot.DotBase = Next; }
-				if(Next != null) { Next.Prev = Prev; } else { Lot.DotLast = Prev; }
-				Prev = null;
-				Next = null;
-				Lot.DotCache = null;
-				Lot.DotCount--;
-				Lot = null;
-				return this;
-			}
-			#endregion
-			#region #method# LastTo(Lot) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot LastTo(Lot Lot) {
-				#region #debug# 
-#if DEBUG
-				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Lot = Lot;
-				if(Lot.DotCount > 0) {
-					this.Prev = Lot.DotLast;
-					this.Prev.Next = this;
-					Lot.DotLast = this;
-				} else {
-					Lot.DotBase = Lot.DotLast = this;
-				}
-				Lot.DotCache = null;
-				Lot.DotCount++;
-				return this;
-			}
-			#endregion
-			#region #method# BaseTo(Lot) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot BaseTo(Lot Lot) {
-				#region #debug# 
-#if DEBUG
-				if(Lot == null || this.Lot != null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Lot = Lot;
-				if(Lot.DotCount > 0) {
-					this.Next = Lot.DotBase;
-					this.Next.Prev = this;
-					Lot.DotBase = this;
-				} else {
-					Lot.DotBase = Lot.DotLast = this;
-				}
-				Lot.DotCache = null;
-				Lot.DotCount++;
-				return this;
-			}
-			#endregion
-			#region #method# PrevTo(Dot) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot PrevTo(Dot Dot) {
-				#region #debug# 
-#if DEBUG
-				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Lot = Dot.Lot;
-				this.Next = Dot;
-				var Prev = Dot.Prev;
-				Dot.Prev = this;
-				if(Prev != null) {
-					this.Prev = Prev;
-					Prev.Next = this;
-				} else {
-					this.Lot.DotBase = this;
-				}
-				this.Lot.DotCache = null;
-				this.Lot.DotCount++;
-				return this;
-			}
-			#endregion
-			#region #method# NextTo(Dot) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot NextTo(Dot Dot) {
-				#region #debug# 
-#if DEBUG
-				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Lot = Dot.Lot;
-				this.Prev = Dot;
-				var Next = Dot.Next;
-				Dot.Next = this;
-				if(Next != null) {
-					this.Next = Next;
-					Next.Prev = this;
-				} else {
-					this.Lot.DotLast = this;
-				}
-				this.Lot.DotCache = null;
-				this.Lot.DotCount++;
-				return this;
-			}
-			#endregion
-			#region #method# Replace(Dot) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
-			public Dot Replace(Dot Dot) {
-				#region #debug# 
-#if DEBUG
-				if(Dot == null || Dot.Lot == null || this.Lot != null) throw new System.InvalidOperationException();
-#endif
-				#endregion
-				this.Lot = Dot.Lot;
-				this.Prev = Dot.Prev;
-				this.Next = Dot.Next;
-				if(this.Prev != null) { this.Prev.Next = this; } else { this.Lot.DotBase = this; }
-				if(this.Next != null) { this.Next.Prev = this; } else { this.Lot.DotLast = this; }
-				Dot.Prev = null;
-				Dot.Next = null;
-				Dot.Lot = null;
-				this.Lot.DotCache = null;
-				return this;
-			}
-			#endregion
-			#region #method# Reset 
-			public void SetTrueNextCount(int C) {
-				var R = this.Next;
-				while(R != null && C > 0) {
-					R.Int = true;
-					C--;
-					R = R.Next;
-				}
-			}
-			public void ResetStart(int B) {
-				var Lot = this.Lot;
-				var C = MinMaxS;
-				var R = this.Prev;
-				while(R != null && B < C) {
-					if(C > 0) {
-						R.Int = true;
-					} else {
-						R.Int = false;
-					}
-					C--;
-					R = R.Prev;
-				}
-				if(C > 0 && Lot.DotBase.Root > 0.0) {
-					var S = Lot.Size;//Lot.Last.Root / C;
-					while(C > 0) {
-						if(Lot.DotBase.Root > 0.0) {
-							S = Lot.DotBase.Root - S;
-							if(S < 0.0) S = 0.0;
-							Lot.Line.Dot(S).BaseTo(Lot);
-						}
-						C--;
-					}
-				}
-			}
-			public void ResetStart() {
-				var Lot = this.Lot;
-				var C = MinMaxS;
-				var R = this.Prev;
-				while(R != null) {
-					if(C > 0) {
-						R.Int = true;
-					} else {
-						R.Int = false;
-					}
-					C--;
-					R = R.Prev;
-				}
-				if(C > 0 && Lot.DotBase.Root > 0.0) {
-					var S = Lot.Size;//Lot.Last.Root / C;
-					while(C > 0) {
-						if(Lot.DotBase.Root > 0.0) {
-							S = Lot.DotBase.Root - S;
-							if(S < 0.0) S = 0.0;
-							Lot.Line.Dot(S).BaseTo(Lot);
-						}
-						C--;
-					}
-				}
-			}
-			public void ResetEnd() {
-				var Lot = this.Lot;
-				var C = MinMaxS;
-				var R = this.Next;
-				while(R != null) {
-					if(C > 0) {
-						R.Int = true;
-					} else {
-						R.Int = false;
-					}
-					C--;
-					R = R.Next;
-				}
-				if(C > 0 && Lot.DotLast.Root < 1.0) {
-					var S = Lot.Size;//Lot.Last.Root / C;
-					while(C > 0) {
-						if(Lot.DotLast.Root < 1.0) {
-							S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
-							Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
-						}
-						C--;
-					}
-				}
-			}
-			public void Reset() {
-				var Lot = this.Lot;
-				var C = MinMaxS;
-				this.Int = true;
-				var R = this.Prev;
-				while(R != null) {
-					if(C > 0) {
-						R.Int = true;
-						C--;
-					} else {
-						R.Int = false;
-					}
-					R = R.Prev;
-				}
-				if(Lot.DotBase.Root > 0.0 && C > 0) {
-					var S = Lot.Size;//Lot.Base.Root / C;
-					while(C > 0) {
-						if(Lot.DotBase.Root > 0.0) {
-							S = Lot.DotBase.Root - S; if(S < 0.0) S = 0.0;
-							Lot.Line.Dot(S).BaseTo(Lot);
-						}
-						C--;
-					}
-				}
-				C = MinMaxS;
-				R = this.Next;
-				while(R != null) {
-					if(C > 0) {
-						R.Int = true;
-						C--;
-					} else {
-						R.Int = false;
-					}
-					R = R.Next;
-				}
-				if(Lot.DotLast.Root < 1.0 && C > 0) {
-					var S = Lot.Size;//Lot.Last.Root / C;
-					while(C > 0) {
-						if(Lot.DotLast.Root < 1.0) {
-							S = Lot.DotBase.Root + S; if(S > 1.0) S = 1.0;
-							Lot.Line.Dot(Lot.DotBase.Root + S).LastTo(Lot);
-						}
-						C--;
-					}
-				}
 			}
 			#endregion
 		}
@@ -1635,6 +759,11 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Dot(root) 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
 			public override Dot Dot(double root) {
 				var R = this.Inverted ? 1.0 - root : root;
 				var x00 = MX;
@@ -1898,7 +1027,321 @@ namespace Wholemy {
 			return double.NaN;
 		}
 		#endregion
+		#region #class# Min 
+		public class Min {
+			public Line GetA(double Mlen) {
+				var I = this.BaseA;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						if(I.Len < Mlen) { return LineA.DivB(I.Root).DivA(0.0); }
+						I = I.Next;
+					}
+				}
+				return null;
+			}
+			public Line GetB(double Mlen) {
+				var I = this.BaseB;
+				if(I != null) {
+					var L = I.Len;
+					var M = I;
+					while(I != null) {
+						if(I.Len < Mlen) { return LineB.DivB(I.Root).DivA(0.0); }
+						I = I.Next;
+					}
+				}
+				return null;
+			}
+			public double Size;
+			public readonly Line LineA;
+			public readonly Line LineB;
+			public Dot BaseA;
+			public Dot LastA;
+			public int CountA;
+			public Dot[] CacheA;
+			public Dot BaseB;
+			public Dot LastB;
+			public int CountB;
+			public Dot[] CacheB;
+			#region #property# Dots 
+			public Dot[] ItemsA {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(CacheA != null) return CacheA;
+					var I = CountA;
+					var A = new Dot[I];
+					var S = LastA;
+					while(--I >= 0) {
+						A[I] = S;
+						S = S.Prev;
+					}
+					CacheA = A;
+					return A;
+				}
+			}
+			public Dot[] ItemsB {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(CacheB != null) return CacheB;
+					var I = CountB;
+					var B = new Dot[I];
+					var S = LastB;
+					while(--I >= 0) {
+						B[I] = S;
+						S = S.Prev;
+					}
+					CacheB = B;
+					return B;
+				}
+			}
+			#endregion
+			public Min(Line A, Line B) {
+				this.LineA = A;
+				this.LineB = B;
+				Add(0.0);
+				//Add(0.5);
+				//Size = 0.5;
+				var S = 1.0 / MinMaxS;
+				Size = S;
+				var I = S;
+				while(I < 1.0) {
+					Add(I);
+					I += S;
+				}
+				Add(1.0);
+			}
+			public void Add(double root) {
+				AddA(root);
+				AddB(root);
+			}
+			public void AddA(double root) {
+				var A = this.LineA.Dot(root);
+				Dot Prev = null;
+				var Next = BaseA;
+				while(Next != null) {
+					if(Next.Root == root) { return; }
+					if(Next.Root > root) { break; }
+					Prev = Next; Next = Next.Next;
+				}
+				if(Prev == null) { BaseA = A; } else { Prev.Next = A; A.Prev = Prev; }
+				if(Next == null) { LastA = A; } else { Next.Prev = A; A.Next = Next; }
+				CountA++;
+				CacheA = null;
+			}
+			public void AddB(double root) {
+				var B = this.LineB.Dot(root);
+				Dot Prev = null;
+				var Next = BaseB;
+				while(Next != null) {
+					if(Next.Root == root) { return; }
+					if(Next.Root > root) { break; }
+					Prev = Next; Next = Next.Next;
+				}
+				if(Prev == null) { BaseB = B; } else { Prev.Next = B; B.Prev = Prev; }
+				if(Next == null) { LastB = B; } else { Next.Prev = B; B.Next = Next; }
+				CountB++;
+				CacheA = null;
+			}
+			public void CutA(Dot Dot) {
+				var P = Dot.Prev;
+				var N = Dot.Next;
+				if(P != null) { P.Next = N; } else { BaseA = N; }
+				if(N != null) { N.Prev = P; } else { LastA = P; }
+				Dot.Prev = Dot.Next = null;
+				CountA--;
+				CacheA = null;
+			}
+			public void CutB(Dot Dot) {
+				var P = Dot.Prev;
+				var N = Dot.Next;
+				if(P != null) { P.Next = N; } else { BaseB = N; }
+				if(N != null) { N.Prev = P; } else { LastB = P; }
+				Dot.Prev = Dot.Next = null;
+				CountB--;
+				CacheB = null;
+			}
+			public void Dep() {
+				this.Size *= 0.5;
+				RepA();
+				RepB();
+			}
+			public void Int() {
+				Len();
+				AntA();
+				AntB();
+			}
+			public void Len() {
+				var I = BaseA;
+				while(I != null) {
+					var ii = BaseB;
+					while(ii != null) {
+						var LT = ii.LenTo(I);
+						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Led = ii; }
+						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Led = I; }
+						ii = ii.Next;
+					}
+					I = I.Next;
+				}
+			}
+			public void AntA() {
+				var Dots = BaseA;
+				if(Dots != null) {
+					var M = Dots;
+					var L = Dots.Len;
+					Dots = Dots.Next;
+					while(Dots != null) {
+						var ll = Dots.Len;
+						if(ll < L) { L = ll; M = Dots; }
+						Dots = Dots.Next;
+					}
+					var C = MinMaxS;
+					var R = M.Prev;
+					while(R != null) {
+						var N = R.Prev;
+						if(C > 0) {
+							C--;
+						} else {
+							CutA(R);
+						}
+						R = N;
+					}
+					if(C > 0) {
+						R = BaseA;
+						var rr = R.Root;
+						while(C > 0 && rr > 0.0) {
+							rr = rr - Size;
+							if(rr < 0.0) rr = 0.0;
+							AddA(rr);
+							C--;
+						}
+					}
+					C = MinMaxS;
+					R = M.Next;
+					while(R != null) {
+						var N = R.Next;
+						if(C > 0) {
+							C--;
+						} else {
+							CutA(R);
+						}
+						R = N;
+					}
+					if(C > 0) {
+						R = LastA;
+						var rr = R.Root;
+						while(C > 0 && rr < 1.0) {
+							rr = rr + Size;
+							if(rr > 1.0) rr = 1.0;
+							AddA(rr);
+							C--;
+						}
+					}
+				}
+			}
+			public void AntB() {
+				var Dots = BaseB;
+				if(Dots != null) {
+					var M = Dots;
+					var L = Dots.Len;
+					Dots = Dots.Next;
+					while(Dots != null) {
+						var ll = Dots.Len;
+						if(ll < L) { L = ll; M = Dots; }
+						Dots = Dots.Next;
+					}
+					var C = MinMaxS;
+					var R = M.Prev;
+					while(R != null) {
+						var N = R.Prev;
+						if(C > 0) {
+							C--;
+						} else {
+							CutB(R);
+						}
+						R = N;
+					}
+					if(C > 0) {
+						R = BaseB;
+						var rr = R.Root;
+						while(C > 0 && rr > 0.0) {
+							rr = rr - Size;
+							if(rr < 0.0) rr = 0.0;
+							AddB(rr);
+							C--;
+						}
+					}
+					C = MinMaxS;
+					R = M.Next;
+					while(R != null) {
+						var N = R.Next;
+						if(C > 0) {
+							C--;
+						} else {
+							CutB(R);
+						}
+						R = N;
+					}
+					if(C > 0) {
+						R = LastB;
+						var rr = R.Root;
+						while(C > 0 && rr < 1.0) {
+							rr = rr + Size;
+							if(rr > 1.0) rr = 1.0;
+							AddB(rr);
+							C--;
+						}
+					}
+				}
+			}
+			public void RepA() {
+				var I = BaseA;
+				if(I != null) {
+					var S = Size;
+					while(I != null) {
+						var N = I.Next;
+						if(N != null) {
+							var R = (N.Root - I.Root) * 0.5;
+							if(I.Root + R < N.Root) {
+								AddA(I.Root + R);
+							}
+						}
+						I = N;
+					}
+				}
+			}
+			public void RepB() {
+				var I = BaseB;
+				if(I != null) {
+					var S = Size;
+					while(I != null) {
+						var N = I.Next;
+						if(N != null) {
+							var R = (N.Root - I.Root) * 0.5;
+							if(I.Root + R < N.Root) {
+								AddB(I.Root + R);
+							}
+						}
+						I = N;
+					}
+				}
+			}
+		}
+		#endregion
 		#region #method# Intersect2L(Aref, Bref, Mlen) 
+		/// <remarks>
+		/// Поиск пересечений работает следующим образом, сначала находится наименьший минимум, одно пересечение в одной кривой,
+		/// затем кривая делится в области этого пересечения и в двух отрезках происходит поиск максимумов среди минимумов,
+		/// кривые делятся в области максимумов на отрезки и среди них происходит поиск минимумов, пересечений)
+		/// </remarks>
 		public static double Intersect2L(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 			var A = Aref.Pastle;
 			var B = Bref.Pastle;
@@ -1906,28 +1349,15 @@ namespace Wholemy {
 			var M = Mlen;
 			if(A.Intersect(B)) {
 				var Mint = A.Mint * B.Mint;
-				var AP = new Lot(A);
-				var BP = new Lot(B);
-				//Lot.Len(AP, BP);
-				//AP.MinMaxOnly(Mlen, Mint);
-				//BP.MinMaxOnly(Mlen, Mint);
-				bool r = true;
+				var Min = new Min(A, B);
 				do {
-					AP.Dep();
-					BP.Dep();
-					Lot.Len(AP, BP);
-					if(r) {
-						if(!AP.MinMaxOnly(Mlen, Mint)) r = false;
-						if(!BP.MinMaxOnly(Mlen, Mint)) r = false;
-						if(!r) { AP.HotClear(); BP.HotClear(); }
-					}
-					AP.Enter(BP);
-					AP.Cut();
-					BP.Cut();
+					Min.Dep();
+					Min.Int();
 					D++;
 				} while(D < MaxDepth);
-				A = AP.Get(Mlen);
-				B = BP.Get(Mlen);
+
+				A = Min.GetA(Mlen);
+				B = Min.GetB(Mlen);
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
