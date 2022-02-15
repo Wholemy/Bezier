@@ -100,10 +100,166 @@ namespace Wholemy {
 			}
 		}
 		#endregion
+		public class Lot {
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public bool Valid;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Lot Pair;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Line Line;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public int Count;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot Base;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot Last;
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+#endif
+			#endregion
+			public Dot[] Cache;
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public Lot(Line Line) {
+				this.Line = Line ?? throw new System.ArgumentNullException(nameof(Line));
+				var Base = this.Base = Line.Dot(0.0);
+				var Last = this.Last = Line.Dot(1.0);
+				Base.Next = Last;
+				Last.Prev = Base;
+				Base.NextRoot = Last.PrevRoot = 0.5;
+				Base.Lot = Last.Lot = this;
+				this.Count = 2;
+			}
+			public Lot(Line Line, Lot Pair) : this(Line) {
+				this.Pair = Pair;
+				Pair.Pair = this;
+				this.Validate();
+			}
+			#region #invisible# 
+#if TRACE
+			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.RootHidden)]
+#endif
+			#endregion
+			#region #get# Items 
+			public Dot[] Items {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(Cache != null) return Cache;
+					var I = Count;
+					var A = new Dot[I];
+					var S = Last;
+					while(--I >= 0) { A[I] = S; S = S.Prev; }
+					Cache = A;
+					return A;
+				}
+			}
+			#endregion
+			#region #method# ToString 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return "Lot Count:" + Count.ToString();
+			}
+			#endregion
+			public void Adds() {
+				var I = this.Base;
+				var N = true;
+				while(I != null) {
+					var ii = I.Next;
+					if(N) I.AddPrev();
+					N = I.AddNext();
+					I = ii;
+				}
+			}
+			public void Validate(Dot B) {
+				var P = this.Pair;
+				if(Valid && P.Valid) {
+					var a = this.Base;
+					var b = B;
+					while(a != null) {
+						var L = a.LenTo(b);
+						if(double.IsNaN(a.Len) || L < a.Len) {
+							a.Len = L; a.Led = b;
+						}
+						if(double.IsNaN(b.Len) || L < b.Len) {
+							b.Len = L; b.Led = a;
+						}
+						a = a.Next;
+					}
+				}
+			}
+			public void Validate() {
+				var P = this.Pair;
+				if(!Valid || !P.Valid) {
+					var a = this.Base;
+					var ab = P.Base;
+					if(ab != null) {
+						var b = ab;
+						while(b != null) { b.Len = double.NaN; b = b.Next; }
+						while(a != null) {
+							a.Len = double.NaN;
+							b = ab;
+							while(b != null) {
+								var L = a.LenTo(b);
+								if(double.IsNaN(a.Len) || L < a.Len) {
+									a.Len = L; a.Led = b;
+								}
+								if(double.IsNaN(b.Len) || L < b.Len) {
+									b.Len = L; b.Led = a;
+								}
+								b = b.Next;
+							}
+							a = a.Next;
+						}
+						this.Valid = true;
+						P.Valid = true;
+					}
+				}
+			}
+		}
 		#region #class# Dot 
 		public class Dot {
+			public Lot Lot;
 			public Dot Prev;
 			public Dot Next;
+			public double PrevRoot;
+			public double NextRoot;
 			/// <summary>Длина до другой точки наиболее короткая)</summary>
 			public double Len = double.NaN;
 			public Dot Led;
@@ -116,12 +272,12 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerStepThrough]
 #endif
 			#endregion
-			public Dot(double Root, double X, double Y) { this.Root = Root; this.X = X; this.Y = Y; }
+			public Dot(double Root, double X, double Y) { this.PrevRoot = this.NextRoot = this.Root = Root; this.X = X; this.Y = Y; }
 			#endregion
 			#region #method# ToString 
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
-				return $"Dot Len:{Len.ToString("G17", I)} Root:{Root.ToString("G17", I)} X:{X.ToString("G17", I)} Y:{Y.ToString("G17", I)}";
+				return $"Dot Len: {Len.ToString("G17", I)} Root: {Root.ToString("G17", I)} X: {X.ToString("G17", I)} Y: {Y.ToString("G17", I)}";
 			}
 			#endregion
 			#region #method# LenTo(Dot) 
@@ -129,6 +285,89 @@ namespace Wholemy {
 				var X = this.X - Dot.X;
 				var Y = this.Y - Dot.Y;
 				return System.Math.Sqrt(X * X + Y * Y);
+			}
+			#endregion
+			#region #method# AddPrev 
+			public bool AddPrev() {
+				var Lot = this.Lot;
+				Dot Prev, New; double Size;
+				var R = true;
+				if(this.PrevRoot < this.Root) {
+					Size = (this.Root - this.PrevRoot) * 0.5;
+					New = Lot.Line.Dot(this.PrevRoot);
+					New.PrevRoot -= Size;
+					if(New.PrevRoot < 0.0) New.PrevRoot = 0.0;
+					New.NextRoot += Size;
+					if(New.NextRoot > 1.0) New.NextRoot = 1.0;
+					Prev = this.Prev;
+					if(Prev != null) {
+						if(Prev.NextRoot == this.PrevRoot) { Prev.NextRoot = New.PrevRoot; R = false; }
+						New.Prev = Prev;
+						Prev.Next = New;
+					} else {
+						Lot.Base = New;
+					}
+					this.PrevRoot = New.NextRoot;
+					New.Next = this;
+					this.Prev = New;
+					New.Lot = Lot;
+					Lot.Count++;
+					Lot.Cache = null;
+					Lot.Pair.Validate(New);
+				}
+				return R;
+			}
+			#endregion
+			#region #method# AddNext 
+			public bool AddNext() {
+				var Lot = this.Lot;
+				Dot Next, New; double Size;
+				var R = true;
+				if(this.NextRoot > this.Root) {
+					Size = (this.NextRoot - this.Root) * 0.5;
+					New = Lot.Line.Dot(this.NextRoot);
+					New.PrevRoot -= Size;
+					if(New.PrevRoot < 0.0) New.PrevRoot = 0.0;
+					New.NextRoot += Size;
+					if(New.NextRoot > 1.0) New.NextRoot = 1.0;
+					Next = this.Next;
+					if(Next != null) {
+						if(Next.PrevRoot == this.NextRoot) { Next.PrevRoot = New.NextRoot; R = false; }
+						New.Next = Next;
+						Next.Prev = New;
+					} else {
+						Lot.Last = New;
+					}
+					this.NextRoot = New.PrevRoot;
+					New.Prev = this;
+					this.Next = New;
+					New.Lot = Lot;
+					Lot.Count++;
+					Lot.Cache = null;
+					Lot.Pair.Validate(New);
+				}
+				return R;
+			}
+			#endregion
+			#region #method# Cut 
+			#region #through# 
+#if TRACE
+			[System.Diagnostics.DebuggerStepThrough]
+#endif
+			#endregion
+			public void Cut() {
+				var Lot = this.Lot;
+				if(Lot != null) {
+					var P = this.Prev;
+					var N = this.Next;
+					if(P != null) { P.Next = N; } else { Lot.Base = N; }
+					if(N != null) { N.Prev = P; } else { Lot.Last = P; }
+					Lot.Count--;
+					Lot.Cache = null;
+					this.Prev = null; this.Next = null; this.Lot = null;
+					this.Len = double.NaN;
+					Lot.Pair.Valid = false;
+				}
 			}
 			#endregion
 		}
@@ -249,6 +488,7 @@ namespace Wholemy {
 			#endregion
 			#region #method# Dot(root) 
 			public virtual Dot Dot(double root) {
+				if(root < 0.0 || root > 1.0) throw new System.InvalidOperationException();
 				var R = this.Inverted ? 1.0 - root : root;
 				var x00 = MX;
 				var y00 = MY;
@@ -542,6 +782,7 @@ namespace Wholemy {
 			#endregion
 			#region #method# Dot(root) 
 			public override Dot Dot(double root) {
+				if(root < 0.0 || root > 1.0) throw new System.InvalidOperationException();
 				var R = this.Inverted ? 1.0 - root : root;
 				var x00 = MX;
 				var y00 = MY;
@@ -765,6 +1006,7 @@ namespace Wholemy {
 #endif
 			#endregion
 			public override Dot Dot(double root) {
+				if(root < 0.0 || root > 1.0) throw new System.InvalidOperationException();
 				var R = this.Inverted ? 1.0 - root : root;
 				var x00 = MX;
 				var y00 = MY;
@@ -1029,309 +1271,60 @@ namespace Wholemy {
 		#endregion
 		#region #class# Min 
 		public class Min {
-			public Line GetA(double Mlen) {
-				var I = this.BaseA;
-				if(I != null) {
-					var L = I.Len;
-					var M = I;
-					while(I != null) {
-						if(I.Len < Mlen) { return LineA.DivB(I.Root).DivA(0.0); }
-						I = I.Next;
-					}
-				}
-				return null;
-			}
-			public Line GetB(double Mlen) {
-				var I = this.BaseB;
-				if(I != null) {
-					var L = I.Len;
-					var M = I;
-					while(I != null) {
-						if(I.Len < Mlen) { return LineB.DivB(I.Root).DivA(0.0); }
-						I = I.Next;
-					}
-				}
-				return null;
-			}
-			public double Size;
-			public readonly Line LineA;
-			public readonly Line LineB;
-			public Dot BaseA;
-			public Dot LastA;
-			public int CountA;
-			public Dot[] CacheA;
-			public Dot BaseB;
-			public Dot LastB;
-			public int CountB;
-			public Dot[] CacheB;
-			#region #property# Dots 
-			public Dot[] ItemsA {
-				#region #through# 
+			public Lot A;
+			public Lot B;
+			#region #new# (A, B) 
+			#region #through# 
 #if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
+			[System.Diagnostics.DebuggerStepThrough]
 #endif
-				#endregion
-				get {
-					if(CacheA != null) return CacheA;
-					var I = CountA;
-					var A = new Dot[I];
-					var S = LastA;
-					while(--I >= 0) {
-						A[I] = S;
-						S = S.Prev;
-					}
-					CacheA = A;
-					return A;
-				}
-			}
-			public Dot[] ItemsB {
-				#region #through# 
-#if TRACE
-				[System.Diagnostics.DebuggerStepThrough]
-#endif
-				#endregion
-				get {
-					if(CacheB != null) return CacheB;
-					var I = CountB;
-					var B = new Dot[I];
-					var S = LastB;
-					while(--I >= 0) {
-						B[I] = S;
-						S = S.Prev;
-					}
-					CacheB = B;
-					return B;
-				}
-			}
 			#endregion
-			public Min(Line A, Line B) {
-				this.LineA = A;
-				this.LineB = B;
-				Add(0.0);
-				//Add(0.5);
-				//Size = 0.5;
-				var S = 1.0 / MinMaxS;
-				Size = S;
-				var I = S;
-				while(I < 1.0) {
-					Add(I);
-					I += S;
-				}
-				Add(1.0);
-			}
-			public void Add(double root) {
-				AddA(root);
-				AddB(root);
-			}
-			public void AddA(double root) {
-				var A = this.LineA.Dot(root);
-				Dot Prev = null;
-				var Next = BaseA;
-				while(Next != null) {
-					if(Next.Root == root) { return; }
-					if(Next.Root > root) { break; }
-					Prev = Next; Next = Next.Next;
-				}
-				if(Prev == null) { BaseA = A; } else { Prev.Next = A; A.Prev = Prev; }
-				if(Next == null) { LastA = A; } else { Next.Prev = A; A.Next = Next; }
-				CountA++;
-				CacheA = null;
-			}
-			public void AddB(double root) {
-				var B = this.LineB.Dot(root);
-				Dot Prev = null;
-				var Next = BaseB;
-				while(Next != null) {
-					if(Next.Root == root) { return; }
-					if(Next.Root > root) { break; }
-					Prev = Next; Next = Next.Next;
-				}
-				if(Prev == null) { BaseB = B; } else { Prev.Next = B; B.Prev = Prev; }
-				if(Next == null) { LastB = B; } else { Next.Prev = B; B.Next = Next; }
-				CountB++;
-				CacheA = null;
-			}
-			public void CutA(Dot Dot) {
-				var P = Dot.Prev;
-				var N = Dot.Next;
-				if(P != null) { P.Next = N; } else { BaseA = N; }
-				if(N != null) { N.Prev = P; } else { LastA = P; }
-				Dot.Prev = Dot.Next = null;
-				CountA--;
-				CacheA = null;
-			}
-			public void CutB(Dot Dot) {
-				var P = Dot.Prev;
-				var N = Dot.Next;
-				if(P != null) { P.Next = N; } else { BaseB = N; }
-				if(N != null) { N.Prev = P; } else { LastB = P; }
-				Dot.Prev = Dot.Next = null;
-				CountB--;
-				CacheB = null;
-			}
-			public void Dep() {
-				this.Size *= 0.5;
-				RepA();
-				RepB();
-			}
-			public void Int() {
-				Len();
-				AntA();
-				AntB();
-			}
-			public void Len() {
-				var I = BaseA;
-				while(I != null) {
-					var ii = BaseB;
-					while(ii != null) {
-						var LT = ii.LenTo(I);
-						if(double.IsNaN(I.Len) || LT < I.Len) { I.Len = LT; I.Led = ii; }
-						if(double.IsNaN(ii.Len) || LT < ii.Len) { ii.Len = LT; ii.Led = I; }
-						ii = ii.Next;
+			public Min(Line A, Line B) { this.B = new Lot(B, this.A = new Lot(A)); }
+			#endregion
+			public void Adds() {
+				var A = this.A;
+				var B = this.B;
+				A.Adds();
+				B.Adds();
+				A.Validate();
+				Next1:
+				var a = A.Base;
+				Dot P = null;
+				while(a != null) {
+					var N = a.Next;
+					if(a.Led != null && (a.Led.Len != a.Len || a.Led.Lot == null)) { a.Cut(); break; }
+					if(P != null && N != null) {
+						if(P.Len > a.Len && a.Len > N.Len || P.Len < a.Len && a.Len < N.Len) { a.Cut(); break; }
 					}
-					I = I.Next;
+					P = a; a = N;
+				}
+				Next2:
+				a = B.Base;
+				P = null;
+				while(a != null) {
+					var N = a.Next;
+					if(a.Led != null && (a.Led.Len != a.Len || a.Led.Lot == null)) { a.Cut(); goto Next1; }
+					if(P != null && N != null) {
+						if(P.Len > a.Len && a.Len > N.Len || P.Len < a.Len && a.Len < N.Len) { a.Cut(); goto Next1; }
+					}
+					P = a; a = N;
 				}
 			}
-			public void AntA() {
-				var Dots = BaseA;
-				if(Dots != null) {
-					var M = Dots;
-					var L = Dots.Len;
-					Dots = Dots.Next;
-					while(Dots != null) {
-						var ll = Dots.Len;
-						if(ll < L) { L = ll; M = Dots; }
-						Dots = Dots.Next;
-					}
-					var C = MinMaxS;
-					var R = M.Prev;
-					while(R != null) {
-						var N = R.Prev;
-						if(C > 0) {
-							C--;
-						} else {
-							CutA(R);
-						}
-						R = N;
-					}
-					if(C > 0) {
-						R = BaseA;
-						var rr = R.Root;
-						while(C > 0 && rr > 0.0) {
-							rr = rr - Size;
-							if(rr < 0.0) rr = 0.0;
-							AddA(rr);
-							C--;
-						}
-					}
-					C = MinMaxS;
-					R = M.Next;
-					while(R != null) {
-						var N = R.Next;
-						if(C > 0) {
-							C--;
-						} else {
-							CutA(R);
-						}
-						R = N;
-					}
-					if(C > 0) {
-						R = LastA;
-						var rr = R.Root;
-						while(C > 0 && rr < 1.0) {
-							rr = rr + Size;
-							if(rr > 1.0) rr = 1.0;
-							AddA(rr);
-							C--;
-						}
-					}
-				}
+		}
+		public class Roots {
+			public int Count;
+			public Map.Double<Dot> Dots;
+			public Roots(Dot Dot) {
+				if(Map.Add(ref Dots, Dot.Root, Dot)) Count++;
 			}
-			public void AntB() {
-				var Dots = BaseB;
-				if(Dots != null) {
-					var M = Dots;
-					var L = Dots.Len;
-					Dots = Dots.Next;
-					while(Dots != null) {
-						var ll = Dots.Len;
-						if(ll < L) { L = ll; M = Dots; }
-						Dots = Dots.Next;
-					}
-					var C = MinMaxS;
-					var R = M.Prev;
-					while(R != null) {
-						var N = R.Prev;
-						if(C > 0) {
-							C--;
-						} else {
-							CutB(R);
-						}
-						R = N;
-					}
-					if(C > 0) {
-						R = BaseB;
-						var rr = R.Root;
-						while(C > 0 && rr > 0.0) {
-							rr = rr - Size;
-							if(rr < 0.0) rr = 0.0;
-							AddB(rr);
-							C--;
-						}
-					}
-					C = MinMaxS;
-					R = M.Next;
-					while(R != null) {
-						var N = R.Next;
-						if(C > 0) {
-							C--;
-						} else {
-							CutB(R);
-						}
-						R = N;
-					}
-					if(C > 0) {
-						R = LastB;
-						var rr = R.Root;
-						while(C > 0 && rr < 1.0) {
-							rr = rr + Size;
-							if(rr > 1.0) rr = 1.0;
-							AddB(rr);
-							C--;
-						}
-					}
-				}
+			public void Add(Dot Dot) {
+				if(Map.Add(ref Dots, Dot.Root, Dot)) Count++;
 			}
-			public void RepA() {
-				var I = BaseA;
-				if(I != null) {
-					var S = Size;
-					while(I != null) {
-						var N = I.Next;
-						if(N != null) {
-							var R = (N.Root - I.Root) * 0.5;
-							if(I.Root + R < N.Root) {
-								AddA(I.Root + R);
-							}
-						}
-						I = N;
-					}
-				}
-			}
-			public void RepB() {
-				var I = BaseB;
-				if(I != null) {
-					var S = Size;
-					while(I != null) {
-						var N = I.Next;
-						if(N != null) {
-							var R = (N.Root - I.Root) * 0.5;
-							if(I.Root + R < N.Root) {
-								AddB(I.Root + R);
-							}
-						}
-						I = N;
-					}
+			public void Cut() {
+				var A = Dots.Base;
+				while(A != null) {
+					A.Value.Cut();
+					A = A.Above;
 				}
 			}
 		}
@@ -1350,14 +1343,12 @@ namespace Wholemy {
 			if(A.Intersect(B)) {
 				var Mint = A.Mint * B.Mint;
 				var Min = new Min(A, B);
-				do {
-					Min.Dep();
-					Min.Int();
-					D++;
-				} while(D < MaxDepth);
+				while(D++ < MaxDepth) {
+					Min.Adds();
+				}
 
-				A = Min.GetA(Mlen);
-				B = Min.GetB(Mlen);
+				//A = Min.GetA(Mlen);
+				//B = Min.GetB(Mlen);
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
