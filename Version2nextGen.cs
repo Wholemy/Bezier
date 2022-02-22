@@ -100,7 +100,9 @@ namespace Wholemy {
 			}
 		}
 		#endregion
+		#region #class# Lot 
 		public class Lot {
+			public int Fl;
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -118,7 +120,7 @@ namespace Wholemy {
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 #endif
 			#endregion
-			public Line Line;
+			public Polynom Poly;
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -143,32 +145,45 @@ namespace Wholemy {
 #endif
 			#endregion
 			public Dot[] Cache;
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
+			#region #new# (Line) 
 			public Lot(Line Line) {
-				this.Line = Line ?? throw new System.ArgumentNullException(nameof(Line));
-				var Base = this.Base = Line.Dot(0.0);
-				var Last = this.Last = Line.Dot(1.0);
+				var Poly = this.Poly = Line.Polynom;
+				var Base = this.Base = Poly.Dot(0.0);
+				var Last = this.Last = Poly.Dot(1.0);
 				Base.Next = Last;
 				Last.Prev = Base;
 				Base.NextRoot = Last.PrevRoot = 0.5;
 				Base.Lot = Last.Lot = this;
 				this.Count = 2;
+				Line.Div(0.5, out var A, out var B);
 			}
+			#endregion
+			#region #new# (Line, Pair) 
 			public Lot(Line Line, Lot Pair) : this(Line) {
 				this.Pair = Pair;
 				Pair.Pair = this;
-				this.Validate();
+
+				this.Lens();
+				if(this.Base.Len < this.Last.Len) {
+					Fl = 1;
+				}
+				if(this.Base.Len > this.Last.Len) {
+					Fl = 2;
+				}
+				if(Pair.Base.Len < Pair.Last.Len) {
+					Pair.Fl = 1;
+				}
+				if(Pair.Base.Len > Pair.Last.Len) {
+					Pair.Fl = 2;
+				}
 			}
+			#endregion
+			#region #get# Items 
 			#region #invisible# 
 #if TRACE
 			[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.RootHidden)]
 #endif
 			#endregion
-			#region #get# Items 
 			public Dot[] Items {
 				#region #through# 
 #if TRACE
@@ -197,6 +212,7 @@ namespace Wholemy {
 				return "Lot Count:" + Count.ToString();
 			}
 			#endregion
+			#region #method# Adds 
 			public void Adds() {
 				var I = this.Base;
 				var N = true;
@@ -207,7 +223,9 @@ namespace Wholemy {
 					I = ii;
 				}
 			}
-			public void Validate(Dot B) {
+			#endregion
+			#region #method# Lens(B) 
+			public void Lens(Dot B) {
 				var P = this.Pair;
 				if(Valid && P.Valid) {
 					var a = this.Base;
@@ -224,7 +242,9 @@ namespace Wholemy {
 					}
 				}
 			}
-			public void Validate() {
+			#endregion
+			#region #method# Lens 
+			public void Lens() {
 				var P = this.Pair;
 				if(!Valid || !P.Valid) {
 					var a = this.Base;
@@ -252,7 +272,62 @@ namespace Wholemy {
 					}
 				}
 			}
+			#endregion
+
+			public void Fmm3() {
+				var V = true;
+				while(V) {
+					V = false;
+					Dot P = null;
+					var I = this.Base;
+					while(I != null) {
+						var N = I.Next;
+						if(P != null && N != null) {
+							if(Fl == 1 && P.Len < I.Len && I.Len < N.Len) {
+								N.Cut(); V = true; continue;
+							}
+							if(Fl == 2 && P.Len > I.Len && I.Len > N.Len) {
+								P.Cut(); P = I; I = N; V = true; continue;
+							}
+							if(P.Len > I.Len && I.Len < N.Len) {
+								if(P.Len > N.Len) {
+									P.Cut(); P = I; I = N; V = true; continue;
+								}
+								if(P.Len < N.Len) {
+									N.Cut(); V = true; continue;
+								}
+							}
+							//if(Fl == 0) {
+							//	if(P.Len < I.Len && I.Len < N.Len) {
+							//		I.Cut(); V = true; continue;
+							//	}
+							//	if(P.Len > I.Len && I.Len > N.Len) {
+							//		I.Cut(); V = true; continue;
+							//	}
+							//}
+						} else if(P != null && N == null) {
+							//if(P.Len < I.Len) {
+							//	I.Cut(); V = true; continue;
+							//}
+						}
+						P = I; I = N;
+					}
+				}
+			}
+			public void Fixs() {
+				var V = true;
+				while(V) {
+					V = false;
+					var I = this.Base;
+					while(I != null) {
+						var N = I.Next;
+						if(I.Led != null && (I.Led.Len != I.Len || I.Led.Lot == null)) { I.Cut(); }
+						I = N;
+					}
+				}
+			}
 		}
+		#endregion
 		#region #class# Dot 
 		public class Dot {
 			public Lot Lot;
@@ -260,7 +335,7 @@ namespace Wholemy {
 			public Dot Next;
 			public double PrevRoot;
 			public double NextRoot;
-			/// <summary>Длина до другой точки наиболее короткая)</summary>
+			/// <summary>Длина до точки другого лота, наиболее короткая)</summary>
 			public double Len = double.NaN;
 			public Dot Led;
 			public readonly double Root;
@@ -294,11 +369,13 @@ namespace Wholemy {
 				var R = true;
 				if(this.PrevRoot < this.Root) {
 					Size = (this.Root - this.PrevRoot) * 0.5;
-					New = Lot.Line.Dot(this.PrevRoot);
+					New = Lot.Poly.Dot(this.PrevRoot);
 					New.PrevRoot -= Size;
-					if(New.PrevRoot < 0.0) New.PrevRoot = 0.0;
+					if(New.PrevRoot < 0.0)
+						New.PrevRoot = 0.0;
 					New.NextRoot += Size;
-					if(New.NextRoot > 1.0) New.NextRoot = 1.0;
+					if(New.NextRoot > 1.0)
+						New.NextRoot = 1.0;
 					Prev = this.Prev;
 					if(Prev != null) {
 						if(Prev.NextRoot == this.PrevRoot) { Prev.NextRoot = New.PrevRoot; R = false; }
@@ -313,7 +390,7 @@ namespace Wholemy {
 					New.Lot = Lot;
 					Lot.Count++;
 					Lot.Cache = null;
-					Lot.Pair.Validate(New);
+					Lot.Pair.Lens(New);
 				}
 				return R;
 			}
@@ -325,11 +402,13 @@ namespace Wholemy {
 				var R = true;
 				if(this.NextRoot > this.Root) {
 					Size = (this.NextRoot - this.Root) * 0.5;
-					New = Lot.Line.Dot(this.NextRoot);
+					New = Lot.Poly.Dot(this.NextRoot);
 					New.PrevRoot -= Size;
-					if(New.PrevRoot < 0.0) New.PrevRoot = 0.0;
+					if(New.PrevRoot < 0.0)
+						New.PrevRoot = 0.0;
 					New.NextRoot += Size;
-					if(New.NextRoot > 1.0) New.NextRoot = 1.0;
+					if(New.NextRoot > 1.0)
+						New.NextRoot = 1.0;
 					Next = this.Next;
 					if(Next != null) {
 						if(Next.PrevRoot == this.NextRoot) { Next.PrevRoot = New.NextRoot; R = false; }
@@ -344,7 +423,7 @@ namespace Wholemy {
 					New.Lot = Lot;
 					Lot.Count++;
 					Lot.Cache = null;
-					Lot.Pair.Validate(New);
+					Lot.Pair.Lens(New);
 				}
 				return R;
 			}
@@ -693,6 +772,14 @@ namespace Wholemy {
 				return System.Math.Sqrt(X * X + Y * Y);
 			}
 			#endregion
+			#region #property# Polynom 
+			public virtual Polynom Polynom {
+				get {
+					if(Inverted) return new Polynom(EX, EY, EX, EY, MX, MY, MX, MY);
+					return new Polynom(MX, MY, MX, MY, EX, EY, EX, EY);
+				}
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Quadratic 
@@ -885,6 +972,18 @@ namespace Wholemy {
 				return $"Q {(In ? "In" : "No")} Len:{Len.ToString(I)} Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} QX:{QX.ToString(I)} QY:{QY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
 			}
 			#endregion
+			#region #property# Polynom 
+			public override Polynom Polynom {
+				get {
+					var cmX = MX + (((QX - MX) * 2.0) / 3.0);
+					var cmY = MY + (((QY - MY) * 2.0) / 3.0);
+					var ceX = QX + ((EX - QX) / 3.0);
+					var ceY = QY + ((EY - QY) / 3.0);
+					if(Inverted) return new Polynom(EX, EY, ceX, ceY, cmX, cmY, MX, MY);
+					return new Polynom(MX, MY, cmX, cmY, ceX, ceY, EX, EY);
+				}
+			}
+			#endregion
 		}
 		#endregion
 		#region #class# Cubic 
@@ -895,10 +994,85 @@ namespace Wholemy {
 			public readonly double cmY;
 			public readonly double ceX;
 			public readonly double ceY;
+			#region #method# Div(A, B) 
+			public void Div(out Quadratic A, out Quadratic B) {
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = cmX;
+				var y11 = cmY;
+				var x22 = ceX;
+				var y22 = ceY;
+				var x33 = EX;
+				var y33 = EY;
+				var x01 = (x11 - x00) * 0.5 + x00;
+				var y01 = (y11 - y00) * 0.5 + y00;
+				var x12 = (x22 - x11) * 0.5 + x11;
+				var y12 = (y22 - y11) * 0.5 + y11;
+				var x23 = (x33 - x22) * 0.5 + x22;
+				var y23 = (y33 - y22) * 0.5 + y22;
+				var x02 = (x12 - x01) * 0.5 + x01;
+				var y02 = (y12 - y01) * 0.5 + y01;
+				var x13 = (x23 - x12) * 0.5 + x12;
+				var y13 = (y23 - y12) * 0.5 + y12;
+				var x03 = (x13 - x02) * 0.5 + x02;
+				var y03 = (y13 - y02) * 0.5 + y02;
+				A = new Quadratic(x00, y00, x01, y01, x03, y03);
+				B = new Quadratic(x03, y03, x23, y23, x33, y33);
+			}
+			#endregion
 			#region #method# Equ(Line) 
 			public override bool Equ(Line Line) {
 				var Q = (Cubic)Line;
 				return (Q.MX == this.MX && Q.MY == this.MY && Q.cmX == this.cmX && Q.cmY == this.cmY && Q.ceX == this.ceX && Q.ceY == this.ceY && Q.EX == this.EX && Q.EY == this.EY);
+			}
+			#endregion
+			#region #method# DivArc(root, A, B) 
+			public void DivArc(double root, out Line A, out Line B) {
+				if(this.Inverted) root = 1.0 - root;
+				var x00 = MX;
+				var y00 = MY;
+				var x11 = cmX;
+				var y11 = cmY;
+				var x22 = ceX;
+				var y22 = ceY;
+				var x33 = EX;
+				var y33 = EY;
+				var x01 = (x11 - x00) * root + x00;
+				var y01 = (y11 - y00) * root + y00;
+				var x12 = (x22 - x11) * root + x11;
+				var y12 = (y22 - y11) * root + y11;
+				var x23 = (x33 - x22) * root + x22;
+				var y23 = (y33 - y22) * root + y22;
+				var x02 = (x12 - x01) * root + x01;
+				var y02 = (y12 - y01) * root + y01;
+				var x13 = (x23 - x12) * root + x12;
+				var y13 = (y23 - y12) * root + y12;
+				var x03 = (x13 - x02) * root + x02;
+				var y03 = (y13 - y02) * root + y02;
+				double X, Y;
+				var al0 = System.Math.Sqrt((X = x23 - x33) * X + (Y = y23 - y33) * Y);
+				var bl0 = System.Math.Sqrt((X = x01 - x00) * X + (Y = y01 - y00) * Y);
+				var al1 = System.Math.Sqrt((X = x03 - x13) * X + (Y = y03 - y13) * Y);
+				var bl1 = System.Math.Sqrt((X = x02 - x03) * X + (Y = y02 - y03) * Y);
+				var al2 = al1 + (al0 - bl1) / 2.0;
+				var bl2 = bl1 + (bl0 - bl1) / 2.0;
+				var x23u = x33 + (x23 - x33) / al0 * al2;
+				var y23u = y33 + (y23 - y33) / al0 * al2;
+				var x01u = x00 + (x01 - x00) / bl0 * bl2;
+				var y01u = y00 + (y01 - y00) / bl0 * bl2;
+				var x13u = x03 + (x13 - x03) / al1 * al2;
+				var y13u = y03 + (y13 - y03) / al1 * al2;
+				var x02u = x03 + (x02 - x03) / bl1 * bl2;
+				var y02u = y03 + (y02 - y03) / bl1 * bl2;
+				var S = this.Size * root;
+				var ss = this.Size - S;
+				if(this.Inverted) {
+					A = new Cubic(x03, y03, x13u, y13u, x23u, y23u, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
+					B = new Cubic(x00, y00, x01u, y01u, x02u, y02u, x03, y03, this.Inverted, this.Depth + 1, this.Root + ss, S);
+				} else {
+					A = new Cubic(x00, y00, x01u, y01u, x02u, y02u, x03, y03, this.Inverted, this.Depth + 1, this.Root, S);
+					B = new Cubic(x03, y03, x13u, y13u, x23u, y23u, x33, y33, this.Inverted, this.Depth + 1, this.Root + S, ss);
+				}
 			}
 			#endregion
 			#region #method# Div(root, A, B) 
@@ -950,10 +1124,10 @@ namespace Wholemy {
 				var y01 = (y11 - y00) * root + y00;
 				var x12 = (x22 - x11) * root + x11;
 				var y12 = (y22 - y11) * root + y11;
-				var x23 = (x33 - x22) * root + x22;
-				var y23 = (y33 - y22) * root + y22;
 				var x02 = (x12 - x01) * root + x01;
 				var y02 = (y12 - y01) * root + y01;
+				var x23 = (x33 - x22) * root + x22;
+				var y23 = (y33 - y22) * root + y22;
 				var x13 = (x23 - x12) * root + x12;
 				var y13 = (y23 - y12) * root + y12;
 				var x03 = (x13 - x02) * root + x02;
@@ -1000,11 +1174,6 @@ namespace Wholemy {
 			}
 			#endregion
 			#region #method# Dot(root) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
-			#endregion
 			public override Dot Dot(double root) {
 				if(root < 0.0 || root > 1.0) throw new System.InvalidOperationException();
 				var R = this.Inverted ? 1.0 - root : root;
@@ -1020,10 +1189,10 @@ namespace Wholemy {
 				var y01 = (y11 - y00) * R + y00;
 				var x12 = (x22 - x11) * R + x11;
 				var y12 = (y22 - y11) * R + y11;
-				var x23 = (x33 - x22) * R + x22;
-				var y23 = (y33 - y22) * R + y22;
 				var x02 = (x12 - x01) * R + x01;
 				var y02 = (y12 - y01) * R + y01;
+				var x23 = (x33 - x22) * R + x22;
+				var y23 = (y33 - y22) * R + y22;
 				var x13 = (x23 - x12) * R + x12;
 				var y13 = (y23 - y12) * R + y12;
 				var x03 = (x13 - x02) * R + x02;
@@ -1031,6 +1200,20 @@ namespace Wholemy {
 				return new Dot(root, x03, y03);
 			}
 			#endregion
+			public Cubic(double MX, double MY, double EX, double EY, bool cw = false, bool Inverted = false, int Depth = 0, double Root = InitRoot, double Size = InitSize) : base(MX, MY, EX, EY, Inverted, Depth, Root, Size) {
+				const double Arc = 0.55228474983079322; // В конце 22 вместо 34 // 4.0 / 3.0 * System.Math.Tan(System.Math.PI * 0.125);
+				if(((MX < EX && MY < EY) || (MX > EX && MY > EY)) ^ cw) {
+					this.cmX = MX + ((EX - MX) * Arc);
+					this.cmY = MY;
+					this.ceX = EX;
+					this.ceY = EY + ((MY - EY) * Arc);
+				} else {
+					this.cmX = MX;
+					this.cmY = MY + ((EY - MY) * Arc);
+					this.ceX = EX + ((MX - EX) * Arc);
+					this.ceY = EY;
+				}
+			}
 			#region #new# (MX, MY, cmX, cmY, ceX, ceY, EX, EY, Inverted, Depth, Root, Size) 
 			public Cubic(double MX, double MY, double cmX, double cmY, double ceX, double ceY, double EX, double EY, bool Inverted = false, int Depth = 0, double Root = InitRoot, double Size = InitSize) : base(MX, MY, EX, EY, Inverted, Depth, Root, Size) {
 				this.cmX = cmX;
@@ -1117,6 +1300,54 @@ namespace Wholemy {
 			public override string ToString() {
 				var I = System.Globalization.CultureInfo.InvariantCulture;
 				return $"C {(In ? "In" : "No")} Len:{Len.ToString(I)} Depth:{Depth.ToString(I)} Root:{Root.ToString(I)} Size:{Size.ToString(I)} MX:{MX.ToString(I)} MY:{MY.ToString(I)} cmX:{cmX.ToString(I)} cmY:{cmY.ToString(I)} ceX:{ceX.ToString(I)} ceY:{ceY.ToString(I)} EX:{EX.ToString(I)} EY:{EY.ToString(I)}";
+			}
+			#endregion
+			#region #property# Polynom 
+			public override Polynom Polynom {
+				#region #through# 
+#if TRACE
+				[System.Diagnostics.DebuggerStepThrough]
+#endif
+				#endregion
+				get {
+					if(Inverted) return new Polynom(EX, EY, ceX, ceY, cmX, cmY, MX, MY);
+					return new Polynom(MX, MY, cmX, cmY, ceX, ceY, EX, EY);
+				}
+			}
+			#endregion
+		}
+		#endregion
+		#region #class# Polynom 
+		public class Polynom {
+			public readonly double X0;
+			public readonly double Y0;
+			public readonly double X1;
+			public readonly double Y1;
+			public readonly double X2;
+			public readonly double Y2;
+			public readonly double X3;
+			public readonly double Y3;
+			public Polynom(double MX, double MY, double cmX, double cmY, double ceX, double ceY, double EX, double EY) {
+				X0 = MX;
+				Y0 = MY;
+				X1 = -3.0 * MX + 3.0 * cmX;
+				Y1 = -3.0 * MY + 3.0 * cmY;
+				X2 = 3.0 * MX - 6.0 * cmX + 3.0 * ceX;
+				Y2 = 3.0 * MY - 6.0 * cmY + 3.0 * ceY;
+				X3 = -MX + 3.0 * cmX + -3.0 * ceX + EX;
+				Y3 = -MY + 3.0 * cmY + -3.0 * ceY + EY;
+			}
+			public Dot Dot(double R) {
+				var r2 = R * R;
+				var r3 = r2 * R;
+				var X = X3 * r3 + X2 * r2 + X1 * R + X0;
+				var Y = Y3 * r3 + Y2 * r2 + Y1 * R + Y0;
+				return new Dot(R, X, Y);
+			}
+			#region #method# ToString 
+			public override string ToString() {
+				var I = System.Globalization.CultureInfo.InvariantCulture;
+				return $"{X0.ToString("G17", I)} {Y0.ToString("G17", I)} < {X1.ToString("G17", I)} {Y1.ToString("G17", I)} < {X2.ToString("G17", I)} {Y2.ToString("G17", I)} < {X3.ToString("G17", I)} {Y3.ToString("G17", I)}";
 			}
 			#endregion
 		}
@@ -1274,59 +1505,55 @@ namespace Wholemy {
 			public Lot A;
 			public Lot B;
 			#region #new# (A, B) 
-			#region #through# 
-#if TRACE
-			[System.Diagnostics.DebuggerStepThrough]
-#endif
+			public Min(Line A, Line B) {
+				this.B = new Lot(B, this.A = new Lot(A));
+			}
 			#endregion
-			public Min(Line A, Line B) { this.B = new Lot(B, this.A = new Lot(A)); }
-			#endregion
+			public void Adds0() {
+				A.Adds();
+				B.Adds();
+			}
 			public void Adds() {
 				var A = this.A;
 				var B = this.B;
 				A.Adds();
 				B.Adds();
-				A.Validate();
-				Next1:
+				A.Lens();
+				A.Fmm3();
+				B.Fmm3();
+				A.Fixs();
+				B.Fixs();
+			}
+			#region #method# GetA(Mlen) 
+			public Line GetA(double Mlen) {
 				var a = A.Base;
-				Dot P = null;
-				while(a != null) {
-					var N = a.Next;
-					if(a.Led != null && (a.Led.Len != a.Len || a.Led.Lot == null)) { a.Cut(); break; }
-					if(P != null && N != null) {
-						if(P.Len > a.Len && a.Len > N.Len || P.Len < a.Len && a.Len < N.Len) { a.Cut(); break; }
+				if(a != null) {
+					Dot R = a;
+					a = a.Next;
+					while(a != null) {
+						if(R.Len > a.Len) R = a;
+						a = a.Next;
 					}
-					P = a; a = N;
+					return new Cubic(R.X, R.Y, R.X, R.Y, R.X, R.Y, R.X, R.Y);
 				}
-				Next2:
-				a = B.Base;
-				P = null;
-				while(a != null) {
-					var N = a.Next;
-					if(a.Led != null && (a.Led.Len != a.Len || a.Led.Lot == null)) { a.Cut(); goto Next1; }
-					if(P != null && N != null) {
-						if(P.Len > a.Len && a.Len > N.Len || P.Len < a.Len && a.Len < N.Len) { a.Cut(); goto Next1; }
+				return null;
+			}
+			#endregion
+			#region #method# GetB(Mlen) 
+			public Line GetB(double Mlen) {
+				var a = B.Base;
+				if(a != null) {
+					Dot R = a;
+					a = a.Next;
+					while(a != null) {
+						if(R.Len > a.Len) R = a;
+						a = a.Next;
 					}
-					P = a; a = N;
+					return new Cubic(R.X, R.Y, R.X, R.Y, R.X, R.Y, R.X, R.Y);
 				}
+				return null;
 			}
-		}
-		public class Roots {
-			public int Count;
-			public Map.Double<Dot> Dots;
-			public Roots(Dot Dot) {
-				if(Map.Add(ref Dots, Dot.Root, Dot)) Count++;
-			}
-			public void Add(Dot Dot) {
-				if(Map.Add(ref Dots, Dot.Root, Dot)) Count++;
-			}
-			public void Cut() {
-				var A = Dots.Base;
-				while(A != null) {
-					A.Value.Cut();
-					A = A.Above;
-				}
-			}
+			#endregion
 		}
 		#endregion
 		#region #method# Intersect2L(Aref, Bref, Mlen) 
@@ -1343,12 +1570,13 @@ namespace Wholemy {
 			if(A.Intersect(B)) {
 				var Mint = A.Mint * B.Mint;
 				var Min = new Min(A, B);
+				//while(D++ < 9) { Min.Adds0(); }
 				while(D++ < MaxDepth) {
 					Min.Adds();
 				}
 
-				//A = Min.GetA(Mlen);
-				//B = Min.GetB(Mlen);
+				A = Min.GetA(Mlen);
+				B = Min.GetB(Mlen);
 				if(A != null && B != null) {
 					Aref = A;
 					Bref = B;
@@ -1362,6 +1590,13 @@ namespace Wholemy {
 		public static bool Intersect(ref Line Aref, ref Line Bref, double Mlen = 0.25) {
 
 			return false;
+		}
+		#endregion
+		#region #method# LenTo(Dot) 
+		public static double Len(double MX, double MY, double EX, double EY) {
+			var X = MX - EX;
+			var Y = MY - EY;
+			return System.Math.Sqrt(X * X + Y * Y);
 		}
 		#endregion
 	}
