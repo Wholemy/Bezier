@@ -1,5 +1,44 @@
 namespace Wholemy {
 	public class Bzier {
+		#region #method# Rotate(CX, CY, AX, AY, A) 
+		public static void Rotate(double CX, double CY, ref double AX, ref double AY, double AR) {
+			double X, Y;
+			if(AR == 0.0) throw new System.ArgumentOutOfRangeException("AR");
+			var Len = System.Math.Sqrt((X = CX - AX) * X + (Y = CY - AY) * Y);
+			if(Len == 0.0) throw new System.ArgumentOutOfRangeException("Len");
+			long R = (long)AR;
+			if(AR < 0.0) { AR = 1.0 + (AR - R); R %= 4; R += 3; } else { AR -= R; R %= 4; }
+			var MX = AX; var MY = AY;
+			if(R == 1) { MX = CY - AY + CX; MY = AX - CX + CY; } // 90
+			else if(R == 2) { MX = CX - AX + CX; MY = CY - AY + CY; } // 180
+			else if(R == 3) { MX = AY - CY + CX; MY = CX - AX + CY; } // 270
+			var EX = AX; var EY = AY; AX = MX; AY = MY;
+			if(AR > 0.0 && R >= 0 && R < 3) { EX = CY - MY + CX; EY = MX - CX + CY; } // 90
+			while(AR != 0.0) {
+				var L = System.Math.Sqrt((X = MX - EX) * X + (Y = MY - EY) * Y);
+				var ll = L / 2;
+				if(AR < 0.5) {
+					EX = MX + (EX - MX) / L * ll;
+					EY = MY + (EY - MY) / L * ll;
+					ll = System.Math.Sqrt((X = CX - EX) * X + (Y = CY - EY) * Y);
+					EX = CX + (EX - CX) / ll * Len;
+					EY = CY + (EY - CY) / ll * Len;
+					AR = AR * 2.0;
+					AX = EX;
+					AY = EY;
+				} else {
+					MX = EX + (MX - EX) / L * ll;
+					MY = EY + (MY - EY) / L * ll;
+					ll = System.Math.Sqrt((X = CX - MX) * X + (Y = CY - MY) * Y);
+					MX = CX + (MX - CX) / ll * Len;
+					MY = CY + (MY - CY) / ll * Len;
+					AR = (AR - 0.5) * 2.0;
+					AX = MX;
+					AY = MY;
+				}
+			}
+		}
+		#endregion
 		public const int MinMaxS = 128;
 		public const int MaxDepth = 54;
 		public const double InitRoot = 0.0;
@@ -1026,9 +1065,8 @@ namespace Wholemy {
 				return (Q.MX == this.MX && Q.MY == this.MY && Q.cmX == this.cmX && Q.cmY == this.cmY && Q.ceX == this.ceX && Q.ceY == this.ceY && Q.EX == this.EX && Q.EY == this.EY);
 			}
 			#endregion
-			#region #method# DivArc(root, A, B) 
-			public void DivArc(double root, out Line A, out Line B) {
-				if(this.Inverted) root = 1.0 - root;
+			#region #method# DivArc(A, B) 
+			public void DivArc(out Cubic A, out Cubic B) {
 				var x00 = MX;
 				var y00 = MY;
 				var x11 = cmX;
@@ -1037,25 +1075,25 @@ namespace Wholemy {
 				var y22 = ceY;
 				var x33 = EX;
 				var y33 = EY;
-				var x01 = (x11 - x00) * root + x00;
-				var y01 = (y11 - y00) * root + y00;
-				var x12 = (x22 - x11) * root + x11;
-				var y12 = (y22 - y11) * root + y11;
-				var x23 = (x33 - x22) * root + x22;
-				var y23 = (y33 - y22) * root + y22;
-				var x02 = (x12 - x01) * root + x01;
-				var y02 = (y12 - y01) * root + y01;
-				var x13 = (x23 - x12) * root + x12;
-				var y13 = (y23 - y12) * root + y12;
-				var x03 = (x13 - x02) * root + x02;
-				var y03 = (y13 - y02) * root + y02;
+				var x01 = (x11 - x00) * 0.5 + x00;
+				var y01 = (y11 - y00) * 0.5 + y00;
+				var x12 = (x22 - x11) * 0.5 + x11;
+				var y12 = (y22 - y11) * 0.5 + y11;
+				var x23 = (x33 - x22) * 0.5 + x22;
+				var y23 = (y33 - y22) * 0.5 + y22;
+				var x02 = (x12 - x01) * 0.5 + x01;
+				var y02 = (y12 - y01) * 0.5 + y01;
+				var x13 = (x23 - x12) * 0.5 + x12;
+				var y13 = (y23 - y12) * 0.5 + y12;
+				var x03 = (x13 - x02) * 0.5 + x02;
+				var y03 = (y13 - y02) * 0.5 + y02;
 				double X, Y;
 				var al0 = System.Math.Sqrt((X = x23 - x33) * X + (Y = y23 - y33) * Y);
 				var bl0 = System.Math.Sqrt((X = x01 - x00) * X + (Y = y01 - y00) * Y);
 				var al1 = System.Math.Sqrt((X = x03 - x13) * X + (Y = y03 - y13) * Y);
 				var bl1 = System.Math.Sqrt((X = x02 - x03) * X + (Y = y02 - y03) * Y);
-				var al2 = al1 + (al0 - bl1) / 2.0;
-				var bl2 = bl1 + (bl0 - bl1) / 2.0;
+				var al2 = al1 + (al0 - al1) * 0.5;
+				var bl2 = bl1 + (bl0 - bl1) * 0.5;
 				var x23u = x33 + (x23 - x33) / al0 * al2;
 				var y23u = y33 + (y23 - y33) / al0 * al2;
 				var x01u = x00 + (x01 - x00) / bl0 * bl2;
@@ -1064,7 +1102,7 @@ namespace Wholemy {
 				var y13u = y03 + (y13 - y03) / al1 * al2;
 				var x02u = x03 + (x02 - x03) / bl1 * bl2;
 				var y02u = y03 + (y02 - y03) / bl1 * bl2;
-				var S = this.Size * root;
+				var S = this.Size * 0.5;
 				var ss = this.Size - S;
 				if(this.Inverted) {
 					A = new Cubic(x03, y03, x13u, y13u, x23u, y23u, x33, y33, this.Inverted, this.Depth + 1, this.Root, ss);
@@ -1201,7 +1239,7 @@ namespace Wholemy {
 			}
 			#endregion
 			public Cubic(double MX, double MY, double EX, double EY, bool cw = false, bool Inverted = false, int Depth = 0, double Root = InitRoot, double Size = InitSize) : base(MX, MY, EX, EY, Inverted, Depth, Root, Size) {
-				const double Arc = 0.55228474983079322; // В конце 22 вместо 34 // 4.0 / 3.0 * System.Math.Tan(System.Math.PI * 0.125);
+				const double Arc = 0.55228474983079322;
 				if(((MX < EX && MY < EY) || (MX > EX && MY > EY)) ^ cw) {
 					this.cmX = MX + ((EX - MX) * Arc);
 					this.cmY = MY;
