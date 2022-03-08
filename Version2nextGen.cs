@@ -1,18 +1,18 @@
 namespace Wholemy {
 	public class Bzier {
-		public unsafe static decimal Sqrt(decimal X, decimal Y) {
+		public static decimal Sqrt(decimal X, decimal Y) {
 			X = X * X + Y * Y;
 			var R = X * 0.5m;
 			do { Y = R; R = (R + (X / R)) * 0.5m; } while(Y - R != 0.0m);
 			return R;
 		}
-		public unsafe static double Sqrt(double X, double Y) {
+		public static double Sqrt(double X, double Y) {
 			X = X * X + Y * Y;
 			var R = X * 0.5;
 			do { Y = R; R = (R + (X / R)) * 0.5; } while(Y - R != 0.0);
 			return R;
 		}
-		public unsafe static float Sqrt(float X, float Y) {
+		public static float Sqrt(float X, float Y) {
 			X = X * X + Y * Y;
 			var R = X * 0.5f;
 			do { Y = R; R = (R + (X / R)) * 0.5f; } while(Y - R != 0.0);
