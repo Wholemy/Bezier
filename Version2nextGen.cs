@@ -2,21 +2,21 @@ namespace Wholemy {
 	public class Bzier {
 		#region #method# Sqrt(X, Y) 
 		public static decimal Sqrt(decimal X, decimal Y) {
-			X = X * X + Y * Y;
+			X = Y = X * X + Y * Y;
 			var R = X * 0.5m;
-			do { Y = R; R = (R + (X / R)) * 0.5m; } while(Y - R != 0.0m);
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5m; };
 			return R;
 		}
 		public static double Sqrt(double X, double Y) {
-			X = X * X + Y * Y;
+			X = Y = X * X + Y * Y;
 			var R = X * 0.5;
-			do { Y = R; R = (R + (X / R)) * 0.5; } while(Y - R != 0.0);
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5; };
 			return R;
 		}
 		public static float Sqrt(float X, float Y) {
-			X = X * X + Y * Y;
+			X = Y = X * X + Y * Y;
 			var R = X * 0.5f;
-			do { Y = R; R = (R + (X / R)) * 0.5f; } while(Y - R != 0.0);
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5f; };
 			return R;
 		}
 		#endregion
@@ -68,6 +68,7 @@ namespace Wholemy {
 				AY = CY + (AY - CY) / L2 * AL;
 				L3 = Sqrt(RX - AX, RY - AY);
 				if(L0 < L1) {
+					if(EX == AX && EY == AY) break;
 					EX = AX; EY = AY; L1 = L3;
 				} else {
 					if(MX == AX && MY == AY) break;
