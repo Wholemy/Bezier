@@ -4,19 +4,21 @@ namespace Wholemy {
 		public static decimal Sqrt(decimal X, decimal Y) {
 			X = Y = X * X + Y * Y;
 			var R = X * 0.5m;
-			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5m; };
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5m; }
 			return R;
 		}
 		public static double Sqrt(double X, double Y) {
+			if(double.IsNaN(X) || double.IsNaN(Y)) { throw new System.ArgumentOutOfRangeException(); }
 			X = Y = X * X + Y * Y;
 			var R = X * 0.5;
-			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5; };
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5; }
 			return R;
 		}
 		public static float Sqrt(float X, float Y) {
+			if(float.IsNaN(X) || float.IsNaN(Y)) { throw new System.ArgumentOutOfRangeException(); }
 			X = Y = X * X + Y * Y;
 			var R = X * 0.5f;
-			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5f; };
+			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5f; }
 			return R;
 		}
 		#endregion
@@ -32,7 +34,6 @@ namespace Wholemy {
 		/// <exception cref="System.ArgumentOutOfRangeException">
 		/// Возникает если растояние старта или конца от центра 0.0)</exception>
 		public static double GetAR(double CX, double CY, double AX, double AY, double RX, double RY) {
-			double X, Y;
 			var AL = Sqrt(CX - AX, CY - AY);
 			if(AL == 0.0) throw new System.ArgumentOutOfRangeException("AL");
 			var RL = Sqrt(CX - RX, CY - RY);
@@ -60,6 +61,7 @@ namespace Wholemy {
 			var AR = 0.5;
 			while(L0 > 0.0) {
 				L2 = Sqrt(MX - EX, MY - EY);
+				if(L2 == 0.0) break;
 				L3 = L2 * 0.5;
 				AX = MX + (EX - MX) / L2 * L3;
 				AY = MY + (EY - MY) / L2 * L3;
