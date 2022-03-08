@@ -1,20 +1,22 @@
 namespace Wholemy {
 	public class Bzier {
-		// x - a number, from which we need to calculate the square root
-		// epsilon - an accuracy of calculation of the root from our number.
-		// The result of the calculations will differ from an actual value
-		// of the root on less than epslion.
-		public static decimal Sqrt(decimal x, decimal epsilon = 0.0M) {
-			if(x < 0) throw new System.OverflowException("Cannot calculate square root from a negative number");
-
-			decimal current = (decimal)System.Math.Sqrt((double)x), previous;
-			do {
-				previous = current;
-				if(previous == 0.0M) return 0;
-				current = (previous + x / previous) / 2;
-			}
-			while(System.Math.Abs(previous - current) > epsilon);
-			return current;
+		public unsafe static decimal Sqrt(decimal X, decimal Y) {
+			X = X * X + Y * Y;
+			var R = X * 0.5m;
+			do { Y = R; R = (R + (X / R)) * 0.5m; } while(Y - R != 0.0m);
+			return R;
+		}
+		public unsafe static double Sqrt(double X, double Y) {
+			X = X * X + Y * Y;
+			var R = X * 0.5;
+			do { Y = R; R = (R + (X / R)) * 0.5; } while(Y - R != 0.0);
+			return R;
+		}
+		public unsafe static float Sqrt(float X, float Y) {
+			X = X * X + Y * Y;
+			var R = X * 0.5f;
+			do { Y = R; R = (R + (X / R)) * 0.5f; } while(Y - R != 0.0);
+			return R;
 		}
 		#region #method# GetAR(CX, CY, AX, AY, RX, RY) 
 		/// <summary>Возвращает корень поворота от 0.0 до 4.0)</summary>
@@ -31,18 +33,18 @@ namespace Wholemy {
 			double X, Y;
 			var AL = System.Math.Sqrt((X = CX - AX) * X + (Y = CY - AY) * Y);
 			if(AL == 0.0) throw new System.ArgumentOutOfRangeException("AL");
-			var RL = System.Math.Sqrt((X = CX - RX) * X + (Y = CY - RY) * Y);
+			var RL = Sqrt(CX - RX, CY - RY);
 			if(RL == 0.0) throw new System.ArgumentOutOfRangeException("RL");
 			RX = CX + (RX - CX) / RL * AL;
 			RY = CY + (RY - CY) / RL * AL;
-			RL = System.Math.Sqrt((X = CX - RX) * X + (Y = CY - RY) * Y);
+			RL = Sqrt(CX - RX, CY - RY);
 			var X1 = CY - AY + CX; var Y1 = AX - CX + CY; // 90
 			var X2 = CX - AX + CX; var Y2 = CY - AY + CY; // 180
 			var X3 = AY - CY + CX; var Y3 = CX - AX + CY; // 270
-			var L0 = System.Math.Sqrt((X = AX - RX) * X + (Y = AY - RY) * Y);
-			var L1 = System.Math.Sqrt((X = X1 - RX) * X + (Y = Y1 - RY) * Y);
-			var L2 = System.Math.Sqrt((X = X2 - RX) * X + (Y = Y2 - RY) * Y);
-			var L3 = System.Math.Sqrt((X = X3 - RX) * X + (Y = Y3 - RY) * Y);
+			var L0 = Sqrt(AX - RX, AY - RY);
+			var L1 = Sqrt(X1 - RX, Y1 - RY);
+			var L2 = Sqrt(X2 - RX, Y2 - RY);
+			var L3 = Sqrt(X3 - RX, Y3 - RY);
 			double R = 0.0, MX = double.NaN, MY = double.NaN, EX = double.NaN, EY = double.NaN;
 			if(L0 < L2 && L0 < L3 && L1 < L2 && L1 < L3) {
 				R = 0.0; MX = AX; MY = AY; EX = X1; EY = Y1;
@@ -55,14 +57,14 @@ namespace Wholemy {
 			}
 			var AR = 0.5;
 			while(L0 > 0.0) {
-				L2 = System.Math.Sqrt((X = MX - EX) * X + (Y = MY - EY) * Y);
+				L2 = Sqrt(MX - EX, MY - EY);
 				L3 = L2 * 0.5;
 				AX = MX + (EX - MX) / L2 * L3;
 				AY = MY + (EY - MY) / L2 * L3;
-				L2 = System.Math.Sqrt((X = CX - AX) * X + (Y = CY - AY) * Y);
+				L2 = Sqrt(CX - AX, CY - AY);
 				AX = CX + (AX - CX) / L2 * AL;
 				AY = CY + (AY - CY) / L2 * AL;
-				L3 = System.Math.Sqrt((X = RX - AX) * X + (Y = RY - AY) * Y);
+				L3 = Sqrt(RX - AX, RY - AY);
 				if(L0 < L1) {
 					EX = AX; EY = AY; L1 = L3;
 				} else {
@@ -83,9 +85,8 @@ namespace Wholemy {
 		/// <param name="AR">Корень от 0.0 до 4.0 может быть отрицательный)</param>
 		/// <exception cref="System.ArgumentOutOfRangeException"></exception>
 		public static void Rotate(double CX, double CY, ref double AX, ref double AY, double AR) {
-			double X, Y;
 			if(AR == 0.0) throw new System.ArgumentOutOfRangeException("AR");
-			var Len = System.Math.Sqrt((X = CX - AX) * X + (Y = CY - AY) * Y);
+			var Len = Sqrt(CX - AX, CY - AY);
 			if(Len == 0.0) throw new System.ArgumentOutOfRangeException("Len");
 			long R = (long)AR;
 			if(AR < 0.0) { AR = 1.0 + (AR - R); R %= 4; R += 3; } else { AR -= R; R %= 4; }
@@ -96,26 +97,18 @@ namespace Wholemy {
 			var EX = AX; var EY = AY; AX = MX; AY = MY;
 			if(AR > 0.0 && R >= 0 && R < 3) { EX = CY - MY + CX; EY = MX - CX + CY; } // 90
 			while(AR != 0.0) {
-				var L = System.Math.Sqrt((X = MX - EX) * X + (Y = MY - EY) * Y);
+				var L = Sqrt(MX - EX, MY - EY);
 				var ll = L / 2;
 				if(AR < 0.5) {
-					EX = MX + (EX - MX) / L * ll;
-					EY = MY + (EY - MY) / L * ll;
-					ll = System.Math.Sqrt((X = CX - EX) * X + (Y = CY - EY) * Y);
-					EX = CX + (EX - CX) / ll * Len;
-					EY = CY + (EY - CY) / ll * Len;
-					AR = AR * 2.0;
-					AX = EX;
-					AY = EY;
+					EX = MX + (EX - MX) / L * ll; EY = MY + (EY - MY) / L * ll;
+					ll = Sqrt(CX - EX, CY - EY);
+					EX = CX + (EX - CX) / ll * Len; EY = CY + (EY - CY) / ll * Len;
+					AR = AR * 2.0; AX = EX; AY = EY;
 				} else {
-					MX = EX + (MX - EX) / L * ll;
-					MY = EY + (MY - EY) / L * ll;
-					ll = System.Math.Sqrt((X = CX - MX) * X + (Y = CY - MY) * Y);
-					MX = CX + (MX - CX) / ll * Len;
-					MY = CY + (MY - CY) / ll * Len;
-					AR = (AR - 0.5) * 2.0;
-					AX = MX;
-					AY = MY;
+					MX = EX + (MX - EX) / L * ll; MY = EY + (MY - EY) / L * ll;
+					ll = Sqrt(CX - MX, CY - MY);
+					MX = CX + (MX - CX) / ll * Len; MY = CY + (MY - CY) / ll * Len;
+					AR = (AR - 0.5) * 2.0; AX = MX; AY = MY;
 				}
 			}
 		}
