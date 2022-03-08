@@ -66,10 +66,9 @@ namespace Wholemy {
 			} else if(L3 < L1 && L3 < L2 && L0 < L1 && L0 < L2) {
 				R = 3.0; MX = X3; MY = Y3; EX = AX; EY = AY; L1 = L0; L0 = L3;
 			}
-			var AR = 0.5;
-			while(L0 > 0.0) {
-				L2 = Sqrt(MX - EX, MY - EY);
-				if(L2 == 0.0) break;
+			var AR = 1.0;
+			while(L0 > 0.0 && (L2 = Sqrt(MX - EX, MY - EY)) > 0.0) {
+				AR *= 0.5;
 				L3 = L2 * 0.5;
 				AX = MX + (EX - MX) / L2 * L3;
 				AY = MY + (EY - MY) / L2 * L3;
@@ -78,13 +77,10 @@ namespace Wholemy {
 				AY = CY + (AY - CY) / L2 * AL;
 				L3 = Sqrt(RX - AX, RY - AY);
 				if(L0 < L1) {
-					if(EX == AX && EY == AY) break;
 					EX = AX; EY = AY; L1 = L3;
 				} else {
-					if(MX == AX && MY == AY) break;
 					MX = AX; MY = AY; L0 = L3; R += AR;
 				}
-				AR *= 0.5;
 			}
 			return R;
 		}
