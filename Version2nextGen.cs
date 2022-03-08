@@ -1,5 +1,6 @@
 namespace Wholemy {
 	public class Bzier {
+		#region #method# Sqrt(X, Y) 
 		public static decimal Sqrt(decimal X, decimal Y) {
 			X = X * X + Y * Y;
 			var R = X * 0.5m;
@@ -18,6 +19,7 @@ namespace Wholemy {
 			do { Y = R; R = (R + (X / R)) * 0.5f; } while(Y - R != 0.0);
 			return R;
 		}
+		#endregion
 		#region #method# GetAR(CX, CY, AX, AY, RX, RY) 
 		/// <summary>Возвращает корень поворота от 0.0 до 4.0)</summary>
 		/// <param name="CX">Центр по оси X)</param>
@@ -31,7 +33,7 @@ namespace Wholemy {
 		/// Возникает если растояние старта или конца от центра 0.0)</exception>
 		public static double GetAR(double CX, double CY, double AX, double AY, double RX, double RY) {
 			double X, Y;
-			var AL = System.Math.Sqrt((X = CX - AX) * X + (Y = CY - AY) * Y);
+			var AL = Sqrt(CX - AX, CY - AY);
 			if(AL == 0.0) throw new System.ArgumentOutOfRangeException("AL");
 			var RL = Sqrt(CX - RX, CY - RY);
 			if(RL == 0.0) throw new System.ArgumentOutOfRangeException("RL");
