@@ -8,14 +8,22 @@ namespace Wholemy {
 			return R;
 		}
 		public static double Sqrt(double X, double Y) {
-			if(double.IsNaN(X) || double.IsNaN(Y)) { throw new System.ArgumentOutOfRangeException(); }
+			#region #debug# 
+#if DEBUG
+			if(double.IsNaN(X) || double.IsNaN(Y)) throw new System.ArgumentOutOfRangeException();
+#endif
+			#endregion
 			X = Y = X * X + Y * Y;
 			var R = X * 0.5;
 			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5; }
 			return R;
 		}
 		public static float Sqrt(float X, float Y) {
-			if(float.IsNaN(X) || float.IsNaN(Y)) { throw new System.ArgumentOutOfRangeException(); }
+			#region #debug# 
+#if DEBUG
+			if(float.IsNaN(X) || float.IsNaN(Y)) throw new System.ArgumentOutOfRangeException();
+#endif
+			#endregion
 			X = Y = X * X + Y * Y;
 			var R = X * 0.5f;
 			while(Y != R) { Y = R; R = (R + (X / R)) * 0.5f; }
